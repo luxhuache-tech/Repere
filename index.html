@@ -205,12 +205,12 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
    <section id="vK" class="hide">
     <h3>Paramètres du train</h3>
     <div class="grp">
-     <div class="it"><span class="k">Mode</span><span class="val">MA 100</span></div>
+     <div class="it"><span class="k">Catégorie</span><span class="val">MA 100 (affichée MA 10)</span></div>
      <div class="it"><span class="k">Masse totale</span><input type="number" inputmode="decimal" id="kMt" placeholder="0"><span class="val">t</span></div>
      <div class="it"><span class="k">Masse freinée</span><input type="number" inputmode="decimal" id="kMf" placeholder="0"><span class="val">t</span></div>
      <div class="it"><span class="k">Longueur</span><input type="number" inputmode="decimal" id="kLen" placeholder="0"><span class="val">m</span></div>
     </div>
-    <h3>À afficher au KVB</h3>
+    <h3>À afficher sur l’afficheur KVB</h3>
     <div class="kres" id="kvbRes"></div>
     <div id="kvbOut"></div>
     <h3>Détail</h3>
@@ -472,8 +472,8 @@ function kvbCalc(){const mt=num(kvb.mt),mf=num(kvb.mf),len=num(kvb.len);const r=
 function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});
  $("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";
  $("#kvbL").textContent=c.L!=null?c.L+" ("+c.L*100+" m)":"—";
- $("#kvbChip").textContent=c.dec||c.L?"KVB MA 100 · "+(c.L??"—")+" · "+(c.dec??"—"):"";
- $("#kvbRes").innerHTML='<div><span class="lab">Catégorie</span><b>MA 100</b></div><div><span class="lab">Longueur</span><b>'+(c.L??"—")+'</b></div><div><span class="lab">Décélération</span><b'+(c.err?' class="err"':"")+">"+(c.dec??"—")+"</b></div>";
+ $("#kvbChip").textContent=c.dec||c.L?"KVB MA 10 · "+(c.L??"—")+" · "+(c.dec??"—"):"";
+ $("#kvbRes").innerHTML='<div><span class="lab">Catégorie</span><b>MA 10</b></div><div><span class="lab">Longueur</span><b>'+(c.L??"—")+'</b></div><div><span class="lab">Décélération</span><b'+(c.err?' class="err"':"")+">"+(c.dec??"—")+"</b></div>";
  $("#kvbOut").innerHTML=c.err?'<p class="err small">'+esc(c.err)+"</p>":c.dec?'<p class="muted small">Ligne « '+(c.row[0]?c.row[0]+" à "+c.row[1]:"jusqu’à 100")+" t » de la fiche 985 (masse totale arrondie au-dessus, masse freinée au-dessous)."+(c.next?" Décélération "+c.next.dec+" à partir de "+c.next.need+" t freinées.":"")+" Vérifie sur la fiche 985 avant de saisir au KVB.</p>":'<p class="muted small">Saisis la masse totale et la masse freinée totale.</p>'}
 
 /* ---------- LTV lues dans l'avis DEFIT (à valider par le conducteur) ---------- */
