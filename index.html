@@ -62,6 +62,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .ztick{stroke:var(--tx2);stroke-width:1.5}
 .zsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:4 4}.zst{fill:var(--tx3);font-size:11px}
 .zk{stroke:var(--tx3);stroke-width:1}.zkt{fill:var(--tx3);font-size:11px}
+.zann{fill:var(--bg);stroke:var(--ltv);stroke-width:2.5}.zn.ltvt{fill:var(--ltv)}
 .ztrain{fill:var(--acc)}.ztrain.off{fill:var(--tx3)}
 #list{flex:1;overflow:auto;min-height:0;-webkit-overflow-scrolling:touch}
 .r{display:grid;grid-template-columns:46px 56px 1fr;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--hair);cursor:pointer}
@@ -107,6 +108,13 @@ pre{white-space:pre-wrap;font:13px/1.45 var(--f);margin:0;color:var(--tx2)}
 .gt{border-collapse:collapse;width:100%;margin-top:8px;font-variant-numeric:tabular-nums;font-size:13px}
 .gt th,.gt td{border-bottom:1px solid var(--hair);padding:5px 4px;text-align:left}.gt th{color:var(--tx3);font-weight:600;font-size:11px}
 .okc{color:var(--ok)}.wn{color:var(--ltv)}td.bad{color:var(--bad)}
+.lcard{background:var(--s2);border-radius:12px;padding:12px 14px;margin-top:10px}.lcard.done{box-shadow:inset 3px 0 var(--ok)}
+.lhd{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.lcrop{display:block;border-radius:6px;background:#fff;margin-bottom:10px;max-width:100%}
+.lfields{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}.lfields label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--tx2);margin:0}
+.lfields input{width:86px;background:var(--s3);border:0;border-radius:8px;color:var(--tx);font:inherit;font-size:16px;padding:7px 8px;font-variant-numeric:tabular-nums}
+.pnl{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:8px}
+.lft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
 .sug{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--s2);border-radius:12px;padding:10px 14px;margin-top:8px}
 a{color:var(--acc)}
 .note{font-size:12px;color:var(--tx3);margin-top:20px}
@@ -208,10 +216,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
     <div id="kvbOut"></div>
    </section>
    <section id="vL" class="hide">
-    <h3>Repérées dans l’avis DEFIT</h3>
+    <h3>Avis DEFIT</h3>
     <div id="ltvSug"></div>
     <h3>LTV en vigueur</h3>
-    <p class="muted small">Une par ligne : <b>pk début;pk fin;vitesse;tronçon;note</b>. Le tronçon est facultatif (il évite d’appliquer une LTV à une autre ligne qui a les mêmes PK).</p>
+    <p class="muted small">Les LTV validées s’ajoutent ici. Saisie à la main possible, une par ligne : <b>pk début;pk fin;vitesse;tronçon;note;pk annonce</b>. Le tronçon est facultatif (il évite d’appliquer une LTV à une autre ligne qui a les mêmes PK).</p>
     <textarea id="taL" spellcheck="false" aria-label="LTV"></textarea>
     <div class="row"><button class="btn pri" id="okL">Enregistrer</button><span id="msgL" class="muted small"></span></div>
    </section>
@@ -435,6 +443,7 @@ function drawZone(i,f,ok){
  /* LTV */
  for(const z of ltvZones()){if(z.d2<cur-behind||z.d1>cur+ahead)continue;const y1=y(Math.max(z.d1,cur-behind)),y2=y(Math.min(z.d2,cur+ahead));
   q.push('<line x1="'+tx+'" x2="'+tx+'" y1="'+y1+'" y2="'+y2+'" class="zltv"/>','<line x1="'+(rx-4)+'" x2="'+(rx-4)+'" y1="'+y1+'" y2="'+y2+'" class="zltvr"/>');
+  if(z.k.ann!=null){const da=pkToD(z.sec,z.k.ann);if(da!=null&&vis(da)){const ya=y(da);q.push('<circle cx="'+tx+'" cy="'+ya+'" r="5" class="zann"/>');if(free(occR,ya,20))T(tx+14,ya+4,"Annonce LTV "+z.k.v,"zn ltvt")}}
   for(const d of [z.d1,z.d2])if(vis(d)){const yy=y(d);q.push('<line x1="'+(tx-12)+'" x2="'+(tx+12)+'" y1="'+yy+'" y2="'+yy+'" class="zltvt"/>')}
   const ym=Math.max(top+14,Math.min(bot-4,(y1+y2)/2));if(free(occL,ym,30)){T(rx-12,ym-2,"LTV "+z.k.v,"zv ltv","end");T(rx-12,ym+13,fk(Math.min(z.k.a,z.k.b))+"–"+fk(Math.max(z.k.a,z.k.b)),"zp","end")}}
  for(const j of labs){const yy=y(Dc[j]);q.push('<line x1="'+(rx-6)+'" x2="'+(tx)+'" y1="'+yy+'" y2="'+yy+'" class="zchg"/>');if(free(occL,yy,30)){T(rx-12,yy+2,String(rows[j].v),"zv","end");T(rx-12,yy+16,fk(rows[j].pk),"zp","end")}}
@@ -461,29 +470,110 @@ function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","le
  $("#kvbChip").textContent="MA 100"+(c.L!=null?" · L "+c.L:"")+(c.pct!=null?" · "+Math.floor(c.pct)+" %":"");
  $("#kvbOut").innerHTML=KVB_TABLE?"":"<p class=\"muted\">Le tableau de détermination n’est pas encore intégré : envoie-le et les paramètres à afficher seront calculés ici. Rien n’est deviné en attendant.</p>"}
 
-/* ---------- LTV repérées dans l'avis DEFIT (propositions à valider) ---------- */
-function defitLtv(){const out=[],seen=new Set();const pkRe=/(?:PK\s*)?\b(\d{1,3})[.,+](\d{1,3})\b/g,vRe=/\b(\d{2,3})\s*km\s*\/?\s*h\b/i;
- for(const t of defit){const L=t.split(/\n/);for(let i=0;i<L.length;i++){const w=L[i]+" "+(L[i+1]||"");const v=vRe.exec(w);if(!v)continue;const pks=[...w.matchAll(pkRe)].map(m=>+(m[1]+"."+m[2].padEnd(3,"0"))).filter(x=>x!==+v[1]);
-  if(pks.length<2)continue;const a=pks[0],b=pks[1],sp=+v[1];if(sp<10||sp>160||Math.abs(a-b)>30)continue;const key=a+";"+b+";"+sp;if(seen.has(key))continue;seen.add(key);
-  const secs=[...new Set(rows.map(r=>r.sec))].filter(s=>{const R=secRange(s);return R&&Math.min(a,b)>=R[0]-.5&&Math.max(a,b)<=R[1]+.5});
-  out.push({a,b,v:sp,sec:secs.length===1?secs[0]:0,src:(vRe.test(L[i])?L[i]:L[i+1]||L[i]).trim().slice(0,140)})}}return out}
-function renderLtvSug(){const S=defitLtv(),E=$("#ltvSug");const have=new Set(ltv.map(k=>[k.a,k.b,k.v].join(";")));
- if(!S.length){E.innerHTML='<p class="muted">Aucune LTV repérée automatiquement dans l’avis DEFIT. Saisis-les ci-dessous.</p>';return}
- E.innerHTML='<p class="muted">Repérées dans l’avis DEFIT : vérifie chacune sur le document avant de l’ajouter.</p>'+S.map((x,n)=>'<div class="sug"><div><b>'+x.v+' km/h</b> · PK '+fk3(x.a)+" à "+fk3(x.b)+(x.sec?" · tronçon "+x.sec:"")+'<div class="muted small">'+esc(x.src)+"</div></div>"+(have.has([x.a,x.b,x.v].join(";"))?'<span class="muted">Ajoutée</span>':'<button class="btn" data-n="'+n+'">Ajouter</button>')+"</div>").join("");
- E.querySelectorAll("button[data-n]").forEach(b=>b.onclick=()=>{const x=S[+b.dataset.n];const ta=$("#taL");ta.value=(ta.value.trim()?ta.value.trim()+"\n":"")+[x.a,x.b,x.v,x.sec||"",""].join(";");saveLtv()})}
+/* ---------- LTV lues dans l'avis DEFIT (à valider par le conducteur) ---------- */
+/* Empreintes de panneaux déjà vérifiées sur des fiches réelles (panneau d'exécution, vitesse lue à l'œil). */
+const PANEL_SEED={"180x180-fe286681":40,"180x180-91d71817":100,"180x180-e783186a":100};
+let ltvD=[];try{ltvD=JSON.parse(store("ltvD")||"[]")}catch(e){}
+const panelLib=()=>{let l={};try{l=JSON.parse(store("panelLib")||"{}")}catch(e){}return Object.assign({},PANEL_SEED,l)};
+function ltvSecOf(x){const lo=Math.min(x.deb??x.pkFrom,x.fin??x.pkTo),hi=Math.max(x.deb??x.pkFrom,x.fin??x.pkTo);
+ const secs=[...new Set(rows.map(r=>r.sec))].filter(s=>{const R=secRange(s);return R&&hi>=R[0]-.2&&lo<=R[1]+.2});if(secs.length<=1)return secs[0]||0;
+ const nf=GEO.norm(x.from),nt=GEO.norm(x.to);let best=0,bs=-1;
+ for(const s of secs){let sc=0;for(const r of rows)if(r.sec===s){const n=GEO.norm(r.sub&&r.ctx?r.ctx:r.name);if(n&&(n===nf||n===nt||nf.startsWith(n+" ")||nt.startsWith(n+" ")))sc++}if(sc>bs){bs=sc;best=s}}return bs>0?best:0}
+function prepLtvD(list){const lib=panelLib();for(const x of list){if(x.v==null&&x.key&&lib[x.key]){x.v=lib[x.key];x.src="panneau reconnu"}x.sec=ltvSecOf(x)}return list}
+const ltvLine=x=>[x.deb,x.fin,x.v,x.sec||"",x.ref,x.ann??""].join(";");
+function ltvApplied(x){return ltv.some(k=>k.note===x.ref)}
+function renderLtvSug(){const E=$("#ltvSug");if(!E)return;
+ if(!ltvD.length){E.innerHTML='<p class="muted small">Aucune LTV trouvée dans l’avis DEFIT de la fiche importée.</p>';return}
+ E.innerHTML='<p class="muted small">Lues dans l’avis DEFIT. Contrôle chaque LTV sur l’extrait de l’avis (vitesse, PK, voie, jours et heures d’application) avant de la valider.</p>'+ltvD.map((x,n)=>{const ok=ltvApplied(x);
+  return '<div class="lcard'+(ok?" done":"")+'"><div class="lhd"><b>'+esc(x.from)+" → "+esc(x.to)+'</b><span class="muted small">'+(x.voie?"Voie "+esc(x.voie):"")+(x.cs?' · <span style="color:var(--ltv)">contre-sens</span>':"")+'</span></div>'+
+  '<canvas class="lcrop" data-n="'+n+'"></canvas>'+
+  '<div class="lfields">'+(x.img?'<img class="pnl" src="'+x.img+'" alt="Panneau">':"")+
+  '<label>Vitesse<input type="number" inputmode="numeric" data-f="v" data-n="'+n+'" value="'+(x.v??"")+'" placeholder="?"></label>'+
+  '<label>PK début<input type="number" inputmode="decimal" step="0.001" data-f="deb" data-n="'+n+'" value="'+(x.deb??"")+'" placeholder="?"></label>'+
+  '<label>PK fin<input type="number" inputmode="decimal" step="0.001" data-f="fin" data-n="'+n+'" value="'+(x.fin??"")+'" placeholder="?"></label>'+
+  '<label>Annonce<input type="number" inputmode="decimal" step="0.001" data-f="ann" data-n="'+n+'" value="'+(x.ann??"")+'" placeholder="—"></label>'+
+  '<label>Tronçon<input type="number" inputmode="numeric" data-f="sec" data-n="'+n+'" value="'+(x.sec||"")+'" placeholder="tous"></label></div>'+
+  '<div class="lft"><span class="muted small">'+(x.src?"Vitesse : "+esc(x.src)+" (à vérifier)":(x.schema?"Voir le schéma "+esc(x.schema)+" en annexe":"Vitesse à saisir"))+'</span>'+
+  (ok?'<button class="btn" data-off="'+n+'">Retirer</button>':'<button class="btn pri" data-ok="'+n+'">Valider</button>')+"</div></div>"}).join("");
+ E.querySelectorAll("input[data-f]").forEach(i=>i.oninput=()=>{const x=ltvD[+i.dataset.n],v=i.value===""?null:+i.value;x[i.dataset.f]=v;if(i.dataset.f==="v")x.src="";store("ltvD",JSON.stringify(ltvD))});
+ E.querySelectorAll("button[data-ok]").forEach(b=>b.onclick=()=>{const x=ltvD[+b.dataset.ok];
+  if(!(x.v>0)||x.deb==null||x.fin==null){b.textContent="Vitesse et PK requis";setTimeout(()=>b.textContent="Valider",1600);return}
+  if(x.key){let l={};try{l=JSON.parse(store("panelLib")||"{}")}catch(e){}l[x.key]=x.v;store("panelLib",JSON.stringify(l))}
+  const ta=$("#taL");ta.value=(ta.value.trim()?ta.value.trim()+"\n":"")+ltvLine(x);saveLtv()});
+ E.querySelectorAll("button[data-off]").forEach(b=>b.onclick=()=>{const x=ltvD[+b.dataset.off];const ta=$("#taL");ta.value=ta.value.split("\n").filter(l=>l.split(";")[4]!==x.ref).join("\n");saveLtv()});
+ drawCrops()}
+/* extraits de l'avis DEFIT, dessinés depuis le PDF de la fiche gardé sur l'appareil */
+let ficheDoc=null;
+async function drawCrops(){const C=[...document.querySelectorAll("canvas.lcrop")];if(!C.length)return;
+ try{if(!ficheDoc){const f=await idbGet("fiche");if(!f)return;ficheDoc=await pdfLib().getDocument({data:f.slice(0)}).promise}}catch(e){return}
+ for(const c of C){const x=ltvD[+c.dataset.n];if(!x)continue;try{const pg=await ficheDoc.getPage(x.page),W=c.parentElement.clientWidth-28,v0=pg.getViewport({scale:1}),dpr=Math.min(window.devicePixelRatio||1,2),sc=W/v0.width*1.15,vp=pg.getViewport({scale:sc*dpr});
+  const off=document.createElement("canvas");off.width=vp.width;off.height=vp.height;await pg.render({canvasContext:off.getContext("2d"),viewport:vp}).promise;
+  const k=sc*dpr,y0=Math.max(0,x.y0*k),h=Math.min(vp.height,x.y1*k)-y0,x0=v0.width*.07*k,w=Math.min(vp.width-x0,W*dpr);
+  c.width=w;c.height=h;c.style.width=w/dpr+"px";c.style.height=h/dpr+"px";c.getContext("2d").drawImage(off,x0,y0,w,h,0,0,w,h)}catch(e){}}}
+
+/* ---------- lecture des LTV dans la fiche DEFIT ----------
+   Les PK des panneaux sont du texte ; la vitesse est une image de panneau.
+   Chaque image de panneau est reconnue par son empreinte : la première fois, le conducteur
+   saisit la vitesse, ensuite l'appli la retrouve seule (et la montre toujours pour contrôle). */
+const DEFIT={};
+DEFIT.hash=img=>{const d=img.data;let h=2166136261>>>0;const st=Math.max(1,Math.floor(d.length/4096));for(let i=0;i<d.length;i+=st){h^=d[i];h=Math.imul(h,16777619)>>>0}return img.width+"x"+img.height+"-"+h.toString(16)};
+DEFIT.toUrl=img=>{try{if(typeof document==="undefined")return null;const c=document.createElement("canvas");c.width=img.width;c.height=img.height;const x=c.getContext("2d"),o=x.createImageData(img.width,img.height),d=img.data,n=img.width*img.height;
+ if(img.kind===3)o.data.set(d.subarray?d.subarray(0,n*4):d.slice(0,n*4));else if(img.kind===2)for(let i=0;i<n;i++){o.data[4*i]=d[3*i];o.data[4*i+1]=d[3*i+1];o.data[4*i+2]=d[3*i+2];o.data[4*i+3]=255}
+ else if(img.kind===1){const rb=Math.ceil(img.width/8);for(let y=0;y<img.height;y++)for(let xx=0;xx<img.width;xx++){const b=(d[y*rb+(xx>>3)]>>(7-(xx&7)))&1,v=b?255:0,k=4*(y*img.width+xx);o.data[k]=o.data[k+1]=o.data[k+2]=v;o.data[k+3]=255}}else return null;
+ x.putImageData(o,0,0);return c.toDataURL("image/png")}catch(e){return null}};
+async function pageImages(pg){const out=[];try{const ops=await pg.getOperatorList(),O=pdfjsLib.OPS,U=pdfjsLib.Util,H=pg.view[3];let ctm=[1,0,0,1,0,0];const st=[];
+ for(let i=0;i<ops.fnArray.length;i++){const fn=ops.fnArray[i],a=ops.argsArray[i];
+  if(fn===O.save)st.push(ctm.slice());else if(fn===O.restore)ctm=st.pop()||ctm;else if(fn===O.transform)ctm=U.transform(ctm,a);
+  else if(fn===O.paintImageXObject||fn===O.paintJpegXObject){const nm=a[0];const w=Math.hypot(ctm[0],ctm[1]),h=Math.hypot(ctm[2],ctm[3]);
+   let img=null;try{const src=nm.startsWith("g_")?pg.commonObjs:pg.objs;img=await new Promise(res=>{try{src.get(nm,res)}catch(e){res(null)}})}catch(e){}
+   out.push({x:ctm[4],y:H-ctm[5]-h,w,h,img})}}}catch(e){}return out}
+/* lignes de texte d'une page DEFIT -> blocs */
+DEFIT.blocks=(lines,W)=>{const B=[];let b=null;
+ const hdr=/^(.+?)\s+-\s+\S+.*?\((\d+(?:,\d+)?)\)\s*>\s*(.+?)\s+-\s+\S+.*?\((\d+(?:,\d+)?)\)/;
+ for(const l of lines){const t=l.map(i=>i.s).reduce((a,c,k,A)=>a+(k&&!(A[k-1].length>1&&/-$/.test(A[k-1]))?" ":"")+c,"").replace(/\s+/g," ").trim();const m=hdr.exec(t);
+  if(m){b={from:m[1].trim(),pkFrom:+m[2].replace(",","."),to:m[3].trim(),pkTo:+m[4].replace(",","."),y0:l.y-12,y1:1e9,voie:"",ref:"",cs:false,pks:[],schema:"",lines:[t]};B.push(b);continue}
+  if(!b)continue;if(/^Page \d+ sur/.test(t)||/^Itinéraire/.test(t)){b.y1=Math.min(b.y1,l.y-4);b=null;continue}
+  b.lines.push(t);
+  const v=/Voie\s*:\s*(.*?)(?:\s+\d{4}-[A-Z]+-\d+.*)?$/.exec(t);if(v&&!b.voie)b.voie=v[1].trim();
+  const r=/(\d{4})-([A-Z]+)-(\d{5,})-(\d+)-[\d.]+/.exec(t);if(r&&!b.ref){b.ref=r[0];b.type=r[2];b.num=r[3]}
+  if(/Contre-sens/i.test(t))b.cs=true;
+  const sc=/N°\s*(\d{4}-[A-Z]+-\d+-\d+)/.exec(t);if(sc)b.schema=sc[1];
+  if(l.every(i=>/^\d{1,3}\.\d{2,3}$/.test(i.s))&&l.length>=2)b.pks.push(...l.map(i=>({pk:+i.s,x:i.f*W})));
+ }
+ for(let k=0;k<B.length;k++){if(B[k+1]&&B[k].y1===1e9)B[k].y1=B[k+1].y0-2}
+ return B};
+/* vitesse donnée par le libellé d'un schéma (« LTV 100 – … ») */
+DEFIT.schemaSpeed=(txts,num)=>{for(const t of txts){if(!t.includes(num))continue;const m=/LTV\s*(\d{2,3})\b/.exec(t.replace(/\s+/g," "));if(m)return +m[1]}return null};
+async function readDefit(pdf,pages,schemaTxt){
+ const lib=(()=>{try{return JSON.parse(store("panelLib")||"{}")}catch(e){return{}}})();const out=[];
+ for(const p of pages){const pg=await pdf.getPage(p),W=pg.view[2],H=pg.view[3],tc=await pg.getTextContent();
+  const lines=group(tc.items.filter(i=>i.str.trim()).map(i=>({s:i.str.trim(),f:i.transform[4]/W,y:H-i.transform[5]})));
+  const B=DEFIT.blocks(lines,W).filter(b=>b.type==="LTV");if(!B.length)continue;
+  const imgs=await pageImages(pg);
+  for(const b of B){const y1=b.y1===1e9?H:b.y1;
+   /* panneaux : images à peu près carrées dans le bloc, alignées au-dessus des PK */
+   const pan=imgs.filter(m=>m.y>b.y0&&m.y+m.h<y1+2&&m.w>12&&m.w<90&&m.h/m.w>.8&&m.h/m.w<1.6).sort((a,c)=>a.x-c.x);
+   const pk=b.pks.slice().sort((a,c)=>a.x-c.x);
+   let ann=null,deb=null,fin=null;if(pk.length>=3)[ann,deb,fin]=pk.map(x=>x.pk);else if(pk.length===2)[deb,fin]=pk.map(x=>x.pk);
+   let pnl=null;if(pk.length>=2&&pan.length){const xd=pk[pk.length>=3?1:0].x;pnl=pan.reduce((a,c)=>Math.abs(c.x+c.w/2-xd)<Math.abs(a.x+a.w/2-xd)?c:a)}
+   const key=pnl&&pnl.img&&pnl.img.data?DEFIT.hash(pnl.img):null;
+   let v=null,src="";if(key&&lib[key]){v=lib[key];src="panneau reconnu"}
+   if(v==null&&b.schema){const sv=DEFIT.schemaSpeed(schemaTxt,b.num);if(sv){v=sv;src="libellé du schéma"}}
+   out.push({page:p,y0:b.y0,y1,from:b.from,to:b.to,pkFrom:b.pkFrom,pkTo:b.pkTo,voie:b.voie,ref:b.ref,cs:b.cs,ann,deb,fin,schema:b.schema,v,src,key,img:pnl&&pnl.img?DEFIT.toUrl(pnl.img):null})}}
+ return out}
 
 
 /* ---------- lecture du PDF de la fiche ---------- */
 function group(it){it.sort((a,b)=>a.y-b.y||a.f-b.f);const L=[];for(const i of it){const l=L[L.length-1];if(l&&Math.abs(l.y-i.y)<2.5)l.push(i);else{const n=[i];n.y=i.y;L.push(n)}}L.forEach(l=>l.sort((a,b)=>a.f-b.f));return L}
 function pdfLib(){if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return pdfjsLib}
 async function readPdf(buf){
- const pdf=await pdfLib().getDocument({data:buf}).promise;
- const out=[],dft=[],warn=[];let cur=null,ctx="",train="";
+ const pdf=await pdfLib().getDocument({data:buf,isOffscreenCanvasSupported:false}).promise;
+ const out=[],dft=[],warn=[],dp=[],sch=[];let cur=null,ctx="",train="";
  for(let p=1;p<=pdf.numPages;p++){
   const pg=await pdf.getPage(p),W=pg.view[2],H=pg.view[3],tc=await pg.getTextContent();
   const lines=group(tc.items.filter(i=>i.str.trim()).map(i=>({s:i.str.trim(),f:i.transform[4]/W,y:H-i.transform[5]})));
   const txt=lines.map(l=>l.map(i=>i.s).join(" ")).join("\n");
-  if(!/Etablissements et points/.test(txt)){if(/DEFIT/.test(txt))dft.push(txt);continue}
+  if(!/Etablissements et points/.test(txt)){if(/DEFIT/.test(txt)){dft.push(txt);if(/Fiche DEFIT/.test(txt))dp.push(p)}if(/Sch[ée]ma\s*N/.test(txt))sch.push(txt);continue}
   const yH=(lines.find(l=>l.some(i=>/^Etablissements/.test(i.s)))||{y:0}).y;
   const fl=lines.find(l=>l.some(i=>/^Les vitesses limites/.test(i.s)));const yF=fl?fl.y:1e9;
   const mk=[],pr=[];
@@ -503,17 +593,33 @@ async function readPdf(buf){
   if(mk.length)cur=mk[mk.length-1].v;
   out.push(...pr);
  }
- const tm=r=>{const m=/(\d{1,2}):(\d{2})/.exec(r.time||"");return m?+m[1]*60+ +m[2]:null};let sec=1,lt=null;out.forEach((r,i)=>{const t=tm(r);if(i){let dm=t==null||lt==null?0:t-lt;if(dm<0)dm+=1440;const d=Math.abs(r.pk-out[i-1].pk);if(d>3&&d/(Math.max(dm,.5)/60)>140)sec++}r.sec=sec;if(t!=null)lt=t});
+ out.forEach((r,i)=>r.sec=1);splitSec(out);
  if(out.some(r=>r.v==null))warn.push("Certaines lignes n’ont pas de limite lue : vérifie-les.");
  if(out.length<5)warn.push("Très peu de lignes lues : le format du PDF est peut-être différent.");
- return{rows:out,defit:dft,warn};
+ let ltvD=[];try{ltvD=await readDefit(pdf,dp,sch)}catch(e){warn.push("Lecture des LTV de l’avis DEFIT impossible : "+e.message)}
+ return{rows:out,defit:dft,warn,ltvD};
 }
+
+/* découpage en tronçons : un tronçon = un repérage kilométrique continu.
+   Nouveau tronçon si le sens du kilométrage s'inverse, ou si le saut de PK est impossible vu les horaires (plus de 300 km/h). */
+function splitSec(out){const tm=r=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(r.time||"");return m?+m[1]*60+ +m[2]+(m[3]?.5:0):null};
+ let sec=1,dir=0,lt=null;
+ out.forEach((r,i)=>{const t=tm(r);
+  if(i){const p=out[i-1],d=r.pk-p.pk;let brk=false;
+   if(dir&&Math.abs(d)>0.3&&Math.sign(d)===-dir)brk=true;
+   if(!brk&&t!=null&&lt){let dm=t-lt.t;if(dm<0)dm+=1440;if(Math.abs(r.pk-lt.pk)/((dm+1)/60)>300)brk=true}
+   if(!brk&&t==null&&Math.abs(d)>15)brk=true;
+   if(brk){const L0=lt;sec++;dir=0;lt=null;
+    /* points sans horaire juste avant la coupure : on les rattache au nouveau tronçon s'ils en sont plus proches */
+    if(t!=null&&L0)for(let j=i-1;j>0&&out[j].sec===sec-1&&tm(out[j])==null;j--){if(Math.abs(out[j].pk-r.pk)<Math.abs(out[j].pk-L0.pk))out[j].sec=sec;else break}}
+   else if(!dir&&Math.abs(d)>0.05)dir=Math.sign(d)}
+  r.sec=sec;if(t!=null)lt={t,pk:r.pk}});return out}
 
 /* ---------- données ---------- */
 function setData(r,d){rows=r;defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo();drawGeo();renderLtvSug()}
 function demo(){const m=(pk,name,v,time,pl,stop)=>({pk,name,ctx:"",sub:false,stop:!!stop,pl:!!pl,time,reg:"",rad:"",sec:1,v});
  return[m(100,"TEST-A",90,"19:13","",1),m(100.8,"PN 12",60,"",1),m(102,"Bif. de Test",100,""),m(104.5,"Poste 4",120,"19:18"),m(106.2,"PN 15",80,"",1),m(108,"Signal 108",120,"19:22"),m(110.5,"Entrée Test-B",40,"19:25"),m(111,"TEST-B",40,"19:26","",1)]}
-function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||""}))}
+function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||"",ann:c[5]!==undefined&&c[5]!==""&&!isNaN(+c[5])?+c[5]:null}))}
 const inLtv=(k,pk,sec)=>pk>=Math.min(k.a,k.b)&&pk<=Math.max(k.a,k.b)&&(!k.sec||k.sec===sec);
 function saveLtv(){ltv=parseLtv($("#taL").value);store("ltv",$("#taL").value);$("#msgL").textContent=ltv.length+" LTV enregistrée(s).";renderList();renderLtvSug();lastRow=-1}
 
@@ -682,13 +788,13 @@ $("#sv").oninput=e=>{sim.v=+e.target.value;$("#svT").textContent=sim.v};
 $("#mult").onchange=e=>sim.mult=+e.target.value;
 $("#okL").onclick=saveLtv;
 [["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{$(id).value=kvb[k];$(id).oninput=e=>{kvb[k]=e.target.value;store("kvb",JSON.stringify(kvb));renderKvb()}});
-$("#demo").onclick=()=>{setData(demo(),[]);$("#menu").classList.add("hide")};
-$("#clear").onclick=()=>{["rows","defit","ltv","geo"].forEach(k=>store(k,null));ltv=[];$("#taL").value="";geo={lines:{},sec:{},rep:{}};geoRaw=null;setData([],[]);store("rows",null);store("defit",null);renderGeo();drawGeo()};
+$("#demo").onclick=()=>{ltvD=[];store("ltvD",null);setData(demo(),[]);$("#menu").classList.add("hide")};
+$("#clear").onclick=()=>{["rows","defit","ltv","geo","ltvD"].forEach(k=>store(k,null));ltvD=[];ltv=[];$("#taL").value="";geo={lines:{},sec:{},rep:{}};geoRaw=null;setData([],[]);store("rows",null);store("defit",null);renderGeo();drawGeo()};
 $("#geoFile").onchange=e=>{if(e.target.files.length)geoFiles([...e.target.files])};
 $("#geoClr").onclick=()=>{store("geo",null);geo={lines:{},sec:{},rep:{}};geoRaw=null;geoOv={};$("#geoMsg").textContent="";renderGeo();drawGeo()};
 $("#file").onchange=async e=>{
  const f=e.target.files[0];if(!f)return;$("#rep").textContent="Lecture du PDF…";
- try{const r=await readPdf(await f.arrayBuffer());setData(r.rows,r.defit);if(r.warn.length)$("#rep").innerHTML+='<div class="err">'+r.warn.map(esc).join("<br>")+"</div>"}
+ try{const buf=await f.arrayBuffer();await idbSet("fiche",buf.slice(0));ficheDoc=null;const r=await readPdf(buf);setData(r.rows,r.defit);ltvD=prepLtvD(r.ltvD||[]);store("ltvD",JSON.stringify(ltvD));renderLtvSug();if(ltvD.length)$("#rep").innerHTML+="<div>"+ltvD.length+" LTV trouvée(s) dans l’avis DEFIT : valide-les dans l’onglet LTV.</div>";if(r.warn.length)$("#rep").innerHTML+='<div class="err">'+r.warn.map(esc).join("<br>")+"</div>"}
  catch(x){$("#rep").innerHTML='<span class="err">Impossible de lire ce PDF : '+esc(x.message)+"</span>"}
 };
 
