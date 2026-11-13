@@ -3,118 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
 <title>Repère – fiche train défilante (prototype)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-:root{--stopc:#b45f06;--stopbg:#fdecd3;--bg:#e8ecf0;--panel:#fff;--ink:#14181d;--mute:#59656f;--line:#c3ccd5;--ok:#1f7a4d;--warn:#a85f00;--bad:#c62828;--acc:#1c5fa8;--cur:#d6e6f7;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--stopc:#e08a1e;--stopbg:#3a2a12;--bg:#101419;--panel:#1a2027;--ink:#e8edf2;--mute:#93a0ad;--line:#2d3640;--ok:#4cc38a;--warn:#f2b134;--bad:#ff6b66;--acc:#6aa8f0;--cur:#23415f}}
-:root[data-theme="dark"]{--stopc:#e08a1e;--stopbg:#3a2a12;--bg:#101419;--panel:#1a2027;--ink:#e8edf2;--mute:#93a0ad;--line:#2d3640;--ok:#4cc38a;--warn:#f2b134;--bad:#ff6b66;--acc:#6aa8f0;--cur:#23415f}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*,*::before,*::after{box-sizing:inherit}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.4 "Barlow",system-ui,sans-serif}
-.wrap{max-width:1100px;margin:0 auto;padding:10px 14px 24px}
-.note{background:var(--panel);border-left:6px solid var(--warn);padding:8px 12px;font-weight:600;margin-bottom:8px}
+:root{--bg:#000;--panel:#0d1014;--panel2:#161b21;--ink:#eef2f5;--mute:#8996a3;--line:#262d35;--ok:#4cc38a;--warn:#f2b134;--bad:#ff5a52;--acc:#5aa2f0;--cur:#17324f;--stopc:#e08a1e;--stopbg:#2b1f0e;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:400 1rem/1.35 "Barlow",system-ui,sans-serif;overflow:hidden}
+.app{display:grid;grid-template-columns:30fr 36fr 34fr;gap:6px;height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 6px) calc(env(safe-area-inset-right,0px) + 6px) calc(env(safe-area-inset-bottom,0px) + 6px) calc(env(safe-area-inset-left,0px) + 6px)}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.hd{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);min-height:46px}
+.hd .t{font:700 .95rem "Barlow Condensed",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:600 1rem "Barlow",sans-serif;min-width:44px;min-height:40px;padding:0 10px;border-radius:9px;cursor:pointer}
+.ib.on{background:var(--acc);border-color:var(--acc);color:#000}
+/* colonne carte */
+#map{flex:1;min-height:0;background:#0a0c0f}
+.leaflet-container{background:#0a0c0f;font:inherit}
+.leaflet-control-attribution{background:rgba(0,0,0,.6)!important;color:#888!important;font-size:9px!important}.leaflet-control-attribution a{color:#aaa!important}
+.big{padding:6px 12px 8px;border-top:1px solid var(--line)}
+.big .l{color:var(--mute);font:600 .8rem "Barlow",sans-serif;text-transform:uppercase;letter-spacing:.08em}
+#pk{font:700 clamp(3.4rem,8vw,6.4rem)/.95 "Barlow Condensed","Arial Narrow",sans-serif;font-variant-numeric:tabular-nums}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.duo>div{border:1px solid var(--line);border-radius:10px;padding:4px 10px}
+.duo .v{font:700 clamp(2rem,4.6vw,3.6rem)/1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
+.duo .u{color:var(--mute);font:500 .95rem "Barlow Condensed",sans-serif;margin-left:3px}
+#tLim{border-width:3px;border-color:#3a4450}
+.over{border-color:var(--bad)!important}.over .v{color:var(--bad)}
+#st{font-size:.85rem;font-weight:600;padding:5px 12px 7px;color:var(--mute)}
+#st[data-s="ok"]{color:var(--ok)}#st[data-s="warn"]{color:var(--warn)}#st[data-s="bad"]{color:var(--bad)}
+/* colonne fiche */
+.nexts{padding:6px 10px;border-bottom:1px solid var(--line);font-size:.95rem}
+.nexts div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nexts b{color:var(--ink)}#nx,#ns{color:var(--mute)}
+#list{flex:1;overflow:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.r{display:grid;grid-template-columns:44px 58px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:1.02rem;cursor:pointer}
+.r.past{opacity:.38}
+.r.stop{background:var(--stopbg);box-shadow:inset 5px 0 var(--stopc);font-weight:700}
+.r.cur{background:var(--cur);box-shadow:inset 5px 0 var(--acc);opacity:1}
+.r .lm{font:700 1.25rem "Barlow Condensed",sans-serif}.r .lm.ltv{color:var(--bad)}
+.r .pkc{font-variant-numeric:tabular-nums;color:var(--mute)}
+.r .tm{font-variant-numeric:tabular-nums;text-align:right;color:var(--mute);font-size:.95rem}
+.r .sub{color:var(--mute);font-size:.88rem;font-weight:400}
+.r .x{color:var(--mute);font-size:.8rem;font-weight:600;margin-left:6px}
+.tag{background:var(--stopc);color:#000;font-size:.7rem;padding:1px 5px;border-radius:4px;margin-right:5px;font-weight:700}
+.sec{padding:3px 10px;background:var(--panel2);color:var(--mute);font-weight:600;font-size:.82rem}
+.empty{padding:24px 16px;color:var(--mute);text-align:center}
+.foot{display:flex;gap:6px;padding:6px 8px;border-top:1px solid var(--line)}.foot .ib{flex:1}
+/* colonne PDF */
+#pdfv{flex:1;overflow:auto;min-height:0;background:#050607;-webkit-overflow-scrolling:touch}
+#pdfv canvas{display:block;margin:0 auto 6px;max-width:none;background:#fff}
+#pdfPg{color:var(--mute);font-variant-numeric:tabular-nums;font-size:.9rem;white-space:nowrap}
+/* menu */
+#menu{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;justify-content:flex-end;z-index:2000}
+#menu.hide{display:none}
+.drawer{width:min(620px,96vw);height:100%;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:600 .95rem "Barlow",sans-serif;padding:8px 12px;min-height:42px;border-radius:9px}
+.tabs button[aria-pressed="true"]{background:var(--acc);color:#000;border-color:var(--acc)}
+.pane{flex:1;overflow:auto;padding:10px 14px 24px}
+.pane h3{margin:12px 0 6px;font:700 1rem "Barlow Condensed",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--panel2);color:var(--ink);font:600 1rem "Barlow",sans-serif;padding:9px 14px;min-height:44px}
+.seg button[aria-pressed="true"]{background:var(--acc);color:#000}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:600 1rem "Barlow",sans-serif;padding:9px 14px;min-height:44px;border-radius:9px}
+.btn.main{background:var(--acc);border-color:var(--acc);color:#000}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
-.seg{display:inline-flex;border:2px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
-.seg button{border:0;background:var(--panel);color:var(--ink);font:600 1rem "Barlow",sans-serif;padding:9px 14px;min-height:44px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--acc);color:#fff}
-.btn{border:2px solid var(--line);background:var(--panel);color:var(--ink);font:600 1rem "Barlow",sans-serif;padding:9px 14px;min-height:44px;border-radius:8px;cursor:pointer}
-.btn.main{background:var(--acc);border-color:var(--acc);color:#fff}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tile{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:6px 12px}
-.tile .l{color:var(--mute);font-weight:600;font-size:.9rem}
-.tile .v{font:700 clamp(2.6rem,9vw,5rem)/1 "Barlow Condensed","Arial Narrow",sans-serif;font-variant-numeric:tabular-nums}
-.tile .u{font:500 1.1rem "Barlow Condensed","Arial Narrow",sans-serif;color:var(--mute);margin-left:4px}
-.tile.over{border-color:var(--bad)}.tile.over .v{color:var(--bad)}
-.tile.lim{border-width:5px}
-.info{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px;font-size:1.1rem}
-.status{margin-top:8px;padding:8px 12px;border-radius:8px;font-weight:600;border:2px solid var(--line);background:var(--panel)}
-.status[data-s="ok"]{border-color:var(--ok);color:var(--ok)}
-.status[data-s="warn"]{border-color:var(--warn);color:var(--warn)}
-.status[data-s="bad"]{border-color:var(--bad);color:var(--bad)}
-#list{height:calc(100dvh - 450px);min-height:240px;overflow:auto;margin-top:8px;border:2px solid var(--line);border-radius:8px;background:var(--panel)}
-.r{display:grid;grid-template-columns:54px 62px 1fr 92px 30px 30px 34px;gap:6px;align-items:center;padding:7px 8px;border-bottom:1px solid var(--line);cursor:pointer;font-size:1.05rem}
-.r.past{opacity:.45}
-.r.stop{background:var(--stopbg);border-left:6px solid var(--stopc);font-weight:700}.tag{background:var(--stopc);color:#fff;font-size:.75rem;padding:2px 6px;border-radius:4px;margin-right:4px}
-.r.cur{background:var(--cur);border-left:6px solid var(--acc);opacity:1}
-.r .lm{font-weight:700;font-style:italic;font-size:1.2rem}
-.r .lm.ltv{color:var(--bad)}
-.r .sub{color:var(--mute);font-size:.9rem}
-.sec{padding:4px 10px;background:var(--line);color:var(--mute);font-weight:600;font-size:.9rem}
-.sim,.box{background:var(--panel);border:2px dashed var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
-.sim label{display:inline-flex;gap:8px;align-items:center;margin-right:12px}
-textarea{width:100%;min-height:150px;font:500 1rem/1.4 ui-monospace,Menlo,monospace;background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px}
-pre{white-space:pre-wrap;font:400 .95rem/1.4 "Barlow",sans-serif;margin:0}
-.small{color:var(--mute);font-size:.95rem}.err{color:var(--bad);font-weight:600}
-.gsec{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
-.gt{border-collapse:collapse;width:100%;margin-top:6px;font-variant-numeric:tabular-nums}
-.gt th,.gt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}.gt th{color:var(--mute);font-size:.9rem}
+.box,.gsec{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
+.small{color:var(--mute);font-size:.92rem}.err{color:var(--bad);font-weight:600}
+textarea{width:100%;min-height:150px;font:500 1rem/1.4 ui-monospace,Menlo,monospace;background:#000;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+pre{white-space:pre-wrap;font:400 .92rem/1.4 "Barlow",sans-serif;margin:0}
+.gt{border-collapse:collapse;width:100%;margin-top:6px;font-variant-numeric:tabular-nums;font-size:.92rem}
+.gt th,.gt td{border-bottom:1px solid var(--line);padding:4px 5px;text-align:left}.gt th{color:var(--mute);font-size:.82rem}
 .okc{color:var(--ok);font-weight:600}.wn{color:var(--warn);font-weight:600}td.bad{color:var(--bad);font-weight:700}
-select{font:600 1rem "Barlow",sans-serif;min-height:40px}
-.gsec a,.box a{color:var(--acc)}
-button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.hide{display:none}
+select,input[type=file]{font:600 1rem "Barlow",sans-serif;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;min-height:40px}
+a{color:var(--acc)}
+label{display:inline-flex;gap:8px;align-items:center;margin-right:12px}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.hide{display:none!important}
+@media (orientation:portrait){.app{grid-template-columns:1fr 1fr;grid-template-rows:42fr 58fr}.c-map{grid-row:1}.c-fiche{grid-row:1}.c-pdf{grid-column:1/3;grid-row:2}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<div class="note">Prototype d’aide à l’information. La signalisation, les documents officiels et l’équipement de bord restent la référence.</div>
-<div class="seg" role="group" aria-label="Vue">
- <button id="tC" aria-pressed="true">Conduite</button><button id="tL" aria-pressed="false">LTV</button><button id="tD" aria-pressed="false">Avis DEFIT</button><button id="tG" aria-pressed="false">Géométrie</button><button id="tI" aria-pressed="false">Import</button>
+<div class="app">
+ <!-- carte + PK -->
+ <section class="col c-map">
+  <div class="hd"><span class="t" id="mapT">Carte</span><button class="ib on" id="follow" aria-pressed="true" title="Suivre le train">◎</button></div>
+  <div id="map" aria-label="Carte"></div>
+  <div class="big">
+   <div class="l">PK</div><div id="pk">—</div>
+   <div class="duo">
+    <div id="tSpd"><div class="l">Vitesse</div><span class="v" id="spd">—</span><span class="u">km/h</span></div>
+    <div id="tLim"><div class="l">Limite</div><span class="v" id="lim">—</span><span class="u">km/h</span></div>
+   </div>
+  </div>
+  <div id="st" data-s="warn">Charge une fiche (menu ☰).</div>
+ </section>
+ <!-- fiche train -->
+ <section class="col c-fiche">
+  <div class="hd"><span class="t" id="ficheT">Fiche train</span><span class="small" id="modeT">Simulation</span><button class="ib" id="play">▶</button><button class="ib" id="openMenu" aria-label="Menu">☰</button></div>
+  <div class="nexts"><div id="nx">Prochaine limite : —</div><div id="ns">Prochain arrêt : —</div></div>
+  <div id="list" aria-label="Fiche train"></div>
+  <div class="foot hide" id="manFoot"><button class="ib" id="prev">▲ Précédent</button><button class="ib" id="next">Suivant ▼</button></div>
+ </section>
+ <!-- étude de ligne -->
+ <section class="col c-pdf">
+  <div class="hd"><span class="t" id="pdfT">Étude de ligne</span><span id="pdfPg"></span><button class="ib" id="zOut" aria-label="Dézoomer">−</button><button class="ib" id="zIn" aria-label="Zoomer">+</button><label class="ib" style="margin:0;display:inline-flex;align-items:center;justify-content:center">📄<input type="file" id="pdfFile" accept="application/pdf" class="hide"></label></div>
+  <div id="pdfv"><div class="empty">Touche 📄 pour ouvrir ton étude de ligne (PDF).<br>Elle reste sur l’iPad.</div></div>
+ </section>
 </div>
 
-<section id="vC">
- <div class="row">
-  <div class="seg" role="group" aria-label="Mode"><button id="mSim" aria-pressed="true">Simulation</button><button id="mMan" aria-pressed="false">Manuel + GPS vitesse</button><button id="mGps" aria-pressed="false">GPS (PK auto)</button></div>
-  <button class="btn" id="prev">▲ Point précédent</button><button class="btn main" id="next">Point suivant ▼</button>
+<!-- menu -->
+<div id="menu" class="hide">
+ <div class="drawer">
+  <div class="tabs"><button id="tM" aria-pressed="true">Mode</button><button id="tI" aria-pressed="false">Fiche</button><button id="tG" aria-pressed="false">Géométrie</button><button id="tL" aria-pressed="false">LTV</button><button id="tD" aria-pressed="false">Avis DEFIT</button><span style="flex:1"></span><button id="closeMenu">✕ Fermer</button></div>
+  <div class="pane">
+   <section id="vM">
+    <h3>Mode de suivi</h3>
+    <div class="seg" role="group" aria-label="Mode"><button id="mSim" aria-pressed="true">Simulation</button><button id="mMan" aria-pressed="false">Manuel + GPS vitesse</button><button id="mGps" aria-pressed="false">GPS (PK auto)</button></div>
+    <p class="small">Manuel : touche la ligne où tu te trouves, la vitesse vient du GPS. GPS (PK auto) : le PK vient de la position et de la géométrie importée ; si la position est douteuse, PK et limite sont masqués.</p>
+    <div id="simBox"><h3>Simulation</h3>
+     <div class="row"><label>Vitesse <input type="range" id="sv" min="0" max="140" step="5" value="90"> <b id="svT">90</b> km/h</label>
+     <label>Temps <select id="mult"><option value="1">×1</option><option value="5" selected>×5</option><option value="20">×20</option></select></label></div>
+     <div class="row"><label><input type="checkbox" id="simG"> Tester le GPS sur la géométrie</label><button class="btn" id="rst">Revenir au début</button></div>
+    </div>
+    <p class="small">Prototype d’aide à l’information. La signalisation, les documents officiels et l’équipement de bord restent la référence.</p>
+   </section>
+   <section id="vI" class="hide">
+    <h3>Fiche train</h3>
+    <p class="small">Choisis le PDF de la fiche train (le fichier reste sur l’appareil, rien n’est envoyé).</p>
+    <div class="row"><input type="file" id="file" accept="application/pdf"><button class="btn" id="demo">Exemple fictif</button><button class="btn" id="clear">Effacer les données</button></div>
+    <div class="box" id="rep">Aucune fiche chargée.</div>
+   </section>
+   <section id="vG" class="hide">
+    <h3>Géométrie des lignes</h3>
+    <div class="box">
+     <p style="margin-top:0">1. Télécharge depuis l’open data SNCF (bouton <i>Export</i>, format <b>GeoJSON</b> ou CSV) :</p>
+     <ul>
+      <li><a href="https://ressources.data.sncf.com/explore/dataset/liste-des-gares/" target="_blank" rel="noopener">Liste des gares</a> (reconnaissance de la ligne, calage du kilométrage)</li>
+      <li><a href="https://ressources.data.sncf.com/explore/dataset/lignes-par-type/" target="_blank" rel="noopener">Lignes par type</a> ou <a href="https://ressources.data.sncf.com/explore/dataset/formes-des-lignes-du-rfn/" target="_blank" rel="noopener">Formes des lignes du RFN</a> (tracé avec PK début/fin)</li>
+     </ul>
+     <p>2. Importe les deux fichiers ici, après la fiche. Seules les lignes de ta fiche sont gardées.</p>
+     <div class="row"><input type="file" id="geoFile" accept=".json,.geojson,.csv,application/json,text/csv" multiple><button class="btn" id="geoClr">Effacer la géométrie</button></div>
+     <div id="geoMsg" class="small"></div><div id="geoSum" class="small"></div>
+     <p class="small" style="margin-bottom:0">SNCF Réseau déconseille ces données pour la navigation en temps réel : le PK calculé est une aide, jamais une référence.</p>
+    </div>
+    <div id="geoRep"></div>
+   </section>
+   <section id="vL" class="hide">
+    <h3>LTV</h3>
+    <p class="small">Une LTV par ligne : <b>pk_début;pk_fin;vitesse;tronçon;note</b>. Le tronçon est facultatif mais évite d’appliquer la LTV à une autre ligne qui a les mêmes PK.</p>
+    <textarea id="taL" spellcheck="false" aria-label="LTV"></textarea>
+    <div class="row"><button class="btn main" id="okL">Enregistrer les LTV</button><span id="msgL" class="small"></span></div>
+   </section>
+   <section id="vD" class="hide"><h3>Avis DEFIT</h3><div class="box"><pre id="defit">Aucun avis chargé.</pre></div></section>
+  </div>
  </div>
- <div class="tiles">
-  <div class="tile"><div class="l">PK</div><span class="v" id="pk">—</span></div>
-  <div class="tile" id="tSpd"><div class="l">Vitesse</div><span class="v" id="spd">—</span><span class="u">km/h</span></div>
-  <div class="tile lim" id="tLim"><div class="l">Limite</div><span class="v" id="lim">—</span><span class="u">km/h</span></div>
- </div>
- <div class="info" id="nx">Prochaine limite : —</div>
- <div class="info" id="ns">Prochain arrêt : —</div>
- <div class="status" id="st" data-s="warn">Charge une fiche dans l’onglet Import.</div>
- <div id="list" aria-label="Fiche train"></div>
- <div class="sim" id="simBox">
-  <label>Vitesse simulée <input type="range" id="sv" min="0" max="140" step="5" value="90"> <b id="svT">90</b> km/h</label>
-  <label>Temps <select id="mult"><option value="1">×1</option><option value="5" selected>×5</option><option value="20">×20</option></select></label>
-  <label><input type="checkbox" id="simG"> Tester le GPS sur la géométrie</label>
-  <button class="btn main" id="play">Lecture</button><button class="btn" id="rst">Début</button>
- </div>
- <div class="small" style="margin-top:6px">Manuel : touche la ligne où tu te trouves, la vitesse vient du GPS. GPS (PK auto) : le PK est calculé depuis la position et la géométrie importée ; si la position est douteuse, PK et limite sont masqués.</div>
-</section>
-
-<section id="vL" class="hide">
- <p class="small">Une LTV par ligne : <b>pk_début;pk_fin;vitesse;tronçon;note</b>. Le tronçon (voir les séparateurs dans la fiche) est facultatif mais évite d’appliquer la LTV à une autre ligne qui a les mêmes PK. Lis les LTV sur ta fiche DEFIT : elles ne sont pas encore lues automatiquement.</p>
- <textarea id="taL" spellcheck="false" aria-label="LTV"></textarea>
- <div class="row"><button class="btn main" id="okL">Enregistrer les LTV</button><span id="msgL" class="small"></span></div>
-</section>
-
-<section id="vD" class="hide"><div class="box"><pre id="defit">Aucun avis chargé.</pre></div></section>
-
-<section id="vG" class="hide">
- <div class="box">
-  <p style="margin-top:0"><b>1.</b> Sur l’iPad, télécharge depuis l’open data SNCF (bouton <i>Export</i>, format <b>GeoJSON</b> ou CSV) :</p>
-  <ul>
-   <li><a href="https://ressources.data.sncf.com/explore/dataset/liste-des-gares/" target="_blank" rel="noopener">Liste des gares</a> (PK et position de chaque gare par ligne : sert à reconnaître la ligne et à caler le kilométrage)</li>
-   <li><a href="https://ressources.data.sncf.com/explore/dataset/lignes-par-type/" target="_blank" rel="noopener">Lignes par type</a> ou <a href="https://ressources.data.sncf.com/explore/dataset/formes-des-lignes-du-rfn/" target="_blank" rel="noopener">Formes des lignes du RFN</a> (tracé des lignes avec PK début/fin)</li>
-  </ul>
-  <p><b>2.</b> Importe les deux fichiers ici (après la fiche). Seules les lignes de ta fiche sont gardées sur l’appareil.</p>
-  <div class="row"><input type="file" id="geoFile" accept=".json,.geojson,.csv,application/json,text/csv" multiple><button class="btn" id="geoClr">Effacer la géométrie</button></div>
-  <div id="geoMsg" class="small"></div><div id="geoSum" class="small"></div>
-  <p class="small" style="margin-bottom:0">SNCF Réseau déconseille ces données pour la navigation en temps réel : le PK calculé est une aide, jamais une référence.</p>
- </div>
- <div id="geoRep"></div>
-</section>
-
-<section id="vI" class="hide">
- <p class="small">Choisis le PDF de la fiche train (le fichier reste sur l’appareil, rien n’est envoyé).</p>
- <div class="row"><input type="file" id="file" accept="application/pdf"><button class="btn" id="demo">Charger l’exemple fictif</button><button class="btn" id="clear">Effacer les données</button></div>
- <div class="box" id="rep">Aucune fiche chargée.</div>
-</section>
 </div>
 
 <script>
@@ -122,7 +170,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fk=x=>x.toFixed(1).replace(".",",");
 const fk3=x=>x.toFixed(3).replace(".",",");
-let rows=[],defit=[],ltv=[],s=0,mode="sim",sim={run:false,v:90,mult:5,t:0},gps=null,watchId=null,geoErr="";
+let rows=[],defit=[],ltv=[],s=0,mode="sim",sim={run:false,v:90,mult:5,t:0},gps=null,watchId=null,geoErr="",lastRow=-1;
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}return null}
 /* ---------- géométrie : bases SNCF Réseau -> PK depuis GPS ---------- */
 const GEO={};
@@ -246,7 +294,7 @@ function geoBuild(){
   const c=cand.find(c=>c.key===pick);
   for(const x of (c?c.m:[]))rep.items.push({n:x.row.sub&&x.row.ctx?x.row.ctx:x.row.name,pf:x.row.pk,pb:x.g.pk,pg:GEO.loo(L,x.g.n)});
  }
- store("geo",JSON.stringify(geo));renderGeo();trkReset();
+ store("geo",JSON.stringify(geo));renderGeo();trkReset();if(typeof drawGeo==="function")drawGeo();
 }
 function renderGeo(){
  const E=$("#geoRep");const secs=[...new Set(rows.map(r=>r.sec))];
@@ -270,12 +318,11 @@ function renderGeo(){
 }
 
 
-/* ---------- lecture du PDF ---------- */
+/* ---------- lecture du PDF de la fiche ---------- */
 function group(it){it.sort((a,b)=>a.y-b.y||a.f-b.f);const L=[];for(const i of it){const l=L[L.length-1];if(l&&Math.abs(l.y-i.y)<2.5)l.push(i);else{const n=[i];n.y=i.y;L.push(n)}}L.forEach(l=>l.sort((a,b)=>a.f-b.f));return L}
+function pdfLib(){if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return pdfjsLib}
 async function readPdf(buf){
- if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");
- pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
- const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+ const pdf=await pdfLib().getDocument({data:buf}).promise;
  const out=[],dft=[],warn=[];let cur=null,ctx="",train="";
  for(let p=1;p<=pdf.numPages;p++){
   const pg=await pdf.getPage(p),W=pg.view[2],H=pg.view[3],tc=await pg.getTextContent();
@@ -308,22 +355,25 @@ async function readPdf(buf){
 }
 
 /* ---------- données ---------- */
-function setData(r,d){rows=r;defit=d;s=0;sim.run=false;$("#play").textContent="Lecture";renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo()}
+function setData(r,d){rows=r;defit=d;s=0;lastRow=-1;sim.run=false;$("#play").textContent="▶";renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo();drawGeo()}
 function demo(){const m=(pk,name,v,time,pl)=>({pk,name,ctx:"",sub:false,stop:/^Gare/.test(name),pl:!!pl,time,reg:"",rad:"",sec:1,v});
  return[m(100,"Gare de Test-A",90,"19:13"),m(100.8,"Passage à niveau fictif",60,"19:14",1),m(102,"Point 102",100,""),m(104.5,"Point 104,5",120,"19:18"),m(106.2,"Courbe fictive",80,"19:20"),m(108,"Point 108",120,"19:22"),m(110.5,"Entrée de Test-B",40,"19:25"),m(111,"Gare de Test-B",40,"19:26")]}
 function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||""}))}
 const inLtv=(k,pk,sec)=>pk>=Math.min(k.a,k.b)&&pk<=Math.max(k.a,k.b)&&(!k.sec||k.sec===sec);
 
-/* ---------- affichage de la fiche ---------- */
+/* ---------- fiche ---------- */
 function renderList(){
  const L=$("#list");L.innerHTML="";let sec=0;
+ if(!rows.length){L.innerHTML='<div class="empty">Aucune fiche chargée.<br>Menu ☰ → Fiche.</div>'}
+ const trains=[...new Set(rows.map(r=>r.train).filter(Boolean))];$("#ficheT").textContent="Fiche train"+(trains.length?" "+trains.join(" / "):"");
  rows.forEach((r,i)=>{
-  if(r.sec!==sec){sec=r.sec;const d=document.createElement("div");d.className="sec";d.textContent="Tronçon "+sec+" : repérage kilométrique différent (changement de ligne)";L.appendChild(d)}
+  if(r.sec!==sec){sec=r.sec;if(sec>1||new Set(rows.map(x=>x.sec)).size>1){const d=document.createElement("div");d.className="sec";const g=geo.sec&&geo.sec[sec];d.textContent="Tronçon "+sec+(g?" · ligne "+g.split("/")[0]:"");L.appendChild(d)}}
   const e=document.createElement("div");e.className="r"+(r.stop?" stop":"");e.dataset.i=i;
   const t=ltv.some(k=>inLtv(k,r.pk,r.sec));
   const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name)+"</span>":esc(r.name||"—");
-  e.innerHTML='<span class="lm'+(t?" ltv":"")+'">'+(r.v==null?"?":r.v)+(t?"*":"")+"</span><span>"+fk(r.pk)+"</span><span>"+(r.stop?'<b class="tag">ARRÊT</b> ':"")+nm+(r.train?' <b>→ '+esc(r.train)+"</b>":"")+"</span><span>"+esc(r.time)+"</span><span>"+(r.pl?"PL":"")+"</span><span>"+esc(r.reg)+"</span><span>"+esc(r.rad)+"</span>";
-  e.onclick=()=>{if(mode==="man"){s=i;gotoRow()}};
+  const x=[r.pl?"PL":"",r.reg,r.rad].filter(Boolean).map(esc).join(" ");
+  e.innerHTML='<span class="lm'+(t?" ltv":"")+'">'+(r.v==null?"?":r.v)+(t?"*":"")+'</span><span class="pkc">'+fk(r.pk)+"</span><span>"+(r.stop?'<b class="tag">ARRÊT</b>':"")+nm+(r.train?' <b>→ '+esc(r.train)+"</b>":"")+(x?'<span class="x">'+x+"</span>":"")+'</span><span class="tm">'+esc(r.time)+"</span>";
+  e.onclick=()=>{if(mode==="man"){s=i;gotoRow(true)}};
   L.appendChild(e);
  });
  const n=new Set(rows.map(r=>r.sec)).size;
@@ -337,55 +387,104 @@ function masked(why,spd){
  setSt("warn",why+" PK et limite masqués : suis la fiche et la signalisation.");
 }
 function frame(now){
- if(!rows.length){return}
+ if(!rows.length){mapPos(mode!=="sim"&&gps?[gps.lon,gps.lat]:null,false);return}
  let spd=null;if(mode==="sim")spd=sim.v;else if(gps&&(now-gps.ts)/1000<=5)spd=Math.round(gps.v);
- /* mode GPS : la position calculée pilote la fiche */
+ const gpsPt=gps&&(now-gps.ts)/1000<=10?[gps.lon,gps.lat]:null;
  if(mode==="gps"){
   let G=trk.res;if(!gps||(now-gps.ts)/1000>5)G={ok:false,why:geoErr||"Pas de position GPS récente."};
-  if(!G||!G.ok){masked(G?G.why:"Recherche de la position…",spd);return}
-  const ns=pkToS(G.sec,G.pk);if(ns==null){masked("PK hors de la fiche.",spd);return}
-  const moved=Math.floor(ns)!==Math.floor(s);s=ns;if(moved)gotoRow();
+  if(!G||!G.ok){masked(G?G.why:"Recherche de la position…",spd);mapPos(gpsPt,false);return}
+  const ns=pkToS(G.sec,G.pk);if(ns==null){masked("PK hors de la fiche.",spd);mapPos(gpsPt,false);return}
+  s=ns;
  }
  const i=Math.min(rows.length-1,Math.floor(s)),f=s-i,r=rows[i],b=rows[i+1];
  const same=b&&b.sec===r.sec&&Math.abs(b.pk-r.pk)<=20;
  const pk=same?r.pk+f*(b.pk-r.pk):r.pk;
  const dir=same?Math.sign(b.pk-r.pk)||1:(rows[i-1]&&rows[i-1].sec===r.sec?Math.sign(r.pk-rows[i-1].pk)||1:1);
- /* test : GPS simulé sur la géométrie, avec un bruit d'environ 10 m */
- let T=null;
- if(mode==="sim"&&$("#simG").checked){const line=lineFor(r.sec);
-  if(!line)T={ok:false,why:"Pas de géométrie pour le tronçon "+r.sec+"."};
-  else{const p=GEO.point(line,pk);if(!p)T={ok:false,why:"PK "+fk3(pk)+" hors du tracé importé."};
-   else{const a=Math.random()*2*Math.PI,d=Math.random()*10;T=geoFix(p[0]+d*Math.cos(a)/(111320*Math.cos(p[1]*Math.PI/180)),p[1]+d*Math.sin(a)/110540,10,now,sim.v*sim.mult);T.truth=pk}}
-  if(!T.ok){masked("Test GPS : "+T.why,spd);markRows(i);return}
- }
+ let T=null,simPt=null;
+ if(mode==="sim"){const line=lineFor(r.sec);simPt=line?GEO.point(line,pk):null;
+  if($("#simG").checked){
+   if(!line)T={ok:false,why:"Pas de géométrie pour le tronçon "+r.sec+"."};
+   else if(!simPt)T={ok:false,why:"PK "+fk3(pk)+" hors du tracé importé."};
+   else{const p=simPt,a=Math.random()*2*Math.PI,d=Math.random()*10;T=geoFix(p[0]+d*Math.cos(a)/(111320*Math.cos(p[1]*Math.PI/180)),p[1]+d*Math.sin(a)/110540,10,now,sim.v*sim.mult);T.truth=pk}
+   if(!T.ok){masked("Test GPS : "+T.why,spd);markRows(i);mapPos(simPt,false);return}
+  }}
+ mapPos(mode==="sim"?simPt:gpsPt,true);
  let lim=r.v,inL=false;for(const k of ltv)if(inLtv(k,pk,r.sec)&&k.v<lim){lim=k.v;inL=true}
  $("#pk").textContent=fk(T?T.pk:pk);$("#lim").textContent=lim==null?"?":lim;$("#spd").textContent=spd==null?"—":Math.round(spd);
  const over=spd!=null&&lim!=null&&spd>lim;$("#tSpd").classList.toggle("over",over);$("#tLim").classList.toggle("over",over);
  let nx="Fin de la fiche",dist=seg(i)*(1-f);
- for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.v!==r.v){nx="Prochaine limite fiche : "+c.v+" km/h dans "+(dist/1000).toFixed(1).replace(".",",")+" km ("+(c.sub&&c.ctx?c.ctx+" ":"")+(c.name||"PK "+fk(c.pk))+")";break}dist+=seg(j)}
- let ns="Prochain arrêt : aucun jusqu’à la fin de la fiche",d2=seg(i)*(1-f);for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.stop){ns="Prochain arrêt : "+(c.sub&&c.ctx?c.ctx:c.name)+" "+c.time+" – dans "+(d2/1000).toFixed(1).replace(".",",")+" km";break}d2+=seg(j)}$("#ns").textContent=ns;let al=null;for(const k of ltv){if(k.sec&&k.sec!==r.sec)continue;const e=dir>0?Math.min(k.a,k.b):Math.max(k.a,k.b),d=(e-pk)*dir;if(d>0&&(!al||d<al.d))al={d,k}}
- $("#nx").textContent=nx+(inL?" | LTV en cours : "+lim+" km/h":"")+(al?" | LTV "+al.k.v+" dans "+al.d.toFixed(1).replace(".",",")+" km (PK "+fk(Math.min(al.k.a,al.k.b))+"–"+fk(Math.max(al.k.a,al.k.b))+")":"");
+ for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.v!==r.v){nx="Prochaine limite : <b>"+c.v+"</b> dans "+(dist/1000).toFixed(1).replace(".",",")+" km · "+esc((c.sub&&c.ctx?c.ctx+" ":"")+(c.name||"PK "+fk(c.pk)));break}dist+=seg(j)}
+ let ns="Prochain arrêt : aucun",d2=seg(i)*(1-f);for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.stop){ns="Prochain arrêt : <b>"+esc(c.sub&&c.ctx?c.ctx:c.name)+"</b> "+esc(c.time)+" · "+(d2/1000).toFixed(1).replace(".",",")+" km";break}d2+=seg(j)}$("#ns").innerHTML=ns;
+ let al=null;for(const k of ltv){if(k.sec&&k.sec!==r.sec)continue;const e=dir>0?Math.min(k.a,k.b):Math.max(k.a,k.b),d=(e-pk)*dir;if(d>0&&(!al||d<al.d))al={d,k}}
+ $("#nx").innerHTML=nx+(inL?' · <b style="color:var(--bad)">LTV '+lim+"</b> en cours":"")+(al?' · <b style="color:var(--bad)">LTV '+al.k.v+"</b> dans "+al.d.toFixed(1).replace(".",",")+" km":"");
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
- else if(T)setSt("ok","Test GPS : PK calculé "+fk3(T.pk)+" pour un PK simulé de "+fk3(T.truth)+" (écart "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m, à "+Math.round(T.d)+" m du tracé).");
- else if(mode==="gps")setSt("ok","PK calculé par GPS (ligne "+geo.sec[r.sec].split("/")[0]+", à "+Math.round(trk.res.d)+" m du tracé, précision ±"+Math.round(gps.acc)+" m).");
- else if(mode==="man"&&geoErr)setSt("warn",geoErr+" La fiche défile toujours à ta main.");
- else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible (aucun signal récent). Position suivie à la main.");
- else setSt("ok",mode==="sim"?"Simulation en cours.":"Position à la main, vitesse GPS (précision ±"+Math.round(gps.acc)+" m).");
+ else if(T)setSt("ok","Test GPS : écart "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m avec le PK simulé.");
+ else if(mode==="gps")setSt("ok","PK GPS · ligne "+geo.sec[r.sec].split("/")[0]+" · "+Math.round(trk.res.d)+" m du tracé · ±"+Math.round(gps.acc)+" m");
+ else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Fiche suivie à la main.");
+ else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Fiche suivie à la main.");
+ else setSt("ok",mode==="sim"?(sim.run?"Simulation en cours.":"Simulation à l’arrêt."):"Fiche à la main, vitesse GPS ±"+Math.round(gps.acc)+" m.");
  markRows(i);
 }
-function markRows(i){$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)})}
+function markRows(i){if(i===lastRow)return;lastRow=i;$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)});gotoRow()}
 function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
-function gotoRow(){const e=$("#list").querySelector('.r[data-i="'+Math.floor(s)+'"]');if(e){const L=$("#list");L.scrollTop=e.offsetTop-L.offsetTop-L.clientHeight*.3}}
+let listTouch=0;
+function gotoRow(force){if(!force&&Date.now()-listTouch<8000)return;const e=$("#list").querySelector('.r[data-i="'+Math.floor(s)+'"]');if(e){const L=$("#list");const y=e.offsetTop-L.offsetTop-L.clientHeight*.3;if(L.scrollTo)L.scrollTo({top:y,behavior:"smooth"});else L.scrollTop=y}}
+["touchstart","wheel"].forEach(ev=>$("#list").addEventListener(ev,()=>listTouch=Date.now(),{passive:true}));
 function tick(){
  const now=Date.now();
  if(mode==="sim"&&sim.run&&rows.length){
   const dt=(now-sim.t)/1000,i=Math.min(rows.length-1,Math.floor(s));
   s=Math.min(rows.length-1,s+sim.v/3.6*dt*sim.mult/seg(i));
-  if(s>=rows.length-1){sim.run=false;$("#play").textContent="Lecture"}
-  gotoRow();
+  if(s>=rows.length-1){sim.run=false;$("#play").textContent="▶"}
  }
  sim.t=now;frame(now);
 }
+
+/* ---------- carte ---------- */
+let map=null,mk=null,geoLayer=null,follow=true,mapTouch=0;
+function initMap(){
+ if(typeof L==="undefined"){$("#map").innerHTML='<div class="empty">Carte indisponible (connexion nécessaire au premier lancement).</div>';return}
+ map=L.map("map",{zoomControl:false,attributionControl:true}).setView([46.6,2.4],6);
+ L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:"© OpenStreetMap © CARTO"}).addTo(map);
+ L.tileLayer("https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",{maxZoom:19,subdomains:"abc",opacity:.55,attribution:"OpenRailwayMap"}).addTo(map);
+ geoLayer=L.layerGroup().addTo(map);
+ mk=L.circleMarker([0,0],{radius:9,color:"#fff",weight:3,fillColor:"#5aa2f0",fillOpacity:1});
+ map.on("dragstart",()=>{follow=false;setFollow()});
+ drawGeo();new ResizeObserver(()=>map.invalidateSize()).observe($("#map"));
+}
+function setFollow(){$("#follow").classList.toggle("on",follow);$("#follow").setAttribute("aria-pressed",follow)}
+function drawGeo(){if(!map)return;geoLayer.clearLayers();const B=[];
+ for(const k of new Set(Object.values(geo.sec||{}))){const l=geo.lines[k];if(!l)continue;for(const p of l.pieces){const ll=p.c.map(c=>[c[1],c[0]]);B.push(...ll);L.polyline(ll,{color:"#5aa2f0",weight:4,opacity:.85}).addTo(geoLayer);
+  for(const a of p.anch){const q=GEO.at(p.c,p.cum,a.s);L.circleMarker([q[1],q[0]],{radius:4,color:"#e08a1e",weight:2,fillColor:"#000",fillOpacity:1}).bindTooltip(a.n+" · "+fk3(a.pk)).addTo(geoLayer)}}}
+ if(B.length)map.fitBounds(B,{padding:[20,20]})}
+function mapPos(p,ok){if(!map)return;if(!p){if(map.hasLayer(mk))mk.remove();return}
+ mk.setLatLng([p[1],p[0]]).setStyle({fillColor:ok?"#5aa2f0":"#8996a3"});if(!map.hasLayer(mk))mk.addTo(map);
+ if(follow){const z=Math.max(map.getZoom(),13);map.setView([p[1],p[0]],z,{animate:true})}}
+$("#follow").onclick=()=>{follow=!follow;setFollow()};
+
+/* ---------- étude de ligne (PDF libre) ---------- */
+let pdfDoc=null,pdfZoom=1,pdfRendering=0;
+function idb(){return new Promise((res,rej)=>{try{const q=indexedDB.open("repere",1);q.onupgradeneeded=()=>q.result.createObjectStore("f");q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}})}
+async function idbSet(k,v){try{const d=await idb();await new Promise((res,rej)=>{const t=d.transaction("f","readwrite");t.objectStore("f").put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}catch(e){}}
+async function idbGet(k){try{const d=await idb();return await new Promise(res=>{const q=d.transaction("f").objectStore("f").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}}
+async function openStudy(buf,name){
+ const V=$("#pdfv");V.innerHTML='<div class="empty">Ouverture…</div>';
+ try{pdfDoc=await pdfLib().getDocument({data:buf.slice(0)}).promise;$("#pdfT").textContent=name||"Étude de ligne";await renderStudy(0)}
+ catch(x){V.innerHTML='<div class="empty err">Impossible d’ouvrir ce PDF : '+esc(x.message)+"</div>"}}
+async function renderStudy(keepFrac){
+ if(!pdfDoc)return;const my=++pdfRendering,V=$("#pdfv");const frac=keepFrac||(V.scrollHeight?V.scrollTop/V.scrollHeight:0);
+ V.innerHTML="";const W=V.clientWidth-8,dpr=Math.min(window.devicePixelRatio||1,2);
+ for(let p=1;p<=pdfDoc.numPages;p++){const pg=await pdfDoc.getPage(p);if(my!==pdfRendering)return;
+  const vp0=pg.getViewport({scale:1}),sc=W/vp0.width*pdfZoom,vp=pg.getViewport({scale:sc*dpr});
+  const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.style.width=vp.width/dpr+"px";c.style.height=vp.height/dpr+"px";c.dataset.p=p;V.appendChild(c);
+  await pg.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;if(p===1&&frac)V.scrollTop=frac*V.scrollHeight}
+ if(frac)V.scrollTop=frac*V.scrollHeight;pageNo()}
+function pageNo(){if(!pdfDoc)return;const V=$("#pdfv");let n=1;for(const c of V.querySelectorAll("canvas"))if(c.offsetTop-V.offsetTop<=V.scrollTop+V.clientHeight/3)n=+c.dataset.p;$("#pdfPg").textContent=n+" / "+pdfDoc.numPages;store("studyTop",String(V.scrollTop/V.scrollHeight))}
+$("#pdfv").addEventListener("scroll",()=>pageNo(),{passive:true});
+$("#pdfFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=await f.arrayBuffer();await idbSet("study",{buf:b,name:f.name.replace(/\.pdf$/i,"")});store("studyTop",null);openStudy(b,f.name.replace(/\.pdf$/i,""))};
+$("#zIn").onclick=()=>{pdfZoom=Math.min(3,pdfZoom*1.25);renderStudy()};
+$("#zOut").onclick=()=>{pdfZoom=Math.max(.5,pdfZoom/1.25);renderStudy()};
+let rzT=0;window.addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(()=>renderStudy(),400)});
 
 /* ---------- GPS ---------- */
 function startGps(){
@@ -398,34 +497,42 @@ function startGps(){
   e=>{geoErr="GPS indisponible ("+e.message+")."},{enableHighAccuracy:true,maximumAge:0,timeout:10000});
 }
 function stopGps(){if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}}
-function setMode(m){mode=m;["Sim","Man","Gps"].forEach(k=>$("#m"+k).setAttribute("aria-pressed",m===k.toLowerCase()));$("#simBox").classList.toggle("hide",m!=="sim");sim.run=false;$("#play").textContent="Lecture";stopGps();trkReset();if(m!=="sim")startGps()}
+const modeName={sim:"Simulation",man:"Manuel",gps:"GPS"};
+function setMode(m){mode=m;store("mode",m);["Sim","Man","Gps"].forEach(k=>$("#m"+k).setAttribute("aria-pressed",m===k.toLowerCase()));$("#simBox").classList.toggle("hide",m!=="sim");$("#play").classList.toggle("hide",m!=="sim");$("#manFoot").classList.toggle("hide",m!=="man");$("#modeT").textContent=modeName[m];sim.run=false;$("#play").textContent="▶";stopGps();trkReset();lastRow=-1;if(m!=="sim")startGps()}
 
-/* ---------- interface ---------- */
-function view(v){["C","L","D","G","I"].forEach(k=>{$("#v"+k).classList.toggle("hide",k!==v);$("#t"+k).setAttribute("aria-pressed",k===v)});if(v==="C")gotoRow();if(v==="G")renderGeo()}
-["C","L","D","G","I"].forEach(k=>$("#t"+k).onclick=()=>view(k));
+/* ---------- menu ---------- */
+const V=["M","I","G","L","D"];
+function view(v){V.forEach(k=>{$("#v"+k).classList.toggle("hide",k!==v);$("#t"+k).setAttribute("aria-pressed",k===v)});if(v==="G")renderGeo()}
+V.forEach(k=>$("#t"+k).onclick=()=>view(k));
+$("#openMenu").onclick=()=>$("#menu").classList.remove("hide");
+$("#closeMenu").onclick=()=>$("#menu").classList.add("hide");
+$("#menu").onclick=e=>{if(e.target.id==="menu")$("#menu").classList.add("hide")};
 $("#mSim").onclick=()=>setMode("sim");$("#mMan").onclick=()=>setMode("man");$("#mGps").onclick=()=>setMode("gps");
-$("#next").onclick=()=>{if(mode==="gps")return;if(s<rows.length-1){s=Math.floor(s)+1;gotoRow()}};
-$("#prev").onclick=()=>{if(mode==="gps")return;if(s>0){s=Math.ceil(s)-1;gotoRow()}};
-$("#play").onclick=()=>{if(s>=rows.length-1)s=0;sim.run=!sim.run;sim.t=Date.now();$("#play").textContent=sim.run?"Pause":"Lecture"};
-$("#rst").onclick=()=>{s=0;sim.run=false;$("#play").textContent="Lecture";trkReset();gotoRow()};
+$("#next").onclick=()=>{if(s<rows.length-1){s=Math.floor(s)+1;gotoRow(true)}};
+$("#prev").onclick=()=>{if(s>0){s=Math.ceil(s)-1;gotoRow(true)}};
+$("#play").onclick=()=>{if(s>=rows.length-1)s=0;sim.run=!sim.run;sim.t=Date.now();$("#play").textContent=sim.run?"❚❚":"▶";listTouch=0};
+$("#rst").onclick=()=>{s=0;lastRow=-1;sim.run=false;$("#play").textContent="▶";trkReset();gotoRow(true)};
 $("#simG").onchange=()=>trkReset();
 $("#sv").oninput=e=>{sim.v=+e.target.value;$("#svT").textContent=sim.v};
 $("#mult").onchange=e=>sim.mult=+e.target.value;
-$("#okL").onclick=()=>{ltv=parseLtv($("#taL").value);store("ltv",$("#taL").value);$("#msgL").textContent=ltv.length+" LTV enregistrée(s).";renderList()};
-$("#demo").onclick=()=>{setData(demo(),[]);view("C")};
-$("#clear").onclick=()=>{["rows","defit","ltv","geo"].forEach(k=>store(k,null));rows=[];defit=[];ltv=[];geo={lines:{},sec:{},rep:{}};geoRaw=null;$("#taL").value="";$("#defit").textContent="Aucun avis chargé.";renderList();renderGeo()};
+$("#okL").onclick=()=>{ltv=parseLtv($("#taL").value);store("ltv",$("#taL").value);$("#msgL").textContent=ltv.length+" LTV enregistrée(s).";renderList();lastRow=-1};
+$("#demo").onclick=()=>{setData(demo(),[]);$("#menu").classList.add("hide")};
+$("#clear").onclick=()=>{["rows","defit","ltv","geo"].forEach(k=>store(k,null));rows=[];defit=[];ltv=[];geo={lines:{},sec:{},rep:{}};geoRaw=null;$("#taL").value="";$("#defit").textContent="Aucun avis chargé.";renderList();renderGeo();drawGeo()};
 $("#geoFile").onchange=e=>{if(e.target.files.length)geoFiles([...e.target.files])};
-$("#geoClr").onclick=()=>{store("geo",null);geo={lines:{},sec:{},rep:{}};geoRaw=null;geoOv={};$("#geoMsg").textContent="";renderGeo()};
+$("#geoClr").onclick=()=>{store("geo",null);geo={lines:{},sec:{},rep:{}};geoRaw=null;geoOv={};$("#geoMsg").textContent="";renderGeo();drawGeo()};
 $("#file").onchange=async e=>{
  const f=e.target.files[0];if(!f)return;$("#rep").textContent="Lecture du PDF…";
  try{const r=await readPdf(await f.arrayBuffer());setData(r.rows,r.defit);if(r.warn.length)$("#rep").innerHTML+='<div class="err">'+r.warn.map(esc).join("<br>")+"</div>"}
  catch(x){$("#rep").innerHTML='<span class="err">Impossible de lire ce PDF : '+esc(x.message)+"</span>"}
 };
 
+/* ---------- démarrage ---------- */
 try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]");if(r&&r.length){rows=r;defit=d}}catch(e){}
 $("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
 $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
-renderList();renderGeo();setInterval(tick,500);tick();
+renderList();renderGeo();initMap();setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
+idbGet("study").then(x=>{if(x&&x.buf){openStudy(x.buf,x.name).then(()=>{const t=+store("studyTop");if(t)$("#pdfv").scrollTop=t*$("#pdfv").scrollHeight})}});
+setInterval(tick,500);tick();
 </script>
 </body>
 </html>
