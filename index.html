@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repère – fiche train défilante (prototype)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{--stopc:#b45f06;--stopbg:#fdecd3;--bg:#e8ecf0;--panel:#fff;--ink:#14181d;--mute:#59656f;--line:#c3ccd5;--ok:#1f7a4d;--warn:#a85f00;--bad:#c62828;--acc:#1c5fa8;--cur:#d6e6f7;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--stopc:#e08a1e;--stopbg:#3a2a12;--bg:#101419;--panel:#1a2027;--ink:#e8edf2;--mute:#93a0ad;--line:#2d3640;--ok:#4cc38a;--warn:#f2b134;--bad:#ff6b66;--acc:#6aa8f0;--cur:#23415f}}
+:root[data-theme="dark"]{--stopc:#e08a1e;--stopbg:#3a2a12;--bg:#101419;--panel:#1a2027;--ink:#e8edf2;--mute:#93a0ad;--line:#2d3640;--ok:#4cc38a;--warn:#f2b134;--bad:#ff6b66;--acc:#6aa8f0;--cur:#23415f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.4 "Barlow",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:10px 14px 24px}
+.note{background:var(--panel);border-left:6px solid var(--warn);padding:8px 12px;font-weight:600;margin-bottom:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--panel);color:var(--ink);font:600 1rem "Barlow",sans-serif;padding:9px 14px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);color:#fff}
+.btn{border:2px solid var(--line);background:var(--panel);color:var(--ink);font:600 1rem "Barlow",sans-serif;padding:9px 14px;min-height:44px;border-radius:8px;cursor:pointer}
+.btn.main{background:var(--acc);border-color:var(--acc);color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:6px 12px}
+.tile .l{color:var(--mute);font-weight:600;font-size:.9rem}
+.tile .v{font:700 clamp(2.6rem,9vw,5rem)/1 "Barlow Condensed","Arial Narrow",sans-serif;font-variant-numeric:tabular-nums}
+.tile .u{font:500 1.1rem "Barlow Condensed","Arial Narrow",sans-serif;color:var(--mute);margin-left:4px}
+.tile.over{border-color:var(--bad)}.tile.over .v{color:var(--bad)}
+.tile.lim{border-width:5px}
+.info{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px;font-size:1.1rem}
+.status{margin-top:8px;padding:8px 12px;border-radius:8px;font-weight:600;border:2px solid var(--line);background:var(--panel)}
+.status[data-s="ok"]{border-color:var(--ok);color:var(--ok)}
+.status[data-s="warn"]{border-color:var(--warn);color:var(--warn)}
+.status[data-s="bad"]{border-color:var(--bad);color:var(--bad)}
+#list{height:calc(100dvh - 450px);min-height:240px;overflow:auto;margin-top:8px;border:2px solid var(--line);border-radius:8px;background:var(--panel)}
+.r{display:grid;grid-template-columns:54px 62px 1fr 92px 30px 30px 34px;gap:6px;align-items:center;padding:7px 8px;border-bottom:1px solid var(--line);cursor:pointer;font-size:1.05rem}
+.r.past{opacity:.45}
+.r.stop{background:var(--stopbg);border-left:6px solid var(--stopc);font-weight:700}.tag{background:var(--stopc);color:#fff;font-size:.75rem;padding:2px 6px;border-radius:4px;margin-right:4px}
+.r.cur{background:var(--cur);border-left:6px solid var(--acc);opacity:1}
+.r .lm{font-weight:700;font-style:italic;font-size:1.2rem}
+.r .lm.ltv{color:var(--bad)}
+.r .sub{color:var(--mute);font-size:.9rem}
+.sec{padding:4px 10px;background:var(--line);color:var(--mute);font-weight:600;font-size:.9rem}
+.sim,.box{background:var(--panel);border:2px dashed var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
+.sim label{display:inline-flex;gap:8px;align-items:center;margin-right:12px}
+textarea{width:100%;min-height:150px;font:500 1rem/1.4 ui-monospace,Menlo,monospace;background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:8px}
+pre{white-space:pre-wrap;font:400 .95rem/1.4 "Barlow",sans-serif;margin:0}
+.small{color:var(--mute);font-size:.95rem}.err{color:var(--bad);font-weight:600}
+.gsec{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
+.gt{border-collapse:collapse;width:100%;margin-top:6px;font-variant-numeric:tabular-nums}
+.gt th,.gt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}.gt th{color:var(--mute);font-size:.9rem}
+.okc{color:var(--ok);font-weight:600}.wn{color:var(--warn);font-weight:600}td.bad{color:var(--bad);font-weight:700}
+select{font:600 1rem "Barlow",sans-serif;min-height:40px}
+.gsec a,.box a{color:var(--acc)}
+button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="note">Prototype d’aide à l’information. La signalisation, les documents officiels et l’équipement de bord restent la référence.</div>
+<div class="seg" role="group" aria-label="Vue">
+ <button id="tC" aria-pressed="true">Conduite</button><button id="tL" aria-pressed="false">LTV</button><button id="tD" aria-pressed="false">Avis DEFIT</button><button id="tG" aria-pressed="false">Géométrie</button><button id="tI" aria-pressed="false">Import</button>
+</div>
+
+<section id="vC">
+ <div class="row">
+  <div class="seg" role="group" aria-label="Mode"><button id="mSim" aria-pressed="true">Simulation</button><button id="mMan" aria-pressed="false">Manuel + GPS vitesse</button><button id="mGps" aria-pressed="false">GPS (PK auto)</button></div>
+  <button class="btn" id="prev">▲ Point précédent</button><button class="btn main" id="next">Point suivant ▼</button>
+ </div>
+ <div class="tiles">
+  <div class="tile"><div class="l">PK</div><span class="v" id="pk">—</span></div>
+  <div class="tile" id="tSpd"><div class="l">Vitesse</div><span class="v" id="spd">—</span><span class="u">km/h</span></div>
+  <div class="tile lim" id="tLim"><div class="l">Limite</div><span class="v" id="lim">—</span><span class="u">km/h</span></div>
+ </div>
+ <div class="info" id="nx">Prochaine limite : —</div>
+ <div class="info" id="ns">Prochain arrêt : —</div>
+ <div class="status" id="st" data-s="warn">Charge une fiche dans l’onglet Import.</div>
+ <div id="list" aria-label="Fiche train"></div>
+ <div class="sim" id="simBox">
+  <label>Vitesse simulée <input type="range" id="sv" min="0" max="140" step="5" value="90"> <b id="svT">90</b> km/h</label>
+  <label>Temps <select id="mult"><option value="1">×1</option><option value="5" selected>×5</option><option value="20">×20</option></select></label>
+  <label><input type="checkbox" id="simG"> Tester le GPS sur la géométrie</label>
+  <button class="btn main" id="play">Lecture</button><button class="btn" id="rst">Début</button>
+ </div>
+ <div class="small" style="margin-top:6px">Manuel : touche la ligne où tu te trouves, la vitesse vient du GPS. GPS (PK auto) : le PK est calculé depuis la position et la géométrie importée ; si la position est douteuse, PK et limite sont masqués.</div>
+</section>
+
+<section id="vL" class="hide">
+ <p class="small">Une LTV par ligne : <b>pk_début;pk_fin;vitesse;tronçon;note</b>. Le tronçon (voir les séparateurs dans la fiche) est facultatif mais évite d’appliquer la LTV à une autre ligne qui a les mêmes PK. Lis les LTV sur ta fiche DEFIT : elles ne sont pas encore lues automatiquement.</p>
+ <textarea id="taL" spellcheck="false" aria-label="LTV"></textarea>
+ <div class="row"><button class="btn main" id="okL">Enregistrer les LTV</button><span id="msgL" class="small"></span></div>
+</section>
+
+<section id="vD" class="hide"><div class="box"><pre id="defit">Aucun avis chargé.</pre></div></section>
+
+<section id="vG" class="hide">
+ <div class="box">
+  <p style="margin-top:0"><b>1.</b> Sur l’iPad, télécharge depuis l’open data SNCF (bouton <i>Export</i>, format <b>GeoJSON</b> ou CSV) :</p>
+  <ul>
+   <li><a href="https://ressources.data.sncf.com/explore/dataset/liste-des-gares/" target="_blank" rel="noopener">Liste des gares</a> (PK et position de chaque gare par ligne : sert à reconnaître la ligne et à caler le kilométrage)</li>
+   <li><a href="https://ressources.data.sncf.com/explore/dataset/lignes-par-type/" target="_blank" rel="noopener">Lignes par type</a> ou <a href="https://ressources.data.sncf.com/explore/dataset/formes-des-lignes-du-rfn/" target="_blank" rel="noopener">Formes des lignes du RFN</a> (tracé des lignes avec PK début/fin)</li>
+  </ul>
+  <p><b>2.</b> Importe les deux fichiers ici (après la fiche). Seules les lignes de ta fiche sont gardées sur l’appareil.</p>
+  <div class="row"><input type="file" id="geoFile" accept=".json,.geojson,.csv,application/json,text/csv" multiple><button class="btn" id="geoClr">Effacer la géométrie</button></div>
+  <div id="geoMsg" class="small"></div><div id="geoSum" class="small"></div>
+  <p class="small" style="margin-bottom:0">SNCF Réseau déconseille ces données pour la navigation en temps réel : le PK calculé est une aide, jamais une référence.</p>
+ </div>
+ <div id="geoRep"></div>
+</section>
+
+<section id="vI" class="hide">
+ <p class="small">Choisis le PDF de la fiche train (le fichier reste sur l’appareil, rien n’est envoyé).</p>
+ <div class="row"><input type="file" id="file" accept="application/pdf"><button class="btn" id="demo">Charger l’exemple fictif</button><button class="btn" id="clear">Effacer les données</button></div>
+ <div class="box" id="rep">Aucune fiche chargée.</div>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fk=x=>x.toFixed(1).replace(".",",");
+const fk3=x=>x.toFixed(3).replace(".",",");
+let rows=[],defit=[],ltv=[],s=0,mode="sim",sim={run:false,v:90,mult:5,t:0},gps=null,watchId=null,geoErr="";
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}return null}
+/* ---------- géométrie : bases SNCF Réseau -> PK depuis GPS ---------- */
+const GEO={};
+GEO.pk=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const s=String(v).trim().replace(",",".");let m=/^(-?\d+)\+(\d{1,3})$/.exec(s);if(m)return(+m[1])+(m[1].startsWith("-")?-1:1)*(+m[2].padEnd(3,"0"))/1000;return isNaN(+s)?null:+s};
+GEO.norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/[^A-Z0-9]+/g," ").replace(/\bSAINTES\b/g,"STES").replace(/\bSAINTE\b/g,"STE").replace(/\bSAINT\b/g,"ST").replace(/\s+/g," ").trim();
+GEO.lk=o=>{const r={};for(const k in o)r[k.toLowerCase()]=o[k];return r};
+GEO.csv=t=>{t=t.replace(/^﻿/,"");const first=t.slice(0,t.indexOf("\n"));const sep=(first.match(/;/g)||[]).length>=(first.match(/,/g)||[]).length?";":",";const rows=[];let row=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===sep){row.push(f);f=""}else if(c==="\n"){row.push(f.replace(/\r$/,""));rows.push(row);row=[];f=""}else f+=c}if(f||row.length){row.push(f);rows.push(row)}const h=rows.shift().map(x=>x.trim().toLowerCase());return rows.filter(r=>r.length>1).map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i]);return o})};
+/* coordonnées d'un enregistrement (GeoJSON, export JSON ODS, CSV) */
+GEO.pt=(p,g)=>{if(g&&g.type==="Point")return g.coordinates;const gs=p.geo_shape;if(gs){const G=gs.geometry||gs;if(G&&G.type==="Point")return G.coordinates;if(typeof gs==="string"){try{const j=JSON.parse(gs);if(j.type==="Point")return j.coordinates}catch(e){}}}
+ if(p.x_wgs84!=null&&p.y_wgs84!=null&&p.x_wgs84!==""){const x=+String(p.x_wgs84).replace(",","."),y=+String(p.y_wgs84).replace(",",".");if(isFinite(x)&&isFinite(y))return[x,y]}
+ const gp=p.geo_point_2d||p["geo point"]||p.c_geo;if(gp){if(Array.isArray(gp))return[gp[1],gp[0]];if(gp.lat!=null)return[+gp.lon,+gp.lat];const m=String(gp).split(/[,;]\s*/);if(m.length===2)return[+m[1],+m[0]]}return null};
+GEO.lines=(p,g)=>{let G=g||null;const gs=p.geo_shape;if(!G&&gs){G=gs.geometry||gs;if(typeof G==="string"){try{G=JSON.parse(G)}catch(e){G=null}}}if(!G)return[];if(G.type==="LineString")return[G.coordinates];if(G.type==="MultiLineString")return G.coordinates;return[]};
+/* lecture d'un fichier : renvoie {gares:[], lignes:[]} */
+GEO.parse=text=>{const out={gares:[],lignes:[]};let recs=[];const t=text.trim();
+ if(t[0]==="{"||t[0]==="["){const j=JSON.parse(t);const arr=Array.isArray(j)?j:(j.features||j.results||[]);recs=arr.map(f=>f.type==="Feature"?{p:GEO.lk(f.properties||{}),g:f.geometry}:{p:GEO.lk(f.fields||f),g:f.geometry||null})}
+ else recs=GEO.csv(t).map(p=>({p,g:null}));
+ for(const{p,g}of recs){const cl=p.code_ligne!=null?String(p.code_ligne).trim():"";if(!cl)continue;const rg=+(p.rg_troncon||1)||1;
+  const L=GEO.lines(p,g);
+  if(L.length){out.lignes.push({cl,rg,lib:p.lib_ligne||"",pkd:GEO.pk(p.pkd),pkf:GEO.pk(p.pkf),parts:L.filter(c=>c.length>1)});continue}
+  const c=GEO.pt(p,g),pk=GEO.pk(p.pk),n=p.libelle||p.nom||p.nom_gare||"";if(c&&pk!=null&&n)out.gares.push({n,k:GEO.norm(n),cl,rg,pk,lon:+(+c[0]).toFixed(6),lat:+(+c[1]).toFixed(6)})}
+ return out};
+
+/* ---------- géodésie locale ---------- */
+const R=6371008.8,D2R=Math.PI/180;
+GEO.xy=(lon,lat,c)=>[lon*D2R*R*c,lat*D2R*R];
+GEO.dist=(a,b)=>{const c=Math.cos((a[1]+b[1])/2*D2R);const dx=(b[0]-a[0])*D2R*R*c,dy=(b[1]-a[1])*D2R*R;return Math.hypot(dx,dy)};
+/* projection d'un point sur une polyligne : {d (m), s (m depuis le début)} */
+GEO.proj=(pc,cum,lon,lat)=>{const c=Math.cos(lat*D2R),P=GEO.xy(lon,lat,c);let best={d:1e12,s:0};
+ for(let i=0;i<pc.length-1;i++){const A=GEO.xy(pc[i][0],pc[i][1],c),B=GEO.xy(pc[i+1][0],pc[i+1][1],c);const vx=B[0]-A[0],vy=B[1]-A[1],L2=vx*vx+vy*vy;let u=L2?((P[0]-A[0])*vx+(P[1]-A[1])*vy)/L2:0;u=Math.max(0,Math.min(1,u));const d=Math.hypot(A[0]+u*vx-P[0],A[1]+u*vy-P[1]);if(d<best.d)best={d,s:cum[i]+u*(cum[i+1]-cum[i])}}return best};
+GEO.at=(pc,cum,s)=>{let i=0;while(i<cum.length-2&&cum[i+1]<s)i++;const u=cum[i+1]>cum[i]?(s-cum[i])/(cum[i+1]-cum[i]):0;return[pc[i][0]+u*(pc[i+1][0]-pc[i][0]),pc[i][1]+u*(pc[i+1][1]-pc[i][1])]};
+/* interpolation dans un calage [[s,pk],...] trié par s */
+GEO.interp=(cal,s)=>{if(cal.length<2)return null;let i=0;while(i<cal.length-2&&cal[i+1][0]<s)i++;const a=cal[i],b=cal[i+1];return a[1]+(s-a[0])*(b[1]-a[1])/(b[0]-a[0]||1)};
+GEO.inv=(cal,pk)=>{for(let i=0;i<cal.length-1;i++){const a=cal[i],b=cal[i+1];if((pk-a[1])*(pk-b[1])<=0&&a[1]!==b[1])return a[0]+(pk-a[1])*(b[0]-a[0])/(b[1]-a[1])}return null};
+
+/* ---------- construction d'une ligne calée ---------- */
+/* pieces: [{c,cum,cal,anch:[{n,pk,s}]}] ; les gares de la base (coordonnées projetées sur la ligne) servent de points de calage */
+GEO.build=(lignes,gares,cl,rg)=>{const pieces=[];const G=gares.filter(g=>g.cl===cl&&(!rg||g.rg===rg));
+ for(const l of lignes.filter(l=>l.cl===cl&&(!rg||l.rg===rg)))for(const pc of l.parts){
+  const cum=[0];for(let i=1;i<pc.length;i++)cum.push(cum[i-1]+GEO.dist(pc[i-1],pc[i]));const Lm=cum[cum.length-1];if(Lm<20)continue;
+  const anch=[];for(const g of G){const p=GEO.proj(pc,cum,g.lon,g.lat);if(p.d<=60)anch.push({n:g.n,pk:g.pk,s:p.s,d:p.d})}
+  anch.sort((a,b)=>a.s-b.s);
+  /* sens du kilométrage */
+  let dir=0;if(anch.length>=2){const a=anch[0],b=anch[anch.length-1];dir=Math.sign(b.pk-a.pk)}
+  let cal=anch.map(a=>[a.s,a.pk]);
+  if(l.pkd!=null&&l.pkf!=null&&l.parts.length===1){let e0=[0,l.pkd],e1=[Lm,l.pkf];if(dir&&Math.sign(l.pkf-l.pkd)!==dir){e0=[0,l.pkf];e1=[Lm,l.pkd]}
+   if(!dir)dir=Math.sign(e1[1]-e0[1])||1;cal=[e0,...cal,e1]}
+  else if(cal.length>=1){const d=dir||1;cal=[[0,cal[0][1]-d*cal[0][0]/1000],...cal,[Lm,cal[cal.length-1][1]+d*(Lm-cal[cal.length-1][0])/1000]]}
+  /* garder un calage monotone (on retire les points incohérents) */
+  const mono=[];for(const p of cal){if(mono.length&&(p[0]-mono[mono.length-1][0]<1||Math.sign(p[1]-mono[mono.length-1][1])!==dir&&p[1]!==mono[mono.length-1][1]))continue;mono.push(p)}
+  if(mono.length<2)continue;
+  pieces.push({c:pc.map(q=>[+(+q[0]).toFixed(6),+(+q[1]).toFixed(6)]),cum,cal:mono,anch,dir})}
+ return{cl,rg,lib:(lignes.find(l=>l.cl===cl)||{}).lib||"",pieces}};
+
+/* PK d'une coordonnée sur une ligne calée : liste des candidats triés par distance */
+GEO.locate=(line,lon,lat)=>{const out=[];for(const p of line.pieces){const pr=GEO.proj(p.c,p.cum,lon,lat);const pk=GEO.interp(p.cal,pr.s);if(pk!=null)out.push({d:pr.d,pk,piece:p})}return out.sort((a,b)=>a.d-b.d)};
+GEO.point=(line,pk)=>{for(const p of line.pieces){const s=GEO.inv(p.cal,pk);if(s!=null)return GEO.at(p.c,p.cum,s)}return null};
+
+/* contrôle « une gare retirée » : PK recalculé à partir des autres points de calage */
+GEO.loo=(line,name)=>{for(const p of line.pieces){const i=p.anch.findIndex(a=>a.n===name);if(i<0)continue;const a=p.anch[i];const cal=p.cal.filter(c=>Math.abs(c[0]-a.s)>0.5);const pk=GEO.interp(cal,a.s);return pk}return null};
+
+/* identification de la ligne de chaque tronçon de la fiche, par les noms et PK des gares */
+GEO.match=(rows,gares)=>{const idx={};for(const g of gares)(idx[g.k]=idx[g.k]||[]).push(g);const res={};
+ const find=k=>{if(idx[k])return idx[k];if(k.length<4)return[];const o=[];for(const kk in idx)if(kk.startsWith(k+" ")||k.startsWith(kk+" "))o.push(...idx[kk]);return o};
+ for(const r of rows){const nm=r.sub&&r.ctx?r.ctx:r.name;const k=GEO.norm(nm);if(!k)continue;const c=find(k).filter(g=>Math.abs(g.pk-r.pk)<=3);if(!c.length)continue;const S=(res[r.sec]=res[r.sec]||{});for(const g of c){const key=g.cl+"/"+g.rg;(S[key]=S[key]||[]).push({row:r,g})}}
+ const out={};for(const sec in res){const ranked=Object.entries(res[sec]).map(([key,m])=>{const seen=new Set();m=m.filter(x=>{const u=x.row.name+"|"+x.row.pk;if(seen.has(u))return false;seen.add(u);return true});return{key,m,score:m.length-m.reduce((a,x)=>a+Math.abs(x.g.pk-x.row.pk),0)/10}}).sort((a,b)=>b.score-a.score);out[sec]=ranked}return out};
+
+
+
+/* ---------- géométrie : état, suivi GPS prudent ---------- */
+let geo={lines:{},sec:{},rep:{}},geoRaw=null,geoOv={},trk={last:null,chain:null,n:0,res:null};
+try{const g=JSON.parse(store("geo")||"null");if(g&&g.lines)geo=g}catch(e){}
+const secRows=sec=>rows.map((r,i)=>[r,i]).filter(x=>x[0].sec===sec);
+const lineFor=sec=>{const k=geo.sec[sec];return k?geo.lines[k]:null};
+function pkToS(sec,pk){const R=secRows(sec);if(!R.length)return null;
+ for(let j=0;j<R.length-1;j++){const a=R[j][0].pk,b=R[j+1][0].pk;if((pk-a)*(pk-b)<=0&&a!==b)return R[j][1]+(pk-a)/(b-a)}
+ const d0=Math.abs(pk-R[0][0].pk),d1=Math.abs(pk-R[R.length-1][0].pk);return d0<d1?R[0][1]:R[R.length-1][1]}
+function secRange(sec){const R=secRows(sec).map(x=>x[0].pk);return R.length?[Math.min(...R),Math.max(...R)]:null}
+function trkReset(){trk={last:null,chain:null,n:0,res:null}}
+/* une position GPS -> {ok, pk, sec, d, why} ; ne donne un PK que si tout est cohérent */
+function geoFix(lon,lat,acc,ts,vKmh){
+ const secs=[...new Set(rows.map(r=>r.sec))].filter(s=>lineFor(s));
+ if(!secs.length)return{ok:false,why:"Aucune géométrie chargée pour cette fiche (onglet Géométrie)."};
+ if(!(acc<=50))return{ok:false,why:"Précision GPS insuffisante (±"+Math.round(acc)+" m)."};
+ const thr=Math.max(30,1.5*acc)+15,C=[];
+ for(const sec of secs){const rg=secRange(sec);for(const c of GEO.locate(lineFor(sec),lon,lat))if(c.d<=thr&&rg&&c.pk>=rg[0]-1&&c.pk<=rg[1]+1)C.push({sec,pk:c.pk,d:c.d})}
+ if(!C.length)return{ok:false,why:"Position hors des lignes de la fiche (plus de "+Math.round(thr)+" m)."};
+ const tolOf=(ref)=>{const dt=Math.max(0,(ts-ref.ts)/1000);return(Math.max(vKmh||0,60)/3.6*1.5*dt+150+2*acc)/1000};
+ const near=(c,ref)=>{if(c.sec===ref.sec)return Math.abs(c.pk-ref.pk)<=tolOf(ref);
+  if(Math.abs(c.sec-ref.sec)!==1)return false;const A=secRows(ref.sec),B=secRows(c.sec);if(!A.length||!B.length)return false;
+  const endA=c.sec>ref.sec?A[A.length-1][0].pk:A[0][0].pk,stB=c.sec>ref.sec?B[0][0].pk:B[B.length-1][0].pk;return Math.abs(ref.pk-endA)<=1.5&&Math.abs(c.pk-stB)<=1.5};
+ if(trk.last){const ok=C.filter(c=>near(c,trk.last)).sort((a,b)=>a.d-b.d)[0];
+  if(ok){trk.last={...ok,ts};trk.chain=null;trk.n=0;return{ok:true,...ok}}}
+ /* (ré)acquisition : il faut 3 positions successives cohérentes et une seule solution possible */
+ const distinct=C.filter((c,i)=>C.findIndex(o=>o.sec===c.sec&&Math.abs(o.pk-c.pk)<0.3)===i);
+ if(distinct.length>1){trk.chain=null;trk.n=0;return{ok:false,why:"Plusieurs PK possibles ici (lignes proches) : position en attente."}}
+ const b=distinct[0];
+ if(trk.chain&&near(b,trk.chain))trk.n++;else trk.n=1;trk.chain={...b,ts};
+ if(trk.n>=3){trk.last={...b,ts};trk.chain=null;trk.n=0;return{ok:true,...b}}
+ return{ok:false,why:trk.last?"Saut de PK incohérent avec la position précédente : vérification ("+trk.n+"/3).":"Recherche de la position sur la ligne ("+trk.n+"/3)."};
+}
+/* ---------- onglet Géométrie ---------- */
+async function geoFiles(files){
+ const box=$("#geoMsg");box.textContent="Lecture…";
+ geoRaw=geoRaw||{gares:[],lignes:[]};let msg=[];
+ for(const f of files){try{const p=GEO.parse(await f.text());geoRaw.gares.push(...p.gares);geoRaw.lignes.push(...p.lignes);msg.push(f.name+" : "+p.gares.length+" gares, "+p.lignes.length+" tracés")}catch(x){msg.push(f.name+" : illisible ("+x.message+")")}}
+ box.textContent=msg.join(" · ");geoBuild();
+}
+function geoBuild(){
+ if(!rows.length){if(geoRaw)$("#geoMsg").textContent+=" · Importe d’abord la fiche.";return}
+ /* sans fichiers importés dans cette session : on réutilise les lignes déjà en mémoire */
+ const old=geo.lines;let gares=geoRaw?geoRaw.gares:[];
+ if(!geoRaw)for(const k in old)for(const p of old[k].pieces)for(const a of p.anch)gares.push({n:a.n,k:GEO.norm(a.n),cl:old[k].cl,rg:old[k].rg,pk:a.pk});
+ const M=GEO.match(rows,gares);if(!geoRaw)for(const s in M)M[s]=M[s].filter(c=>old[c.key]);
+ geo={lines:geoRaw?{}:old,sec:{},rep:{}};
+ for(const sec of [...new Set(rows.map(r=>r.sec))]){const cand=M[sec]||[];const pick=geoOv[sec]!==undefined?geoOv[sec]:(cand[0]?cand[0].key:"");
+  const rep={cand:cand.map(c=>({key:c.key,n:c.m.length})),key:pick,items:[]};geo.rep[sec]=rep;if(!pick)continue;
+  const[cl,rg]=pick.split("/");
+  if(!geo.lines[pick]&&geoRaw){const L=GEO.build(geoRaw.lignes,geoRaw.gares,cl,+rg);if(L.pieces.length)geo.lines[pick]=L}
+  const L=geo.lines[pick];if(!L){rep.err="Gares reconnues mais pas de tracé pour la ligne "+cl+" : importe aussi le fichier des lignes.";continue}
+  geo.sec[sec]=pick;rep.lib=L.lib;
+  const c=cand.find(c=>c.key===pick);
+  for(const x of (c?c.m:[]))rep.items.push({n:x.row.sub&&x.row.ctx?x.row.ctx:x.row.name,pf:x.row.pk,pb:x.g.pk,pg:GEO.loo(L,x.g.n)});
+ }
+ store("geo",JSON.stringify(geo));renderGeo();trkReset();
+}
+function renderGeo(){
+ const E=$("#geoRep");const secs=[...new Set(rows.map(r=>r.sec))];
+ const nL=Object.keys(geo.lines).length;$("#geoSum").textContent=nL?nL+" ligne(s) en mémoire sur cet appareil.":"Aucune géométrie en mémoire.";
+ if(!rows.length){E.innerHTML="Importe d’abord la fiche.";return}
+ const m=v=>v==null?"—":Math.round(v*1000)+" m",cls=v=>v==null?"":Math.abs(v)>0.5?"bad":Math.abs(v)>0.1?"wn":"okc";
+ let h="";
+ for(const sec of secs){const r=geo.rep[sec];const R=secRange(sec);
+  h+='<div class="gsec"><b>Tronçon '+sec+'</b> (PK '+fk(R[0])+" à "+fk(R[1])+") : ";
+  if(!r||!r.key){h+='<span class="err">aucune ligne identifiée : pas de PK GPS sur ce tronçon (suivi à la main).</span>'}
+  else{const[cl,rg]=r.key.split("/");h+="ligne <b>"+esc(cl)+"</b> tronçon "+esc(rg)+(r.lib?" – "+esc(r.lib):"")+" · "+r.items.length+" gare(s) reconnue(s)"+(r.items.length<2?' <span class="err">(à confirmer)</span>':"")}
+  if(r&&r.err)h+='<div class="err">'+esc(r.err)+"</div>";
+  if(geoRaw&&r&&r.cand.length){h+='<div class="small">Ligne utilisée : <select data-sec="'+sec+'"><option value="">aucune</option>'+r.cand.map(c=>'<option value="'+esc(c.key)+'"'+(c.key===r.key?" selected":"")+">"+esc(c.key)+" ("+c.n+" gares)</option>").join("")+"</select></div>"}
+  if(r&&r.items.length){h+='<table class="gt"><tr><th>Gare</th><th>PK fiche</th><th>PK base gares</th><th>Écart</th><th>PK recalculé par le tracé</th><th>Écart</th></tr>';
+   for(const it of r.items){const e1=it.pb-it.pf,e2=it.pg==null?null:it.pg-it.pb;h+="<tr><td>"+esc(it.n)+"</td><td>"+it.pf.toFixed(3)+"</td><td>"+it.pb.toFixed(3)+'</td><td class="'+cls(e1)+'">'+m(e1)+"</td><td>"+(it.pg==null?"—":it.pg.toFixed(3))+'</td><td class="'+cls(e2)+'">'+m(e2)+"</td></tr>"}
+   h+="</table>"}
+  h+="</div>"}
+ E.innerHTML=h+'<p class="small">« Écart » fiche/base : différence entre le PK de ta fiche et celui de la base SNCF Réseau. « PK recalculé » : PK de la gare calculé par le tracé <i>sans</i> utiliser cette gare comme repère ; l’écart montre la précision à attendre entre deux gares. Vert ≤ 100 m, orange ≤ 500 m, rouge au-delà.</p>';
+ E.querySelectorAll("select[data-sec]").forEach(s=>s.onchange=()=>{geoOv[s.dataset.sec]=s.value;geoBuild()});
+ const n=Object.keys(geo.lines).length;$("#geoSum").textContent=n?n+" ligne(s) en mémoire sur cet appareil.":"Aucune géométrie en mémoire.";
+}
+
+
+/* ---------- lecture du PDF ---------- */
+function group(it){it.sort((a,b)=>a.y-b.y||a.f-b.f);const L=[];for(const i of it){const l=L[L.length-1];if(l&&Math.abs(l.y-i.y)<2.5)l.push(i);else{const n=[i];n.y=i.y;L.push(n)}}L.forEach(l=>l.sort((a,b)=>a.f-b.f));return L}
+async function readPdf(buf){
+ if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");
+ pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+ const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+ const out=[],dft=[],warn=[];let cur=null,ctx="",train="";
+ for(let p=1;p<=pdf.numPages;p++){
+  const pg=await pdf.getPage(p),W=pg.view[2],H=pg.view[3],tc=await pg.getTextContent();
+  const lines=group(tc.items.filter(i=>i.str.trim()).map(i=>({s:i.str.trim(),f:i.transform[4]/W,y:H-i.transform[5]})));
+  const txt=lines.map(l=>l.map(i=>i.s).join(" ")).join("\n");
+  if(!/Etablissements et points/.test(txt)){if(/DEFIT/.test(txt))dft.push(txt);continue}
+  const yH=(lines.find(l=>l.some(i=>/^Etablissements/.test(i.s)))||{y:0}).y;
+  const fl=lines.find(l=>l.some(i=>/^Les vitesses limites/.test(i.s)));const yF=fl?fl.y:1e9;
+  const mk=[],pr=[];
+  for(const l of lines.filter(l=>l.y>yH+10&&l.y<yF-2)){
+   const col=(a,b)=>l.filter(i=>i.f>=a&&i.f<b);
+   const lim=col(0,.112).find(i=>/^\d+$/.test(i.s));if(lim)mk.push({y:l.y,v:+lim.s});
+   const pkI=col(.112,.172).find(i=>/^-?\d+\.\d+$/.test(i.s));
+   const nmI=col(.213,.593);const raw=nmI.filter(i=>i.s!=="PL").map(i=>i.s).join(" ").trim();
+   const sub=/^\|/.test(raw),name=raw.replace(/^\|\s*/,"").trim();
+   if(/^\(\d\)/.test(name)){dft.push("Note de fiche : "+raw);continue}
+   if(/^\d{5}$/.test(name)){train=name;continue}
+   if(!pkI){if(name&&!sub)ctx=name;continue}
+   if(name&&!sub)ctx=name;
+   pr.push({pk:parseFloat(pkI.s),name,ctx:sub?ctx:"",sub,stop:/^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ '’\-]{2,}$/.test(sub?ctx:name)||/\[C\]/.test(col(.593,.843).map(i=>i.s).join(" ")),pl:nmI.some(i=>i.s==="PL"),time:col(.593,.843).map(i=>i.s).join(" "),reg:col(.843,.89).map(i=>i.s).join(" "),rad:col(.89,2).map(i=>i.s).join(""),y:l.y,train,page:p});train="";
+  }
+  for(const r of pr){let m=null;for(const k of mk)if(k.y<=r.y+4)m=k;r.v=m?m.v:cur;delete r.y}
+  if(mk.length)cur=mk[mk.length-1].v;
+  out.push(...pr);
+ }
+ const tm=r=>{const m=/(\d{1,2}):(\d{2})/.exec(r.time||"");return m?+m[1]*60+ +m[2]:null};let sec=1,lt=null;out.forEach((r,i)=>{const t=tm(r);if(i){let dm=t==null||lt==null?0:t-lt;if(dm<0)dm+=1440;const d=Math.abs(r.pk-out[i-1].pk);if(d>3&&d/(Math.max(dm,.5)/60)>140)sec++}r.sec=sec;if(t!=null)lt=t});
+ if(out.some(r=>r.v==null))warn.push("Certaines lignes n’ont pas de limite lue : vérifie-les.");
+ if(out.length<5)warn.push("Très peu de lignes lues : le format du PDF est peut-être différent.");
+ return{rows:out,defit:dft,warn};
+}
+
+/* ---------- données ---------- */
+function setData(r,d){rows=r;defit=d;s=0;sim.run=false;$("#play").textContent="Lecture";renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo()}
+function demo(){const m=(pk,name,v,time,pl)=>({pk,name,ctx:"",sub:false,stop:/^Gare/.test(name),pl:!!pl,time,reg:"",rad:"",sec:1,v});
+ return[m(100,"Gare de Test-A",90,"19:13"),m(100.8,"Passage à niveau fictif",60,"19:14",1),m(102,"Point 102",100,""),m(104.5,"Point 104,5",120,"19:18"),m(106.2,"Courbe fictive",80,"19:20"),m(108,"Point 108",120,"19:22"),m(110.5,"Entrée de Test-B",40,"19:25"),m(111,"Gare de Test-B",40,"19:26")]}
+function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||""}))}
+const inLtv=(k,pk,sec)=>pk>=Math.min(k.a,k.b)&&pk<=Math.max(k.a,k.b)&&(!k.sec||k.sec===sec);
+
+/* ---------- affichage de la fiche ---------- */
+function renderList(){
+ const L=$("#list");L.innerHTML="";let sec=0;
+ rows.forEach((r,i)=>{
+  if(r.sec!==sec){sec=r.sec;const d=document.createElement("div");d.className="sec";d.textContent="Tronçon "+sec+" : repérage kilométrique différent (changement de ligne)";L.appendChild(d)}
+  const e=document.createElement("div");e.className="r"+(r.stop?" stop":"");e.dataset.i=i;
+  const t=ltv.some(k=>inLtv(k,r.pk,r.sec));
+  const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name)+"</span>":esc(r.name||"—");
+  e.innerHTML='<span class="lm'+(t?" ltv":"")+'">'+(r.v==null?"?":r.v)+(t?"*":"")+"</span><span>"+fk(r.pk)+"</span><span>"+(r.stop?'<b class="tag">ARRÊT</b> ':"")+nm+(r.train?' <b>→ '+esc(r.train)+"</b>":"")+"</span><span>"+esc(r.time)+"</span><span>"+(r.pl?"PL":"")+"</span><span>"+esc(r.reg)+"</span><span>"+esc(r.rad)+"</span>";
+  e.onclick=()=>{if(mode==="man"){s=i;gotoRow()}};
+  L.appendChild(e);
+ });
+ const n=new Set(rows.map(r=>r.sec)).size;
+ $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
+}
+const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=20?Math.max(100,d*1000):1000};
+function masked(why,spd){
+ $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
+ $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over");
+ $("#nx").textContent="Prochaine limite : — (position douteuse)";$("#ns").textContent="Prochain arrêt : —";
+ setSt("warn",why+" PK et limite masqués : suis la fiche et la signalisation.");
+}
+function frame(now){
+ if(!rows.length){return}
+ let spd=null;if(mode==="sim")spd=sim.v;else if(gps&&(now-gps.ts)/1000<=5)spd=Math.round(gps.v);
+ /* mode GPS : la position calculée pilote la fiche */
+ if(mode==="gps"){
+  let G=trk.res;if(!gps||(now-gps.ts)/1000>5)G={ok:false,why:geoErr||"Pas de position GPS récente."};
+  if(!G||!G.ok){masked(G?G.why:"Recherche de la position…",spd);return}
+  const ns=pkToS(G.sec,G.pk);if(ns==null){masked("PK hors de la fiche.",spd);return}
+  const moved=Math.floor(ns)!==Math.floor(s);s=ns;if(moved)gotoRow();
+ }
+ const i=Math.min(rows.length-1,Math.floor(s)),f=s-i,r=rows[i],b=rows[i+1];
+ const same=b&&b.sec===r.sec&&Math.abs(b.pk-r.pk)<=20;
+ const pk=same?r.pk+f*(b.pk-r.pk):r.pk;
+ const dir=same?Math.sign(b.pk-r.pk)||1:(rows[i-1]&&rows[i-1].sec===r.sec?Math.sign(r.pk-rows[i-1].pk)||1:1);
+ /* test : GPS simulé sur la géométrie, avec un bruit d'environ 10 m */
+ let T=null;
+ if(mode==="sim"&&$("#simG").checked){const line=lineFor(r.sec);
+  if(!line)T={ok:false,why:"Pas de géométrie pour le tronçon "+r.sec+"."};
+  else{const p=GEO.point(line,pk);if(!p)T={ok:false,why:"PK "+fk3(pk)+" hors du tracé importé."};
+   else{const a=Math.random()*2*Math.PI,d=Math.random()*10;T=geoFix(p[0]+d*Math.cos(a)/(111320*Math.cos(p[1]*Math.PI/180)),p[1]+d*Math.sin(a)/110540,10,now,sim.v*sim.mult);T.truth=pk}}
+  if(!T.ok){masked("Test GPS : "+T.why,spd);markRows(i);return}
+ }
+ let lim=r.v,inL=false;for(const k of ltv)if(inLtv(k,pk,r.sec)&&k.v<lim){lim=k.v;inL=true}
+ $("#pk").textContent=fk(T?T.pk:pk);$("#lim").textContent=lim==null?"?":lim;$("#spd").textContent=spd==null?"—":Math.round(spd);
+ const over=spd!=null&&lim!=null&&spd>lim;$("#tSpd").classList.toggle("over",over);$("#tLim").classList.toggle("over",over);
+ let nx="Fin de la fiche",dist=seg(i)*(1-f);
+ for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.v!==r.v){nx="Prochaine limite fiche : "+c.v+" km/h dans "+(dist/1000).toFixed(1).replace(".",",")+" km ("+(c.sub&&c.ctx?c.ctx+" ":"")+(c.name||"PK "+fk(c.pk))+")";break}dist+=seg(j)}
+ let ns="Prochain arrêt : aucun jusqu’à la fin de la fiche",d2=seg(i)*(1-f);for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.stop){ns="Prochain arrêt : "+(c.sub&&c.ctx?c.ctx:c.name)+" "+c.time+" – dans "+(d2/1000).toFixed(1).replace(".",",")+" km";break}d2+=seg(j)}$("#ns").textContent=ns;let al=null;for(const k of ltv){if(k.sec&&k.sec!==r.sec)continue;const e=dir>0?Math.min(k.a,k.b):Math.max(k.a,k.b),d=(e-pk)*dir;if(d>0&&(!al||d<al.d))al={d,k}}
+ $("#nx").textContent=nx+(inL?" | LTV en cours : "+lim+" km/h":"")+(al?" | LTV "+al.k.v+" dans "+al.d.toFixed(1).replace(".",",")+" km (PK "+fk(Math.min(al.k.a,al.k.b))+"–"+fk(Math.max(al.k.a,al.k.b))+")":"");
+ if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
+ else if(T)setSt("ok","Test GPS : PK calculé "+fk3(T.pk)+" pour un PK simulé de "+fk3(T.truth)+" (écart "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m, à "+Math.round(T.d)+" m du tracé).");
+ else if(mode==="gps")setSt("ok","PK calculé par GPS (ligne "+geo.sec[r.sec].split("/")[0]+", à "+Math.round(trk.res.d)+" m du tracé, précision ±"+Math.round(gps.acc)+" m).");
+ else if(mode==="man"&&geoErr)setSt("warn",geoErr+" La fiche défile toujours à ta main.");
+ else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible (aucun signal récent). Position suivie à la main.");
+ else setSt("ok",mode==="sim"?"Simulation en cours.":"Position à la main, vitesse GPS (précision ±"+Math.round(gps.acc)+" m).");
+ markRows(i);
+}
+function markRows(i){$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)})}
+function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
+function gotoRow(){const e=$("#list").querySelector('.r[data-i="'+Math.floor(s)+'"]');if(e){const L=$("#list");L.scrollTop=e.offsetTop-L.offsetTop-L.clientHeight*.3}}
+function tick(){
+ const now=Date.now();
+ if(mode==="sim"&&sim.run&&rows.length){
+  const dt=(now-sim.t)/1000,i=Math.min(rows.length-1,Math.floor(s));
+  s=Math.min(rows.length-1,s+sim.v/3.6*dt*sim.mult/seg(i));
+  if(s>=rows.length-1){sim.run=false;$("#play").textContent="Lecture"}
+  gotoRow();
+ }
+ sim.t=now;frame(now);
+}
+
+/* ---------- GPS ---------- */
+function startGps(){
+ geoErr="";gps=null;trkReset();
+ if(!navigator.geolocation){geoErr="Géolocalisation indisponible ici.";return}
+ watchId=navigator.geolocation.watchPosition(p=>{const c=p.coords;let v=c.speed;
+  if((v==null||v<0)&&gps&&gps.lat!=null){const dt=(p.timestamp-gps.ts)/1000;v=dt>0?GEO.dist([gps.lon,gps.lat],[c.longitude,c.latitude])/dt:0}
+  gps={v:(v||0)*3.6,acc:c.accuracy,ts:p.timestamp,lat:c.latitude,lon:c.longitude};geoErr="";
+  if(mode==="gps")trk.res=geoFix(c.longitude,c.latitude,c.accuracy,p.timestamp,gps.v)},
+  e=>{geoErr="GPS indisponible ("+e.message+")."},{enableHighAccuracy:true,maximumAge:0,timeout:10000});
+}
+function stopGps(){if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}}
+function setMode(m){mode=m;["Sim","Man","Gps"].forEach(k=>$("#m"+k).setAttribute("aria-pressed",m===k.toLowerCase()));$("#simBox").classList.toggle("hide",m!=="sim");sim.run=false;$("#play").textContent="Lecture";stopGps();trkReset();if(m!=="sim")startGps()}
+
+/* ---------- interface ---------- */
+function view(v){["C","L","D","G","I"].forEach(k=>{$("#v"+k).classList.toggle("hide",k!==v);$("#t"+k).setAttribute("aria-pressed",k===v)});if(v==="C")gotoRow();if(v==="G")renderGeo()}
+["C","L","D","G","I"].forEach(k=>$("#t"+k).onclick=()=>view(k));
+$("#mSim").onclick=()=>setMode("sim");$("#mMan").onclick=()=>setMode("man");$("#mGps").onclick=()=>setMode("gps");
+$("#next").onclick=()=>{if(mode==="gps")return;if(s<rows.length-1){s=Math.floor(s)+1;gotoRow()}};
+$("#prev").onclick=()=>{if(mode==="gps")return;if(s>0){s=Math.ceil(s)-1;gotoRow()}};
+$("#play").onclick=()=>{if(s>=rows.length-1)s=0;sim.run=!sim.run;sim.t=Date.now();$("#play").textContent=sim.run?"Pause":"Lecture"};
+$("#rst").onclick=()=>{s=0;sim.run=false;$("#play").textContent="Lecture";trkReset();gotoRow()};
+$("#simG").onchange=()=>trkReset();
+$("#sv").oninput=e=>{sim.v=+e.target.value;$("#svT").textContent=sim.v};
+$("#mult").onchange=e=>sim.mult=+e.target.value;
+$("#okL").onclick=()=>{ltv=parseLtv($("#taL").value);store("ltv",$("#taL").value);$("#msgL").textContent=ltv.length+" LTV enregistrée(s).";renderList()};
+$("#demo").onclick=()=>{setData(demo(),[]);view("C")};
+$("#clear").onclick=()=>{["rows","defit","ltv","geo"].forEach(k=>store(k,null));rows=[];defit=[];ltv=[];geo={lines:{},sec:{},rep:{}};geoRaw=null;$("#taL").value="";$("#defit").textContent="Aucun avis chargé.";renderList();renderGeo()};
+$("#geoFile").onchange=e=>{if(e.target.files.length)geoFiles([...e.target.files])};
+$("#geoClr").onclick=()=>{store("geo",null);geo={lines:{},sec:{},rep:{}};geoRaw=null;geoOv={};$("#geoMsg").textContent="";renderGeo()};
+$("#file").onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;$("#rep").textContent="Lecture du PDF…";
+ try{const r=await readPdf(await f.arrayBuffer());setData(r.rows,r.defit);if(r.warn.length)$("#rep").innerHTML+='<div class="err">'+r.warn.map(esc).join("<br>")+"</div>"}
+ catch(x){$("#rep").innerHTML='<span class="err">Impossible de lire ce PDF : '+esc(x.message)+"</span>"}
+};
+
+try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]");if(r&&r.length){rows=r;defit=d}}catch(e){}
+$("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
+$("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
+renderList();renderGeo();setInterval(tick,500);tick();
+</script>
+</body>
+</html>
