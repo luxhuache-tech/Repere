@@ -457,7 +457,7 @@ const KVB_TABLE=null;
 let kvb={mt:"",mf:"",len:""};try{const k=JSON.parse(store("kvb")||"null");if(k)kvb=k}catch(e){}
 function kvbCalc(){const mt=+String(kvb.mt).replace(",","."),mf=+String(kvb.mf).replace(",","."),len=+String(kvb.len).replace(",",".");
  const r={ok:mt>0&&mf>0&&len>0};if(mt>0&&mf>=0)r.pct=mf/mt*100;if(len>0)r.L=Math.ceil(len/100);return r}
-function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});$("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";$("#kvbL").textContent=c.L!=null?String(c.L):"—";
+function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});$("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";$("#kvbL").textContent=c.L!=null?c.L+" ("+c.L*100+" m)":"—";
  $("#kvbChip").textContent="MA 100"+(c.L!=null?" · L "+c.L:"")+(c.pct!=null?" · "+Math.floor(c.pct)+" %":"");
  $("#kvbOut").innerHTML=KVB_TABLE?"":"<p class=\"muted\">Le tableau de détermination n’est pas encore intégré : envoie-le et les paramètres à afficher seront calculés ici. Rien n’est deviné en attendant.</p>"}
 
