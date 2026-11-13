@@ -108,6 +108,8 @@ pre{white-space:pre-wrap;font:13px/1.45 var(--f);margin:0;color:var(--tx2)}
 .gt{border-collapse:collapse;width:100%;margin-top:8px;font-variant-numeric:tabular-nums;font-size:13px}
 .gt th,.gt td{border-bottom:1px solid var(--hair);padding:5px 4px;text-align:left}.gt th{color:var(--tx3);font-weight:600;font-size:11px}
 .okc{color:var(--ok)}.wn{color:var(--ltv)}td.bad{color:var(--bad)}
+.kres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kres>div{background:var(--s2);border-radius:12px;padding:10px 14px}.kres b{display:block;font:600 30px/1.1 var(--fd);font-variant-numeric:tabular-nums;margin-top:2px}.kres b.err{color:var(--bad)}
+.r.stop{box-shadow:inset 3px 0 var(--ltv)}.r.stop .nm{font-weight:600;color:var(--tx)}.r.stop.past .nm{color:var(--tx3)}.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;color:#000;background:var(--ltv);border-radius:4px;padding:1px 5px;margin-right:6px;vertical-align:2px}
 .lcard{background:var(--s2);border-radius:12px;padding:12px 14px;margin-top:10px}.lcard.done{box-shadow:inset 3px 0 var(--ok)}
 .lhd{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
 .lcrop{display:block;border-radius:6px;background:#fff;margin-bottom:10px;max-width:100%}
@@ -208,12 +210,14 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
      <div class="it"><span class="k">Masse freinée</span><input type="number" inputmode="decimal" id="kMf" placeholder="0"><span class="val">t</span></div>
      <div class="it"><span class="k">Longueur</span><input type="number" inputmode="decimal" id="kLen" placeholder="0"><span class="val">m</span></div>
     </div>
-    <h3>Résultat</h3>
+    <h3>À afficher au KVB</h3>
+    <div class="kres" id="kvbRes"></div>
+    <div id="kvbOut"></div>
+    <h3>Détail</h3>
     <div class="grp">
      <div class="it"><span class="k">Masse freinée / masse totale</span><span class="val" id="kvbPct">—</span></div>
      <div class="it"><span class="k">Longueur, en centaines de mètres (arrondie au-dessus)</span><span class="val" id="kvbL">—</span></div>
     </div>
-    <div id="kvbOut"></div>
    </section>
    <section id="vL" class="hide">
     <h3>Avis DEFIT</h3>
@@ -461,14 +465,16 @@ function drawZone(i,f,ok){
 }
 
 /* ---------- KVB ---------- */
-/* Tableau de détermination des paramètres : à fournir par le conducteur. Tant qu'il est vide, rien n'est calculé. */
-const KVB_TABLE=null;
 let kvb={mt:"",mf:"",len:""};try{const k=JSON.parse(store("kvb")||"null");if(k)kvb=k}catch(e){}
-function kvbCalc(){const mt=+String(kvb.mt).replace(",","."),mf=+String(kvb.mf).replace(",","."),len=+String(kvb.len).replace(",",".");
- const r={ok:mt>0&&mf>0&&len>0};if(mt>0&&mf>=0)r.pct=mf/mt*100;if(len>0)r.L=Math.ceil(len/100);return r}
-function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});$("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";$("#kvbL").textContent=c.L!=null?c.L+" ("+c.L*100+" m)":"—";
- $("#kvbChip").textContent="MA 100"+(c.L!=null?" · L "+c.L:"")+(c.pct!=null?" · "+Math.floor(c.pct)+" %":"");
- $("#kvbOut").innerHTML=KVB_TABLE?"":"<p class=\"muted\">Le tableau de détermination n’est pas encore intégré : envoie-le et les paramètres à afficher seront calculés ici. Rien n’est deviné en attendant.</p>"}
+const num=x=>{const v=+String(x).replace(",",".");return isFinite(v)&&String(x).trim()!==""?v:null};
+function kvbCalc(){const mt=num(kvb.mt),mf=num(kvb.mf),len=num(kvb.len);const r={};
+ if(mt>0&&mf>=0)r.pct=mf/mt*100;if(len>0)r.L=Math.ceil(len/100);if(mt>0&&mf>0){const d=kvbDecel(mt,mf);if(d.err)r.err=d.err;else{r.dec=d.dec;r.row=d.row;r.next=d.next}}return r}
+function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});
+ $("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";
+ $("#kvbL").textContent=c.L!=null?c.L+" ("+c.L*100+" m)":"—";
+ $("#kvbChip").textContent=c.dec||c.L?"KVB MA 100 · "+(c.L??"—")+" · "+(c.dec??"—"):"";
+ $("#kvbRes").innerHTML='<div><span class="lab">Catégorie</span><b>MA 100</b></div><div><span class="lab">Longueur</span><b>'+(c.L??"—")+'</b></div><div><span class="lab">Décélération</span><b'+(c.err?' class="err"':"")+">"+(c.dec??"—")+"</b></div>";
+ $("#kvbOut").innerHTML=c.err?'<p class="err small">'+esc(c.err)+"</p>":c.dec?'<p class="muted small">Ligne « '+(c.row[0]?c.row[0]+" à "+c.row[1]:"jusqu’à 100")+" t » de la fiche 985 (masse totale arrondie au-dessus, masse freinée au-dessous)."+(c.next?" Décélération "+c.next.dec+" à partir de "+c.next.need+" t freinées.":"")+" Vérifie sur la fiche 985 avant de saisir au KVB.</p>":'<p class="muted small">Saisis la masse totale et la masse freinée totale.</p>'}
 
 /* ---------- LTV lues dans l'avis DEFIT (à valider par le conducteur) ---------- */
 /* Empreintes de panneaux déjà vérifiées sur des fiches réelles (panneau d'exécution, vitesse lue à l'œil). */
@@ -562,6 +568,46 @@ async function readDefit(pdf,pages,schemaTxt){
    out.push({page:p,y0:b.y0,y1,from:b.from,to:b.to,pkFrom:b.pkFrom,pkTo:b.pkTo,voie:b.voie,ref:b.ref,cs:b.cs,ann,deb,fin,schema:b.schema,v,src,key,img:pnl&&pnl.img?DEFIT.toUrl(pnl.img):null})}}
  return out}
 
+/* ---------- KVB : fiche 985 « Affichage des paramètres KVB », tableau MA 100 / 90 / 80 ----------
+   Ligne = tranche de masse totale (t). Colonnes = masse freinée totale minimale (t) pour chaque décélération.
+   Lecture : dans la ligne de la masse totale, on prend la colonne la plus à droite dont la valeur est
+   inférieure ou égale à la masse freinée ; la décélération est en bas de cette colonne. */
+const KVB_DEC=["045","047","050","054","060","068","079","096"];
+const KVB_MA=[
+[0,100,[null,49,53,57,63,72,83,101]],
+[101,105,[47,52,55,60,66,75,87,106]],[106,110,[50,54,58,63,69,79,91,111]],[111,115,[52,57,61,65,73,82,96,116]],
+[116,121,[55,60,64,69,76,87,101,122]],[122,127,[57,63,67,72,80,91,106,128]],[128,133,[60,66,70,76,84,95,111,134]],
+[134,139,[63,69,73,79,88,99,116,140]],[140,146,[66,72,77,83,92,105,121,148]],[147,153,[69,76,81,87,97,110,127,155]],
+[154,160,[72,79,84,91,101,115,133,162]],[161,168,[76,83,88,95,106,120,140,170]],[169,176,[79,87,93,100,111,126,146,178]],
+[177,185,[83,92,97,105,117,132,154,187]],[186,194,[87,96,102,110,123,139,161,196]],[195,203,[92,100,107,115,128,145,169,205]],
+[204,213,[96,105,112,121,135,152,177,215]],[214,223,[101,110,117,127,141,160,185,225]],[224,234,[105,116,123,133,148,167,195,236]],
+[235,245,[110,121,129,139,155,175,204,248]],[246,257,[116,127,135,146,162,184,214,260]],[258,269,[121,133,142,153,170,193,224,272]],
+[270,282,[127,140,148,160,178,202,235,285]],[283,296,[133,146,156,168,187,212,246,299]],[297,310,[140,153,163,176,196,222,258,313]],
+[311,325,[146,161,171,185,205,233,270,328]],[326,341,[153,169,179,194,215,244,284,345]],[342,358,[161,177,188,203,226,256,298,362]],
+[359,375,[169,186,197,213,237,268,312,379]],[376,393,[177,194,207,223,248,281,327,397]],[394,412,[185,204,217,234,260,295,343,416]],
+[413,432,[194,214,227,246,273,309,359,437]],[433,453,[204,224,238,257,286,324,377,458]],[454,475,[213,235,250,270,300,340,395,480]],
+[476,498,[224,246,262,283,315,356,414,503]],[499,522,[235,258,275,297,330,374,434,527]],[523,547,[246,271,288,311,345,392,455,553]],
+[548,574,[258,284,302,326,363,411,477,580]],[575,602,[270,298,317,342,380,431,501,608]],[603,631,[283,312,332,359,399,452,525,638]],
+[632,662,[297,328,348,376,418,474,551,669]],[663,694,[312,343,365,394,438,497,577,701]],[695,728,[327,360,383,414,460,521,605,736]],
+[729,763,[343,377,402,434,482,546,634,771]],[764,800,[359,396,421,455,505,573,665,808]],[801,839,[376,415,442,477,530,601,698,848]],
+[840,880,[395,435,463,500,556,630,732,889]],[881,923,[414,457,486,525,583,661,768,933]],[924,968,[434,479,509,550,611,693,805,978]],
+[969,1015,[455,502,534,577,641,727,844,1026]],[1016,1064,[478,526,560,605,672,762,885,1075]],[1065,1116,[501,552,587,634,705,799,928,1128]],
+[1117,1170,[525,579,616,665,739,837,973,1182]],[1171,1227,[550,607,646,697,775,878,1020,1240]],[1228,1287,[577,637,677,732,813,921,1070,1301]],
+[1288,1349,[605,667,710,767,852,966,1122,1363]],[1350,1414,[635,700,744,804,893,1012,1176,1429]],[1415,1483,[665,734,781,843,937,1062,1233,1499]],
+[1484,1555,[697,769,818,884,982,1113,1293,1571]],[1556,1630,[731,806,858,927,1029,1167,1355,1647]],[1631,1709,[767,846,899,971,1079,1223,1421,1727]],
+[1710,1792,[804,887,943,1019,1132,1283,1490,1811]],[1793,1879,[843,930,989,1068,1187,1345,1563,1899]],[1880,1970,[884,975,1037,1120,1244,1410,1638,1991]],
+[1971,2066,[926,1022,1087,1174,1305,1479,1718,2088]],[2067,2166,[971,1072,1140,1231,1368,1550,1801,2189]],[2167,2271,[1018,1124,1195,1291,1434,1626,1889,2295]],
+[2272,2381,[1068,1178,1253,1353,1504,1704,1980,2406]],[2382,2496,[1120,1235,1314,1419,1576,1787,2076,2522]],[2497,2617,[1174,1295,1377,1488,1653,1873,2176,2645]],
+[2618,2744,[1230,1358,1444,1560,1733,1964,2282,2773]],[2745,2877,[1290,1423,1514,1635,1817,2059,2392,2907]],[2878,3017,[1353,1493,1588,1715,1905,2160,2509,3049]],
+[3018,3163,[1418,1565,1665,1798,1998,2264,2630,3196]],[3164,3316,[1487,1641,1745,1885,2094,2374,2758,3351]],[3317,3477,[1559,1720,1830,1976,2196,2489,2891,3514]],
+[3478,3646,[1635,1804,1919,2072,2303,2610,3032,3684]],[3647,3823,[1714,1891,2012,2173,2415,2736,3179,3863]]];
+/* masse totale arrondie au-dessus, masse freinée arrondie au-dessous : on reste du côté prudent */
+function kvbDecel(mt,mf){const M=Math.ceil(mt),F=Math.floor(mf);const row=KVB_MA.find(r=>M>=r[0]&&M<=r[1]);
+ if(!row)return{err:"Masse totale hors du tableau (au-delà de "+KVB_MA[KVB_MA.length-1][1]+" t)."};
+ let k=-1;row[2].forEach((v,j)=>{if(v!=null&&F>=v)k=j});
+ if(k<0)return{err:"Masse freinée insuffisante pour la plus petite décélération du tableau ("+row[2].find(v=>v!=null)+" t minimum pour "+row[0]+" à "+row[1]+" t)."};
+ return{dec:KVB_DEC[k],row,col:k,next:row[2][k+1]!=null?{dec:KVB_DEC[k+1],need:row[2][k+1]}:null}}
+
 
 /* ---------- lecture du PDF de la fiche ---------- */
 function group(it){it.sort((a,b)=>a.y-b.y||a.f-b.f);const L=[];for(const i of it){const l=L[L.length-1];if(l&&Math.abs(l.y-i.y)<2.5)l.push(i);else{const n=[i];n.y=i.y;L.push(n)}}L.forEach(l=>l.sort((a,b)=>a.f-b.f));return L}
@@ -634,9 +680,9 @@ function renderList(){
   const e=document.createElement("div");e.className="r"+(r.stop?" stop":"");e.dataset.i=i;
   const t=ltv.filter(k=>inLtv(k,r.pk,r.sec)).reduce((m,k)=>Math.min(m,k.v),1e9);
   const eff=t<1e9&&(r.v==null||t<r.v);
-  const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name)+"</span>":esc(r.name||"—");
+  const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name.replace(/^\|\s*/,""))+"</span>":esc(r.name||"—");
   const x=[r.pl?"PL":"",r.reg,r.rad].filter(Boolean).map(esc).join(" ");
-  e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+nm+(r.train?" → "+esc(r.train):"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
+  e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+(r.stop?'<span class="tag">ARRÊT</span>':"")+nm+(r.train?" → "+esc(r.train):"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
   e.onclick=()=>{if(mode==="man"){s=i;lastRow=-1;gotoRow(true)}};
   L.appendChild(e);
  });
