@@ -263,7 +263,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
    <section id="vG" class="hide">
     <h3>Géométrie des lignes</h3>
     <div class="box small">
-     <p style="margin-top:0">Télécharge depuis l’open data SNCF (bouton <i>Export</i>, GeoJSON ou CSV) :</p>
+     <p style="margin-top:0">Les tracés et gares de l’open data SNCF Réseau sont intégrés à l’appli : ils sont chargés automatiquement à l’import d’une fiche (connexion nécessaire à ce moment-là), puis seules les lignes de ta fiche sont gardées sur l’iPad.</p>
+     <div class="row"><button class="btn" id="geoReload">Recharger les données intégrées</button></div>
+     <p class="muted">Pour utiliser d’autres fichiers à la place (bouton <i>Export</i>, GeoJSON ou CSV) :</p>
      <p><a href="https://ressources.data.sncf.com/explore/dataset/liste-des-gares/" target="_blank" rel="noopener">Liste des gares</a> · <a href="https://ressources.data.sncf.com/explore/dataset/lignes-par-type/" target="_blank" rel="noopener">Lignes par type</a> (ou <a href="https://ressources.data.sncf.com/explore/dataset/formes-des-lignes-du-rfn/" target="_blank" rel="noopener">Formes des lignes du RFN</a>)</p>
      <p>Puis importe les deux fichiers ici, après la fiche.</p>
      <div class="row"><input type="file" id="geoFile" accept=".json,.geojson,.csv,application/json,text/csv" multiple></div>
@@ -347,7 +349,8 @@ GEO.loo=(line,name)=>{for(const p of line.pieces){const i=p.anch.findIndex(a=>a.
 /* identification de la ligne de chaque tronçon de la fiche, par les noms et PK des gares */
 GEO.match=(rows,gares)=>{const idx={};for(const g of gares)(idx[g.k]=idx[g.k]||[]).push(g);const res={};
  const find=k=>{if(idx[k])return idx[k];if(k.length<4)return[];const o=[];for(const kk in idx)if(kk.startsWith(k+" ")||k.startsWith(kk+" "))o.push(...idx[kk]);return o};
- for(const r of rows){const nm=r.sub&&r.ctx?r.ctx:r.name;const k=GEO.norm(nm);if(!k)continue;const c=find(k).filter(g=>Math.abs(g.pk-r.pk)<=3);if(!c.length)continue;const S=(res[r.sec]=res[r.sec]||{});for(const g of c){const key=g.cl+"/"+g.rg;(S[key]=S[key]||[]).push({row:r,g})}}
+ for(const r of rows){/* un point de la fiche ne vaut la gare que s'il s'agit de la gare elle-même (nom de gare, ou « BV » sous le nom de la gare) */
+  if(r.sub&&!/^\|?\s*BV\b/.test(r.name))continue;const nm=r.sub&&r.ctx?r.ctx:r.name;const k=GEO.norm(nm);if(!k)continue;const c=find(k).filter(g=>Math.abs(g.pk-r.pk)<=3);if(!c.length)continue;const S=(res[r.sec]=res[r.sec]||{});for(const g of c){const key=g.cl+"/"+g.rg;(S[key]=S[key]||[]).push({row:r,g})}}
  const out={};for(const sec in res){const ranked=Object.entries(res[sec]).map(([key,m])=>{const seen=new Set();m=m.filter(x=>{const u=x.row.name+"|"+x.row.pk;if(seen.has(u))return false;seen.add(u);return true});return{key,m,score:m.length-m.reduce((a,x)=>a+Math.abs(x.g.pk-x.row.pk),0)/10}}).sort((a,b)=>b.score-a.score);out[sec]=ranked}return out};
 
 
@@ -384,10 +387,20 @@ function geoFix(lon,lat,acc,ts,vKmh){
  if(trk.n>=3){trk.last={...b,ts};trk.chain=null;trk.n=0;return{ok:true,...b}}
  return{ok:false,why:trk.last?"Saut de PK incohérent avec la position précédente : vérification ("+trk.n+"/3).":"Recherche de la position sur la ligne ("+trk.n+"/3)."};
 }
+/* ---------- géométrie intégrée (open data SNCF Réseau, fichiers du site) ---------- */
+let geoBuiltin=false,geoLoading=null;
+function loadBuiltinGeo(){if(geoRaw)return Promise.resolve(true);if(geoLoading)return geoLoading;if(typeof fetch!=="function")return Promise.resolve(false);
+ const box=$("#geoMsg");if(box)box.textContent="Chargement des données SNCF Réseau intégrées…";
+ geoLoading=Promise.all([fetch("data/gares.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}),fetch("data/lignes.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})])
+  .then(([g,l])=>{if(geoRaw)return true;geoRaw={gares:g.gares.map(([n,cl,rg,pk,lon,lat])=>({n,k:GEO.norm(n),cl,rg,pk,lon,lat})),lignes:l.lignes.map(([cl,rg,lib,pkd,pkf,parts])=>({cl,rg,lib,pkd,pkf,parts}))};geoBuiltin=true;
+   if(box)box.textContent="Données SNCF Réseau intégrées : "+geoRaw.gares.length+" gares, "+geoRaw.lignes.length+" tronçons de ligne.";geoBuild();return true})
+  .catch(e=>{geoLoading=null;if(box)box.textContent="Données intégrées indisponibles (connexion ?). Tu peux importer les fichiers à la main.";return false});
+ return geoLoading}
+
 /* ---------- onglet Géométrie ---------- */
 async function geoFiles(files){
  const box=$("#geoMsg");box.textContent="Lecture…";
- geoRaw=geoRaw||{gares:[],lignes:[]};let msg=[];
+ if(geoBuiltin){geoRaw=null;geoBuiltin=false}geoRaw=geoRaw||{gares:[],lignes:[]};let msg=[];
  for(const f of files){try{const p=GEO.parse(await f.text());geoRaw.gares.push(...p.gares);geoRaw.lignes.push(...p.lignes);msg.push(f.name+" : "+p.gares.length+" gares, "+p.lignes.length+" tracés")}catch(x){msg.push(f.name+" : illisible ("+x.message+")")}}
  box.textContent=msg.join(" · ");geoBuild();
 }
@@ -743,7 +756,7 @@ function splitSec(out){const tm=r=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(r.time
   r.sec=sec;if(t!=null)lt={t,pk:r.pk}});return out}
 
 /* ---------- données ---------- */
-function setData(r,d){rows=r;defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo();drawGeo();renderLtvSug()}
+function setData(r,d){rows=r;defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
 function demo(){const m=(pk,name,v,time,pl,stop)=>({pk,name,ctx:"",sub:false,stop:!!stop,pl:!!pl,time,reg:"",rad:"",sec:1,v});
  return[m(100,"TEST-A",90,"19:13","",1),m(100.8,"PN 12",60,"",1),m(102,"Bif. de Test",100,""),m(104.5,"Poste 4",120,"19:18"),m(106.2,"PN 15",80,"",1),m(108,"Signal 108",120,"19:22"),m(110.5,"Entrée Test-B",40,"19:25"),m(111,"TEST-B",40,"19:26","",1)]}
 function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||"",ann:c[5]!==undefined&&c[5]!==""&&!isNaN(+c[5])?+c[5]:null}))}
@@ -770,7 +783,7 @@ function renderList(){
  const n=new Set(rows.map(r=>r.sec)).size;
  $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
 }
-const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=20?Math.max(100,d*1000):1000};
+const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
 function masked(why,spd,i,f){
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0";
@@ -789,7 +802,7 @@ function frame(now){
   s=ns;
  }
  const i=Math.min(rows.length-1,Math.floor(s)),f=s-i,r=rows[i],b=rows[i+1];
- const same=b&&b.sec===r.sec&&Math.abs(b.pk-r.pk)<=20;
+ const same=b&&b.sec===r.sec&&Math.abs(b.pk-r.pk)<=80;
  const pk=same?r.pk+f*(b.pk-r.pk):r.pk;
  let T=null,simPt=null;
  if(mode==="sim"){const line=lineFor(r.sec);simPt=line?GEO.point(line,pk):null;
@@ -842,7 +855,7 @@ function initMap(){
  map=L.map("map",{zoomControl:false,attributionControl:true}).setView([46.6,2.4],6);
  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:"© OpenStreetMap © CARTO"}).addTo(map);
  L.tileLayer("https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",{maxZoom:19,subdomains:"abc",opacity:.4,attribution:"OpenRailwayMap"}).addTo(map);
- geoLayer=L.layerGroup().addTo(map);
+ geoLayer=L.layerGroup().addTo(map);map.attributionControl.addAttribution("Tracés : SNCF Réseau (open data)");
  mk=L.circleMarker([0,0],{radius:8,color:"#fff",weight:3,fillColor:"#4f9dff",fillOpacity:1});
  map.on("dragstart",()=>{follow=false;setFollow()});
  drawGeo();if(window.ResizeObserver)new ResizeObserver(()=>map.invalidateSize()).observe($("#map"));
@@ -924,6 +937,7 @@ $("#schAll").onclick=()=>openSchema(null);
 [["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{$(id).value=kvb[k];$(id).oninput=e=>{kvb[k]=e.target.value;store("kvb",JSON.stringify(kvb));renderKvb()}});
 $("#demo").onclick=()=>{ltvD=[];store("ltvD",null);setData(demo(),[]);$("#menu").classList.add("hide")};
 $("#clear").onclick=()=>{["rows","defit","ltv","geo","ltvD"].forEach(k=>store(k,null));ltvD=[];ltv=[];$("#taL").value="";geo={lines:{},sec:{},rep:{}};geoRaw=null;setData([],[]);store("rows",null);store("defit",null);renderGeo();drawGeo()};
+$("#geoReload").onclick=()=>{geoRaw=null;geoBuiltin=false;geoLoading=null;loadBuiltinGeo()};
 $("#geoFile").onchange=e=>{if(e.target.files.length)geoFiles([...e.target.files])};
 $("#geoClr").onclick=()=>{store("geo",null);geo={lines:{},sec:{},rep:{}};geoRaw=null;geoOv={};$("#geoMsg").textContent="";renderGeo();drawGeo()};
 $("#file").onchange=async e=>{
@@ -938,6 +952,7 @@ $("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
 $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
 buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");document.querySelectorAll("#thSw button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
 renderList();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
+if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
 setInterval(tick,500);tick();
 </script>
