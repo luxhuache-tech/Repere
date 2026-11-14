@@ -44,9 +44,9 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .rtr{stroke:var(--track);stroke-width:5;stroke-linecap:round}.rtr.past{stroke:var(--line)}
 .rpa{fill:var(--tx3);opacity:.07}.rpl{fill:none;stroke:var(--tx3);stroke-width:1.5;opacity:.45}
 .rg{fill:var(--tx3);font-size:10px;font-weight:600;opacity:.8;font-variant-numeric:tabular-nums}
-.rsp{stroke:var(--tx);stroke-width:3;stroke-linecap:round}.rsp.ltv{stroke:var(--ltv);stroke-width:4}.rsp.past{opacity:.25}
+.rsp.off{opacity:.35}.rsp{stroke:var(--tx);stroke-width:3;stroke-linecap:round}.rsp.ltv{stroke:var(--ltv);stroke-width:4}.rsp.past{opacity:.25}
 .rspv{stroke:var(--tx3);stroke-width:1.5;stroke-dasharray:3 3}
-.rv{fill:var(--tx);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}.rv.ltv{fill:var(--ltv)}.rv.now{font-size:26px}
+.rv.off{opacity:.35}.rv{fill:var(--tx);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}.rv.ltv{fill:var(--ltv)}.rv.now{font-size:26px}
 .rsm{fill:var(--tx3);font-size:11px}
 .rltv{stroke:var(--ltv);stroke-width:9}.rltvt{stroke:var(--ltv);stroke-width:3;stroke-linecap:round}
 .rann{fill:var(--card);stroke:var(--ltv);stroke-width:3}
@@ -61,6 +61,18 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .rsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:5 5}.rst{fill:var(--tx3);font-size:11px}
 .stopban{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);background:var(--card2);border:1px solid var(--line);border-radius:18px;padding:16px 28px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .stopban .sb1{font-size:clamp(18px,2.4cqw,26px);color:var(--tx2)}.stopban .sb2{font-size:clamp(22px,3.2cqw,36px);margin-top:4px;color:var(--tx2)}.stopban b{color:var(--tx);font-weight:700}
+/* bandeau horaires */
+#hstrip{display:flex;align-items:center;gap:8px;flex:none;background:var(--card);border-radius:14px;padding:4px 6px;min-height:40px}
+#hTog{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--tx2);font-weight:600;font-size:13px;padding:6px 8px;border-radius:9px;flex:none}
+#hTog svg{transition:transform .2s;width:16px;height:16px}#hstrip.open #hTog svg{transform:rotate(90deg)}
+#hList{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}#hList::-webkit-scrollbar{display:none}
+#hstrip:not(.open) #hList{display:none}
+.hi{flex:none;display:flex;flex-direction:column;align-items:flex-start;border:0;background:var(--card2);color:var(--tx2);border-radius:10px;padding:5px 10px;text-align:left}
+.hi .hn{font-size:12px;white-space:nowrap}.hi .ht{font-size:14px;font-weight:600;color:var(--tx);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hi.st .hn{color:var(--tx);font-weight:700}.hi.past{opacity:.4}
+.rback{position:absolute;top:10px;right:10px;border:0;background:var(--acc);color:var(--bg);font-weight:700;border-radius:12px;padding:10px 14px}
+#route{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.stopban.off{border-color:var(--bad)}.stopban.off .sb1 b{color:var(--bad)}.stopban .sb3{font-size:14px;color:var(--tx2);margin-top:6px}
 /* menu déroulant */
 #dd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 74px);right:calc(env(safe-area-inset-right,0px) + 10px);z-index:2500;width:300px;background:var(--card);border-radius:16px;padding:6px;box-shadow:0 12px 40px rgba(0,0,0,.5);border:1px solid var(--line)}
 #dd button[data-o],#dd button[data-t]{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--tx);padding:11px 12px;border-radius:10px;font-weight:500}
@@ -236,6 +248,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   <button class="ic" id="play" aria-label="Lecture"><svg class="i"><use href="#i-play"/></svg></button>
   <button class="ic menu" id="openMenu" aria-label="Menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
  </header>
+ <div id="hstrip"><button id="hTog" aria-expanded="false"><svg class="i"><use href="#i-fold"/></svg>Horaires</button><div id="hList"></div></div>
  <div id="route" aria-label="Ce qui arrive"></div>
  <footer class="bot"><span class="pill" id="gradNow"></span><span class="pill" id="delay"></span><span id="nx"></span><span id="ns"></span><span class="grow"></span><span id="st" data-s="warn">Aucune fiche chargée.</span></footer>
  <div class="foot hide" id="manFoot"><button id="prev">Point précédent</button><button id="next">Point suivant</button></div>
@@ -545,6 +558,18 @@ function renderGeo(){
  E.querySelectorAll("select[data-sec]").forEach(s=>s.onchange=()=>{geoOv[s.dataset.sec]=s.value;geoBuild()});
  const n=Object.keys(geo.lines).length;$("#geoSum").textContent=n?n+" ligne(s) en mémoire sur cet appareil.":"Aucune géométrie en mémoire.";
 }
+
+/* position par rapport au réseau ferré : lignes de la fiche d'abord, puis tout le réseau si les données sont chargées */
+let netState=null;
+function lineBB(parts){let a=1e9,b=1e9,c=-1e9,d=-1e9;for(const pc of parts)for(const p of pc){if(p[0]<a)a=p[0];if(p[1]<b)b=p[1];if(p[0]>c)c=p[0];if(p[1]>d)d=p[1]}return[a,b,c,d]}
+function netCheck(lon,lat,acc){const thr=Math.max(80,2*acc);let best=1e12;
+ for(const k in geo.lines)for(const p of geo.lines[k].pieces){const r=GEO.proj(p.c,p.cum,lon,lat);if(r.d<best)best=r.d}
+ if(best<=thr)return{off:false,d:best,txt:""};
+ let other=null,ob=1e12;if(geoRaw){const m=.02;for(const l of geoRaw.lignes){const bb=l.bb||(l.bb=lineBB(l.parts));if(lon<bb[0]-m||lon>bb[2]+m||lat<bb[1]-m||lat>bb[3]+m)continue;
+   for(const pc of l.parts){const cum=pc.cum||(pc.cum=(()=>{const c=[0];for(let i=1;i<pc.length;i++)c.push(c[i-1]+GEO.dist(pc[i-1],pc[i]));return c})());const r=GEO.proj(pc,cum,lon,lat);if(r.d<ob){ob=r.d;other=l}}}}
+ const km=d=>d<1000?Math.round(d)+" m":(d/1000).toFixed(1).replace(".",",")+" km";
+ if(other&&ob<=thr)return{off:false,other:other.cl,d:ob,txt:"Sur la ligne "+other.cl+(other.lib&&other.lib!==other.cl?" ("+other.lib+")":"")+", absente de la fiche."};
+ const near=Math.min(best,ob);return{off:true,d:near,txt:near<1e11?"Voie la plus proche à "+km(near)+(geoRaw?"":" (lignes de la fiche)")+".":"Aucune voie connue à proximité."}}
 
 /* ---------- distances le long de la fiche ---------- */
 let Dc=[0];
@@ -893,7 +918,7 @@ function drawProfile(cur,ok){const box=$("#prof");if(!box)return;const P=profPts
    profil en long en fond, atténué ; points de passage en bas. */
 function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clientWidth,H=box.clientHeight;if(!W||!H)return;
  if(!rows.length){box.innerHTML='<div class="empty">Aucune fiche chargée.<br>Menu ≡ → Importer une fiche.</div>';return}
- const cur=Dc[i]+f*seg(i),span=zoneKm*1000,d0=cur-span*.12,d1=cur+span;
+ const cur=Dc[i]+f*seg(i),span=zoneKm*1000,dEnd=Dc[Dc.length-1];viewOff=Math.max(-span*.5,Math.min(viewOff,dEnd-cur));const d0=cur-span*.12+viewOff,d1=d0+span*1.12;routeGeom={d0,d1,W,cur};
  const X=d=>(d-d0)/(d1-d0)*W,vis=d=>d>=d0&&d<=d1;
  const sTop=40,sBot=Math.round(H*.40),pTop=Math.round(H*.22),pBot=Math.round(H*.56),yT=Math.round(H*.6),yAx=H-22,q=[];
  const T=(x,y,t,c,a)=>q.push('<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" class="'+c+'"'+(a?' text-anchor="'+a+'"':"")+">"+esc(t)+"</text>");
@@ -919,9 +944,9 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  for(const c of ch){pieces.push({a,b:c.d,v,lt,clr});a=c.d;v=c.v;lt=c.ltv;clr=c.clr}pieces.push({a,b:d1,v,lt,clr});
  const vmax=Math.max(60,...pieces.map(p=>p.v||0)),Ys=v=>sBot-(v/vmax)*(sBot-sTop-18);
  for(let k=0;k<pieces.length;k++){const p=pieces[k];if(p.v==null)continue;const y=Ys(p.v),xa=X(p.a),xb=X(p.b),past=p.b<=cur;
-  q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+y+'" y2="'+y+'" class="rsp'+(p.lt?" ltv":"")+(past?" past":"")+'"/>');
+  q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+y+'" y2="'+y+'" class="rsp'+(p.lt?" ltv":"")+(past?" past":"")+(ok?"":" off")+'"/>');
   const n=pieces[k+1];if(n&&n.v!=null)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+y+'" y2="'+Ys(n.v)+'" class="rspv"/>');
-  if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":""));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
+  if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;if(ok||p.a>cur)T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":"")+(ok?"":" off"));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
  /* points de passage, en bas */
  const occ=[],pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(isStop(rows[b])-isStop(rows[a]))||(!!rows[b].train-!!rows[a].train)||a-b);
  const lane=[yAx-56,yAx-22];
@@ -941,9 +966,29 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
   if(best!=null){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=stopName(r);
    ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" et 30 s":"")+"</b></div>":"")+"</div>"}}
- box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban}
+ if(mode!=="sim"&&netState&&netState.off&&gps&&(Date.now()-gps.ts)/1000<=10)ban='<div class="stopban off"><div class="sb1"><b>Hors du réseau ferré</b></div><div class="sb3">'+esc(netState.txt)+"</div></div>";
+ const back=Math.abs(viewOff)>50?'<button class="rback" id="rBack">Revenir au train</button>':"";
+ box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban+back;const rb=$("#rBack");if(rb)rb.onclick=e=>{e.stopPropagation();viewOff=0;lastRow=-1;frame(Date.now())}}
 /* numéro de train en cours : dernier changement de parité dépassé */
 function curTrain(i){let t=null;for(let j=0;j<=i&&j<rows.length;j++)if(rows[j].train)t=rows[j].train;return t}
+
+/* glisser la vue pour regarder plus loin ; retour au train après 15 s sans toucher */
+let viewOff=0,viewT=0,routeGeom=null;
+(function(){const box=$("#route");if(!box)return;let x0=null,o0=0;
+ box.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;x0=e.clientX;o0=viewOff;box.setPointerCapture&&box.setPointerCapture(e.pointerId)});
+ box.addEventListener("pointermove",e=>{if(x0==null||!routeGeom)return;const dx=e.clientX-x0;viewOff=o0-dx*(routeGeom.d1-routeGeom.d0)/routeGeom.W;viewT=Date.now();frame(Date.now())});
+ const up=()=>{x0=null;viewT=Date.now()};box.addEventListener("pointerup",up);box.addEventListener("pointercancel",up);
+ setInterval(()=>{if(viewOff&&Date.now()-viewT>15000&&x0==null){viewOff=0}},1000)})();
+function lookAt(j){if(!routeGeom||!rows[j])return;viewOff=Dc[j]-routeGeom.cur-zoneKm*1000*.3;viewT=Date.now();frame(Date.now())}
+/* bandeau des horaires */
+const fmtT=t=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(t);return m?m[1]+"h"+m[2]+(m[3]?" 30 s":""):""};
+let hOpen=store("hOpen")==="1",hLast=-2;
+function renderHours(i,force){const S=$("#hstrip");if(!S)return;S.classList.toggle("open",hOpen);$("#hTog").setAttribute("aria-expanded",hOpen);if(!hOpen||!rows.length){$("#hList").innerHTML=hOpen?'<span class="muted small">Aucune fiche.</span>':"";hLast=-2;return}
+ if(i===hLast&&!force)return;hLast=i;const H=[];
+ for(let j=0;j<rows.length;j++){const r=rows[j];if(isSup(r))continue;const T=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)].map(m=>m[0]);if(!T.length)continue;H.push({j,r,T})}
+ const L=$("#hList");L.innerHTML=H.map(h=>{const st=isStop(h.r),past=h.j<i;return'<button class="hi'+(st?" st":"")+(past?" past":"")+'" data-j="'+h.j+'"><span class="hn">'+esc(stopName(h.r))+(isCond(h.r)?" [C]":"")+'</span><span class="ht">'+(st&&h.T.length>1?fmtT(h.T[0])+" → "+fmtT(h.T[h.T.length-1]):fmtT(h.T[h.T.length-1]))+"</span></button>"}).join("");
+ L.querySelectorAll("button[data-j]").forEach(b=>b.onclick=()=>lookAt(+b.dataset.j));
+ const nx=L.querySelector(".hi:not(.past)");if(nx&&L.scrollTo)L.scrollTo({left:nx.offsetLeft-L.offsetLeft-12,behavior:"smooth"})}
 
 
 /* ---------- lecture du PDF de la fiche ---------- */
@@ -1035,7 +1080,7 @@ function renderList(){
 const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
 function masked(why,spd,i,f){
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
- $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0";
+ $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
  setSt("warn",why+" PK et limite masqués.");if(i!=null)drawRoute(i,f,false)
 }
@@ -1046,7 +1091,7 @@ function frame(now){
  if(mode==="gps"){
   let G=trk.res;if(!gps||(now-gps.ts)/1000>5)G={ok:false,why:geoErr||"Pas de position GPS récente."};
   const i0=Math.min(rows.length-1,Math.floor(s));
-  if(!G||!G.ok){masked(G?G.why:"Recherche de la position…",spd,i0,s-i0);mapPos(gpsPt,false);return}
+  if(!G||!G.ok){masked(netState&&netState.off?"Hors du réseau ferré. "+netState.txt:netState&&netState.other?netState.txt:(G?G.why:"Recherche de la position…"),spd,i0,s-i0);mapPos(gpsPt,false);return}
   const ns=pkToS(G.sec,G.pk);if(ns==null){masked("PK hors de la fiche.",spd,i0,s-i0);mapPos(gpsPt,false);return}
   s=ns;
  }
@@ -1082,7 +1127,7 @@ function frame(now){
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
  else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Position réglée à la main.");
  else setSt("ok",mode==="sim"?(sim.run?"Simulation":"Simulation à l’arrêt"):"Position réglée à la main · vitesse GPS ±"+Math.round(gps.acc)+" m");
- drawRoute(i,f,true);markRows(i);
+ drawRoute(i,f,true);renderHours(i);markRows(i);
 }
 function markRows(i){if(i===lastRow)return;lastRow=i;$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)});gotoRow()}
 function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
@@ -1156,12 +1201,13 @@ function startGps(){
  watchId=navigator.geolocation.watchPosition(p=>{const c=p.coords;let v=c.speed;
   if((v==null||v<0)&&gps&&gps.lat!=null){const dt=(p.timestamp-gps.ts)/1000;v=dt>0?GEO.dist([gps.lon,gps.lat],[c.longitude,c.latitude])/dt:0}
   gps={v:(v||0)*3.6,acc:c.accuracy,ts:p.timestamp,lat:c.latitude,lon:c.longitude};geoErr="";
-  if(mode==="gps")trk.res=geoFix(c.longitude,c.latitude,c.accuracy,p.timestamp,gps.v)},
+  if(mode==="gps")trk.res=geoFix(c.longitude,c.latitude,c.accuracy,p.timestamp,gps.v);
+  netState=c.accuracy<=150&&(Object.keys(geo.lines).length||geoRaw)?netCheck(c.longitude,c.latitude,c.accuracy):null},
   e=>{geoErr="GPS indisponible ("+e.message+")."},{enableHighAccuracy:true,maximumAge:0,timeout:10000});
 }
 function stopGps(){if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}}
 function playIcon(){$("#play use").setAttribute("href",sim.run?"#i-pause":"#i-play")}
-function setMode(m){mode=m;store("mode",m);["Sim","Man","Gps"].forEach(k=>$("#m"+k).setAttribute("aria-pressed",m===k.toLowerCase()));$("#simBox").classList.toggle("hide",m!=="sim");$("#play").classList.toggle("hide",m!=="sim");$("#manFoot").classList.toggle("hide",m!=="man");sim.run=false;playIcon();stopGps();trkReset();lastRow=-1;if(m!=="sim")startGps()}
+function setMode(m){mode=m;netState=null;if(m!=="sim"&&typeof loadBuiltinGeo==="function"&&rows.length)loadBuiltinGeo();store("mode",m);["Sim","Man","Gps"].forEach(k=>$("#m"+k).setAttribute("aria-pressed",m===k.toLowerCase()));$("#simBox").classList.toggle("hide",m!=="sim");$("#play").classList.toggle("hide",m!=="sim");$("#manFoot").classList.toggle("hide",m!=="man");sim.run=false;playIcon();stopGps();trkReset();lastRow=-1;if(m!=="sim")startGps()}
 function setMid(v){}
 function setZoom(k){zoneKm=k;store("zoneKm",String(k));document.querySelectorAll("#zoomSw button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.k===k))}
 
@@ -1192,6 +1238,7 @@ $("#simG").onchange=()=>trkReset();
 $("#sv").oninput=e=>{sim.v=+e.target.value;$("#svT").textContent=sim.v};
 $("#mult").onchange=e=>sim.mult=+e.target.value;
 $("#okL").onclick=saveLtv;
+$("#hTog").onclick=()=>{hOpen=!hOpen;store("hOpen",hOpen?"1":"0");renderHours(Math.min(rows.length-1,Math.floor(s)),true)};
 $("#schClose").onclick=()=>{$("#schv").classList.add("hide");schZoom=1};
 $("#schIn").onclick=()=>{schZoom=Math.min(4,schZoom*1.3);drawSchema()};$("#schOut").onclick=()=>{schZoom=Math.max(.6,schZoom/1.3);drawSchema()};
 $("#schAll").onclick=()=>openSchema(null);
