@@ -40,22 +40,27 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .bot{display:flex;gap:14px;align-items:center;flex:none;padding:0 6px;font-size:13px;color:var(--tx2);min-height:22px;white-space:nowrap;overflow:hidden}.bot b{color:var(--tx);font-weight:600}
 .bot #st{padding:0;border:0}
 /* voie */
-.rtr{fill:none;stroke:var(--track);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.rtr.past{stroke:var(--line)}
-.rltv{fill:none;stroke:var(--ltv);stroke-width:9;stroke-linecap:butt;opacity:.95}.rltvt{stroke:var(--ltv);stroke-width:3;stroke-linecap:round}
-.rann{fill:var(--card);stroke:var(--ltv);stroke-width:3}
-.rov{fill:none;stroke-width:13;opacity:.35}.rov.rt{stroke:var(--tx3)}.rov.rb{stroke:var(--tx2);stroke-dasharray:4 4}
-.rbody{fill:none;stroke:var(--acc);stroke-width:9;stroke-linecap:round;opacity:.45}.rbody.off{stroke:var(--tx3)}
-.rtrain{fill:var(--acc)}.rtrain.off{fill:var(--tx3)}
-.rv{fill:var(--tx);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}.rv.ltv{fill:var(--ltv)}
+#route{position:relative}
+.rtr{stroke:var(--track);stroke-width:5;stroke-linecap:round}.rtr.past{stroke:var(--line)}
+.rpa{fill:var(--tx3);opacity:.07}.rpl{fill:none;stroke:var(--tx3);stroke-width:1.5;opacity:.45}
+.rg{fill:var(--tx3);font-size:10px;font-weight:600;opacity:.8;font-variant-numeric:tabular-nums}
+.rsp{stroke:var(--tx);stroke-width:3;stroke-linecap:round}.rsp.ltv{stroke:var(--ltv);stroke-width:4}.rsp.past{opacity:.25}
+.rspv{stroke:var(--tx3);stroke-width:1.5;stroke-dasharray:3 3}
+.rv{fill:var(--tx);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}.rv.ltv{fill:var(--ltv)}.rv.now{font-size:26px}
 .rsm{fill:var(--tx3);font-size:11px}
-.rchg{stroke:var(--tx3);stroke-width:1;stroke-dasharray:2 4}.rchg.clr{stroke:var(--tx2)}
-.rg{fill:var(--tx3);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.rltv{stroke:var(--ltv);stroke-width:9}.rltvt{stroke:var(--ltv);stroke-width:3;stroke-linecap:round}
+.rann{fill:var(--card);stroke:var(--ltv);stroke-width:3}
+.rov{stroke-width:4;stroke-linecap:round}.rov.rt{stroke:var(--tx3)}.rov.rb{stroke:var(--tx3);stroke-dasharray:4 4}
+.rbody{stroke:var(--acc);stroke-width:9;stroke-linecap:round;opacity:.45}.rbody.off{stroke:var(--tx3)}
+.rtrain{fill:var(--acc)}.rtrain.off{fill:var(--tx3)}
+.rtick{stroke:var(--tx2);stroke-width:2}.rtick.past{opacity:.4}
 .rn{fill:var(--tx2);font-size:13px;text-anchor:middle}.rn.stop{fill:var(--tx);font-size:17px;font-weight:700}.rn.past,.rpk.past{fill:var(--tx3)}
+.rpar{fill:var(--tx);font-weight:800}
 .rpk{fill:var(--tx3);font-size:11px;text-anchor:middle;font-variant-numeric:tabular-nums}
 .rlead{stroke:var(--line);stroke-width:1}.rlead.past{opacity:.5}
-.rdot{fill:var(--tx3)}.rdot.stop{fill:var(--acc)}.rdot.past{opacity:.4}
-.rax{stroke:var(--line);stroke-width:1.5}.rkm{fill:var(--tx3);font-size:11px}
 .rsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:5 5}.rst{fill:var(--tx3);font-size:11px}
+.stopban{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);background:var(--card2);border:1px solid var(--line);border-radius:18px;padding:16px 28px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.stopban .sb1{font-size:clamp(18px,2.4cqw,26px);color:var(--tx2)}.stopban .sb2{font-size:clamp(22px,3.2cqw,36px);margin-top:4px;color:var(--tx2)}.stopban b{color:var(--tx);font-weight:700}
 /* menu déroulant */
 #dd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 74px);right:calc(env(safe-area-inset-right,0px) + 10px);z-index:2500;width:300px;background:var(--card);border-radius:16px;padding:6px;box-shadow:0 12px 40px rgba(0,0,0,.5);border:1px solid var(--line)}
 #dd button[data-o],#dd button[data-t]{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--tx);padding:11px 12px;border-radius:10px;font-weight:500}
@@ -143,6 +148,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .r .pkc{font-variant-numeric:tabular-nums;color:var(--tx2);font-size:14px}
 .r.stop .nm{font-weight:600;color:var(--tx)}.r.stop.past .nm{color:var(--tx3)}.r .sub{color:var(--tx2);font-size:13px}
 .r .x{color:var(--tx3);font-size:12px;margin-left:6px}
+.par{font-weight:800;color:var(--tx)}
 .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--bg);background:var(--ltv);border-radius:5px;padding:1px 6px;margin-right:6px;vertical-align:2px}
 .secr{margin:8px 6px 2px;padding:5px 10px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--tx3);background:var(--card2);border-radius:8px}
 .empty{padding:40px 24px;color:var(--tx3);text-align:center;font-size:14px}
@@ -860,52 +866,62 @@ function drawProfile(cur,ok){const box=$("#prof");if(!box)return;const P=profPts
  for(const p of V){if(p.g==null)continue;const r=Math.round(p.g);if(last==null||Math.abs(r-last)>=3){if(p.d>d0&&p.d<d1){const xx=x(p.d);if(occ.every(o=>Math.abs(o-xx)>34)){occ.push(xx);lab+='<text x="'+(xx+3)+'" y="11" class="pg">'+(Math.abs(r)<1?"0":(r>0?"+":"−")+Math.abs(r))+"</text>"+'<line x1="'+xx+'" x2="'+xx+'" y1="13" y2="'+y(p.z)+'" class="ptick"/>'}}last=r}}
  const xc=x(cur);box.innerHTML='<svg width="'+W+'" height="'+H+'">'+paths+ov+lab+'<line x1="'+xc+'" x2="'+xc+'" y1="0" y2="'+H+'" class="pcur'+(ok?"":" off")+'"/><text x="'+(W-4)+'" y="'+(H-5)+'" class="pkm" text-anchor="end">'+zoneKm+" km</text></svg>"}
 
-/* ---------- vue de conduite horizontale : la voie en profil, ce qui arrive vers la droite ---------- */
+/* ---------- vue de conduite horizontale ----------
+   Voie droite horizontale, train qui défile ; limites en paliers horizontaux au-dessus ;
+   profil en long en fond, atténué ; points de passage en bas. */
 function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clientWidth,H=box.clientHeight;if(!W||!H)return;
- if(!rows.length){box.innerHTML='<div class="empty">Aucune fiche chargée.<br>Menu ≡ → Fiche train.</div>';return}
+ if(!rows.length){box.innerHTML='<div class="empty">Aucune fiche chargée.<br>Menu ≡ → Importer une fiche.</div>';return}
  const cur=Dc[i]+f*seg(i),span=zoneKm*1000,d0=cur-span*.12,d1=cur+span;
  const X=d=>(d-d0)/(d1-d0)*W,vis=d=>d>=d0&&d<=d1;
- const yLab=30,cTop=H*.2,cBot=H*.6,yAx=H-30,q=[];
+ const sTop=40,sBot=Math.round(H*.40),pTop=Math.round(H*.22),pBot=Math.round(H*.56),yT=Math.round(H*.6),yAx=H-22,q=[];
  const T=(x,y,t,c,a)=>q.push('<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" class="'+c+'"'+(a?' text-anchor="'+a+'"':"")+">"+esc(t)+"</text>");
- /* profil : altitude interpolée le long du parcours */
+ /* profil en long, en fond */
  const P=(typeof profPts==="function"?profPts():[]).filter(p=>p.d>=d0-600&&p.d<=d1+600&&p.z!=null);
- let zmin=Infinity,zmax=-Infinity;for(const p of P){if(p.z<zmin)zmin=p.z;if(p.z>zmax)zmax=p.z}
- if(P.length<2){zmin=0;zmax=1}else if(zmax-zmin<25){const m=(zmax+zmin)/2;zmin=m-12.5;zmax=m+12.5}
- let pi=0;const zAt=d=>{if(P.length<2)return .5;while(pi>0&&P[pi].d>d)pi--;while(pi<P.length-2&&P[pi+1].d<d)pi++;const a=P[pi],b=P[pi+1];if(d<=a.d)return a.z;if(d>=b.d)return b.z;return a.z+(b.z-a.z)*(d-a.d)/(b.d-a.d)};
- const Y=d=>{const z=zAt(d);return P.length<2?(cTop+cBot)/2:cBot-(z-zmin)/(zmax-zmin)*(cBot-cTop)};
- const path=(a,b)=>{const n=Math.max(2,Math.ceil((X(b)-X(a))/4));let s="";for(let k=0;k<=n;k++){const d=a+(b-a)*k/n;s+=(k?"L":"M")+X(d).toFixed(1)+" "+Y(d).toFixed(1)}return s};
- /* repères km sur l'axe du bas */
- q.push('<line x1="0" x2="'+W+'" y1="'+yAx+'" y2="'+yAx+'" class="rax"/>');
- const kstep=zoneKm<=2?.5:zoneKm<=5?1:2;for(let k=kstep;k<=zoneKm;k+=kstep){const x=X(cur+k*1000);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yAx-4)+'" y2="'+(yAx+4)+'" class="rax"/>');T(x,yAx+18,(k%1?k.toFixed(1).replace(".",","):k)+" km","rkm","middle")}
- /* voie */
- q.push('<path d="'+path(Math.max(d0,cur-span),cur)+'" class="rtr past"/>','<path d="'+path(cur,d1)+'" class="rtr"/>');
- /* ouvrages (profil) */
- for(let k=0;k<P.length;k++)if(P[k].o&&vis(P[k].d)){let j=k;while(j+1<P.length&&P[j+1].o===P[k].o&&P[j+1].d-P[j].d<200)j++;q.push('<path d="'+path(P[k].d,P[j].d+50)+'" class="rov '+(P[k].o==="t"?"rt":"rb")+'"/>');k=j}
- /* changement de ligne */
- let lsx=-1e9,lsk=0;for(let j=0;j<rows.length-1;j++)if(rows[j].sec!==rows[j+1].sec&&vis(Dc[j+1])){const x=X(Dc[j+1]);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yLab+8)+'" y2="'+yAx+'" class="rsec"/>');const g=geo.sec&&geo.sec[rows[j+1].sec];lsk=x-lsx<130?lsk+1:0;lsx=x;T(x+4,yAx-8-lsk*14,"Changement de ligne"+(g?" "+g.split("/")[0]:""),"rst")}
- /* LTV : sur la voie, en orange */
- const Z=ltvZones(),Lt=trainLen(),occT=[];const freeT=(x,w)=>{for(const o of occT)if(Math.abs(o-x)<w)return false;occT.push(x);return true};
- for(const z of Z){if(z.d2<d0||z.d1>d1)continue;const a=Math.max(z.d1,d0),b=Math.min(z.d2,d1);q.push('<path d="'+path(a,b)+'" class="rltv"/>');
-  for(const d of [z.d1,z.d2])if(vis(d))q.push('<line x1="'+X(d)+'" x2="'+X(d)+'" y1="'+(Y(d)-10)+'" y2="'+(Y(d)+10)+'" class="rltvt"/>');
-  if(z.k.ann!=null){const da=pkToD(z.sec,z.k.ann);if(da!=null&&vis(da))q.push('<circle cx="'+X(da)+'" cy="'+Y(da)+'" r="5" class="rann"/>')}}
- /* limites effectives (avec dégagement) : valeurs dans la bande du haut */
- const E=effLim(cur,Z,Lt);if(E.v!=null){freeT(X(cur),70);T(X(cur)+14,yLab,String(E.v),"rv"+(E.ltv?" ltv":""))}
- for(const c of effChanges(cur,d1,Z,Lt)){const x=X(c.d);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yLab+6)+'" y2="'+Y(c.d)+'" class="rchg'+(c.clr?" clr":"")+'"/>');if(freeT(x,64)){T(x+4,yLab,String(c.v),"rv"+(c.ltv?" ltv":""));if(c.clr)T(x+4,yLab+14,"queue dégagée","rsm")}}
- /* déclivité (‰) au-dessus de la voie */
- let last=null;const occG=[];for(const p of P){if(p.g==null||!vis(p.d))continue;const r=Math.round(p.g);if(last==null||Math.abs(r-last)>=3){const x=X(p.d);if(p.d>cur&&occG.every(o=>Math.abs(o-x)>46)){occG.push(x);T(x,Y(p.d)-12,(Math.abs(r)<1?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","middle")}last=r}}
- /* gares et points de la fiche : sous la voie, repère sur l'axe */
- const occ=[];const pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(rows[b].stop-rows[a].stop)||a-b);
- const lane=[Math.min(cBot+52,yAx-58),Math.min(cBot+96,yAx-16)];
+ if(P.length>1){let zmin=Infinity,zmax=-Infinity;for(const p of P){if(p.z<zmin)zmin=p.z;if(p.z>zmax)zmax=p.z}if(zmax-zmin<25){const m=(zmax+zmin)/2;zmin=m-12.5;zmax=m+12.5}
+  const Yp=z=>pBot-(z-zmin)/(zmax-zmin)*(pBot-pTop);let run=[];const flush=()=>{if(run.length>1){const l=run.map((p,k)=>(k?"L":"M")+X(p.d).toFixed(1)+" "+Yp(p.z).toFixed(1)).join("");q.push('<path d="'+l+"L"+X(run[run.length-1].d).toFixed(1)+" "+yT+"L"+X(run[0].d).toFixed(1)+" "+yT+'Z" class="rpa"/><path d="'+l+'" class="rpl"/>')}run=[]};
+  for(let k=0;k<P.length;k++){if(k&&(P[k].sec!==P[k-1].sec||P[k].d-P[k-1].d>350))flush();run.push(P[k])}flush();
+  let last=null;const occG=[];for(const p of P){if(p.g==null||!vis(p.d))continue;const r=Math.round(p.g);if(last==null||Math.abs(r-last)>=3){const x=X(p.d);if(p.d>cur&&occG.every(o=>Math.abs(o-x)>50)){occG.push(x);T(x,Yp(p.z)-8,(Math.abs(r)<1?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","middle")}last=r}}}
+ /* voie horizontale */
+ q.push('<line x1="0" x2="'+X(cur)+'" y1="'+yT+'" y2="'+yT+'" class="rtr past"/><line x1="'+X(cur)+'" x2="'+W+'" y1="'+yT+'" y2="'+yT+'" class="rtr"/>');
+ /* ouvrages */
+ for(let k=0;k<P.length;k++)if(P[k].o&&vis(P[k].d)){let j=k;while(j+1<P.length&&P[j+1].o===P[k].o&&P[j+1].d-P[j].d<200)j++;q.push('<line x1="'+X(P[k].d)+'" x2="'+X(P[j].d+50)+'" y1="'+(yT+10)+'" y2="'+(yT+10)+'" class="rov '+(P[k].o==="t"?"rt":"rb")+'"/>');T((X(P[k].d)+X(P[j].d+50))/2,yT+24,P[k].o==="t"?"tunnel":"pont","rsm","middle");k=j}
+ /* changements de ligne */
+ let lsx=-1e9,lsk=0;for(let j=0;j<rows.length-1;j++)if(rows[j].sec!==rows[j+1].sec&&vis(Dc[j+1])){const x=X(Dc[j+1]);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(sBot+10)+'" y2="'+yAx+'" class="rsec"/>');const g=geo.sec&&geo.sec[rows[j+1].sec];lsk=x-lsx<130?lsk+1:0;lsx=x;T(x+4,yT-10-lsk*13,"Changement de ligne"+(g?" "+g.split("/")[0]:""),"rst")}
+ /* LTV sur la voie */
+ const Z=ltvZones(),Lt=trainLen();
+ for(const z of Z){if(z.d2<d0||z.d1>d1)continue;q.push('<line x1="'+X(Math.max(z.d1,d0))+'" x2="'+X(Math.min(z.d2,d1))+'" y1="'+yT+'" y2="'+yT+'" class="rltv"/>');
+  for(const d of [z.d1,z.d2])if(vis(d))q.push('<line x1="'+X(d)+'" x2="'+X(d)+'" y1="'+(yT-10)+'" y2="'+(yT+10)+'" class="rltvt"/>');
+  if(z.k.ann!=null){const da=pkToD(z.sec,z.k.ann);if(da!=null&&vis(da))q.push('<circle cx="'+X(da)+'" cy="'+yT+'" r="5" class="rann"/>')}}
+ /* limites : paliers horizontaux (avec dégagement de la longueur du train) */
+ const st=effLim(d0,Z,Lt),ch=effChanges(d0,d1,Z,Lt);const pieces=[];let a=d0,v=st.v,lt=st.ltv,clr=false;
+ for(const c of ch){pieces.push({a,b:c.d,v,lt,clr});a=c.d;v=c.v;lt=c.ltv;clr=c.clr}pieces.push({a,b:d1,v,lt,clr});
+ const vmax=Math.max(60,...pieces.map(p=>p.v||0)),Ys=v=>sBot-(v/vmax)*(sBot-sTop-18);
+ for(let k=0;k<pieces.length;k++){const p=pieces[k];if(p.v==null)continue;const y=Ys(p.v),xa=X(p.a),xb=X(p.b),past=p.b<=cur;
+  q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+y+'" y2="'+y+'" class="rsp'+(p.lt?" ltv":"")+(past?" past":"")+'"/>');
+  const n=pieces[k+1];if(n&&n.v!=null)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+y+'" y2="'+Ys(n.v)+'" class="rspv"/>');
+  if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":""));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
+ /* points de passage, en bas */
+ const occ=[],pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(rows[b].stop-rows[a].stop)||(!!rows[b].train-!!rows[a].train)||a-b);
+ const lane=[yAx-56,yAx-22];
  for(const j of pts){const r=rows[j],x=X(Dc[j]),past=Dc[j]<cur-30,nm=r.sub&&r.ctx?r.ctx+(/^\|?\s*BV\b/.test(r.name)?"":" "+r.name.replace(/^\|\s*/,"")):r.name;
-  const wdt=Math.min(200,(nm.length*(r.stop?9:7.2))+10);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x+wdt<o.x||x>o.x+o.w))L=k}
-  q.push('<circle cx="'+x+'" cy="'+yAx+'" r="'+(r.stop?6:3.5)+'" class="rdot'+(r.stop?" stop":"")+(past?" past":"")+'"/>');
-  if(L<0||(!r.stop&&zoneKm>5&&L>0))continue;occ.push({l:L,x,w:wdt});
-  q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(Y(Dc[j])+6)+'" y2="'+(lane[L]-18)+'" class="rlead'+(past?" past":"")+'"/>');
-  T(x,lane[L],nm,"rn"+(r.stop?" stop":"")+(past?" past":""));T(x,lane[L]+15,"PK "+fk(r.pk)+(r.time&&r.stop?"":""),"rpk"+(past?" past":""))}
- /* train : corps sur la longueur KVB, triangle au-dessus de la tête */
- const xt=X(cur),yt=Y(cur);if(Lt>0)q.push('<path d="'+path(Math.max(d0,cur-Lt),cur)+'" class="rbody'+(ok?"":" off")+'"/>');
- q.push('<path d="M'+(xt-11)+" "+(yt-28)+"h22l-11 19z\" class=\"rtrain"+(ok?"":" off")+'"/>');
- box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"}
+  q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT-5)+'" y2="'+(yT+5)+'" class="rtick'+(past?" past":"")+'"/>');
+  const sub="PK "+fk(r.pk)+(r.reg?" · M. rég. "+r.reg+" min":"");
+  const wdt=Math.max(nm.length*(r.stop?9.5:7.4)+(r.train?78:0),sub.length*6.2)+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
+  if(L<0)continue;occ.push({l:L,x0,x1});
+  q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT+6)+'" y2="'+(lane[L]-17)+'" class="rlead'+(past?" past":"")+'"/>');
+  q.push('<text x="'+x+'" y="'+lane[L]+'" class="rn'+(r.stop?" stop":"")+(past?" past":"")+'">'+esc(nm)+(r.train?'<tspan class="rpar" dx="8">→ '+esc(r.train)+"</tspan>":"")+"</text>");
+  T(x,lane[L]+14,sub,"rpk"+(past?" past":""))}
+ /* train sur la voie */
+ const xt=X(cur);if(Lt>0)q.push('<line x1="'+X(Math.max(d0,cur-Lt))+'" x2="'+xt+'" y1="'+yT+'" y2="'+yT+'" class="rbody'+(ok?"":" off")+'"/>');
+ q.push('<path d="M'+(xt+13)+" "+yT+"l-20 -11v22z\" class=\"rtrain"+(ok?"":" off")+'"/>');
+ /* à l'arrêt en gare : départ prévu */
+ let ban="";const spd=mode==="sim"?sim.v:(gps&&(Date.now()-gps.ts)/1000<=5?gps.v:null);
+ if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(rows[j].stop&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
+  if(best!=null){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=r.sub&&r.ctx?r.ctx:r.name;
+   ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" ½":"")+"</b></div>":"")+"</div>"}}
+ box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban}
+/* numéro de train en cours : dernier changement de parité dépassé */
+function curTrain(i){let t=null;for(let j=0;j<=i&&j<rows.length;j++)if(rows[j].train)t=rows[j].train;return t}
 
 
 /* ---------- lecture du PDF de la fiche ---------- */
@@ -930,7 +946,9 @@ async function readPdf(buf){
    const nmI=col(.213,.593);const raw=nmI.filter(i=>i.s!=="PL").map(i=>i.s).join(" ").trim();
    const sub=/^\|/.test(raw),name=raw.replace(/^\|\s*/,"").trim();
    if(/^\(\d\)/.test(name)){dft.push("Note de fiche : "+raw);continue}
-   if(/^\d{5}$/.test(name)){train=name;continue}
+   if(/^\d{5,6}$/.test(name)){train=name;continue}
+   /* changement de parité : numéro de train seul sur une ligne sans PK */
+   if(!pkI){const par=l.find(i=>/^\d{5,6}$/.test(i.s)&&i.f>.2&&i.f<.85);if(par){train=par.s;continue}}
    if(!pkI){if(name&&!sub)ctx=name;continue}
    if(name&&!sub)ctx=name;
    pr.push({pk:parseFloat(pkI.s),name,ctx:sub?ctx:"",sub,stop:/^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ '’\-]{2,}$/.test(sub?ctx:name)||/\[C\]/.test(col(.593,.843).map(i=>i.s).join(" ")),pl:nmI.some(i=>i.s==="PL"),time:col(.593,.843).map(i=>i.s).join(" "),reg:col(.843,.89).map(i=>i.s).join(" "),rad:col(.89,2).map(i=>i.s).join(""),y:l.y,train,page:p});train="";
@@ -981,8 +999,8 @@ function renderList(){
   const t=ltv.filter(k=>inLtv(k,r.pk,r.sec)).reduce((m,k)=>Math.min(m,k.v),1e9);
   const eff=t<1e9&&(r.v==null||t<r.v);
   const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name.replace(/^\|\s*/,""))+"</span>":esc(r.name||"—");
-  const x=[r.pl?"PL":"",r.reg,r.rad].filter(Boolean).map(esc).join(" ");
-  e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+(r.stop?'<span class="tag">ARRÊT</span>':"")+nm+(r.train?" → "+esc(r.train):"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
+  const x=[r.pl?"PL":"",r.reg?"M. rég. "+r.reg+" min":"",r.rad].filter(Boolean).map(esc).join(" · ");
+  e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+(r.stop?'<span class="tag">ARRÊT</span>':"")+nm+(r.train?' <b class="par">→ '+esc(r.train)+"</b>":"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
   e.onclick=()=>{if(mode==="man"){s=i;lastRow=-1;gotoRow(true)}};
   L.appendChild(e);
  });
@@ -1008,6 +1026,7 @@ function frame(now){
   s=ns;
  }
  const i=Math.min(rows.length-1,Math.floor(s)),f=s-i,r=rows[i],b=rows[i+1];
+ {const tn=curTrain(i)||store("trainNo");if(tn&&$("#ficheT").textContent!==tn)$("#ficheT").textContent=tn}
  const same=b&&b.sec===r.sec&&Math.abs(b.pk-r.pk)<=80;
  const pk=same?r.pk+f*(b.pk-r.pk):r.pk;
  let T=null,simPt=null;
