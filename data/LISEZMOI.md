@@ -6,3 +6,7 @@
 - lignes : code ligne, rang de tronçon, libellé, PK début, PK fin, tracé simplifié (tolérance 1,5 m, coordonnées au 1/100 000e de degré).
 
 Source : SNCF Réseau. Ces données ne sont pas destinées à la navigation en temps réel : le PK calculé par Repère est une aide, jamais une référence.
+
+`declivite.json` vient du jeu « Caractéristique des voies et déclivité » (SNCF Réseau, état au 31/12/2021) : code ligne, rang de tronçon, voie, PK début, PK fin, déclivité en ‰ dans le sens des PK croissants (rampe positive, pente négative). Il ne couvre que les portions mesurées.
+
+Le profil en long est complété par l'appli au moment de l'import : altitudes du terrain IGN (Géoplateforme, calcul altimétrique) et tunnels/ponts ferroviaires OpenStreetMap (© contributeurs OpenStreetMap, ODbL) via Overpass.
