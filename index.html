@@ -555,8 +555,8 @@ function effChanges(d0,d1,Z,Lt){const B=new Set();
 
 /* ---------- horaires : avance / retard ---------- */
 let Tm=[];
-function buildT(){Tm=[];let off=0,last=null;for(const r of rows){const m=[...String(r.time||"").matchAll(/(\d{1,2})[:h](\d{2})/g)];
- if(!m.length){Tm.push(null);continue}const x=m[m.length-1];let t=+x[1]*60+ +x[2]+off;if(last!=null&&t<last-600){off+=1440;t+=1440}last=t;Tm.push(t)}}
+function buildT(){Tm=[];let off=0,last=null;for(const r of rows){const m=[...String(r.time||"").matchAll(/(\d{1,2})[:h](\d{2})(\+?)/g)];
+ if(!m.length){Tm.push(null);continue}const x=m[m.length-1];let t=+x[1]*60+ +x[2]+(x[3]?.5:0)+off;if(last!=null&&t<last-600){off+=1440;t+=1440}last=t;Tm.push(t)}}
 function schedAt(d){let p=-1,n=-1;for(let j=0;j<rows.length;j++){if(Tm[j]==null)continue;if(Dc[j]<=d)p=j;else{n=j;break}}
  if(p<0&&n<0)return null;if(p<0)return Tm[n];if(n<0)return Tm[p];return Tm[p]+(d-Dc[p])/(Dc[n]-Dc[p]||1)*(Tm[n]-Tm[p])}
 function firstTime(){const t=Tm.find(x=>x!=null);return t==null?null:t}
@@ -918,7 +918,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  let ban="";const spd=mode==="sim"?sim.v:(gps&&(Date.now()-gps.ts)/1000<=5?gps.v:null);
  if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(rows[j].stop&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
   if(best!=null){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=r.sub&&r.ctx?r.ctx:r.name;
-   ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" ½":"")+"</b></div>":"")+"</div>"}}
+   ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" et 30 s":"")+"</b></div>":"")+"</div>"}}
  box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban}
 /* numéro de train en cours : dernier changement de parité dépassé */
 function curTrain(i){let t=null;for(let j=0;j<=i&&j<rows.length;j++)if(rows[j].train)t=rows[j].train;return t}
