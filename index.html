@@ -975,7 +975,10 @@ async function readPdf(buf){
    if(name&&!sub)ctx=name;
    pr.push({pk:parseFloat(pkI.s),name,ctx:sub?ctx:"",sub,stop:/^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ '’\-]{2,}$/.test(sub?ctx:name)||/\[C\]/.test(col(.593,.843).map(i=>i.s).join(" ")),pl:nmI.some(i=>i.s==="PL"),time:col(.593,.843).map(i=>i.s).join(" "),reg:col(.843,.89).map(i=>i.s).join(" "),rad:col(.89,2).map(i=>i.s).join(""),y:l.y,train,page:p});train="";
   }
-  for(const r of pr){let m=null;for(const k of mk)if(k.y<=r.y+4)m=k;r.v=m?m.v:cur;delete r.y}
+  for(const r of pr){let m=null;for(const k of mk)if(k.y<=r.y+4)m=k;r.v=m?m.v:cur}
+  /* limite écrite entre deux points : une baisse s'applique dès le point d'avant (côté prudent) */
+  for(const k of mk){if(pr.some(r=>Math.abs(r.y-k.y)<=4))continue;let prev=null;for(const r of pr)if(r.y<k.y)prev=r;if(!prev&&!pr.some(r=>r.y<k.y))prev=out[out.length-1]||null;if(prev&&prev.v!=null&&k.v<prev.v){prev.v=k.v;prev.vEarly=true}}
+  for(const r of pr)delete r.y
   if(mk.length)cur=mk[mk.length-1].v;
   out.push(...pr);
  }
