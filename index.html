@@ -6,123 +6,137 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Repère">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0c0f15">
 <title>Repère</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-:root{--bg:#000;--s1:#0c0d0f;--s2:#16181b;--s3:#202327;--hair:rgba(255,255,255,.08);--tx:#f2f3f5;--tx2:#9aa0a8;--tx3:#5d636b;--acc:#4f9dff;--ltv:#ff9f1a;--bad:#ff453a;--ok:#32d74b;color-scheme:dark;
- --f:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;--fd:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif}
+:root{--bg:#0c0f15;--card:#141822;--card2:#1b2030;--line:#252b3a;--tx:#e7e9ef;--tx2:#9ca4b6;--tx3:#646d80;--acc:#7ab8ff;--ltv:#f2a65a;--bad:#ff6b6b;--ok:#62d2a2;--track:#dde1ea;--mapf:none;--pdff:brightness(.94);color-scheme:dark;
+ --f:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;--fd:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","SF Pro Display","Helvetica Neue",system-ui,sans-serif}
+:root[data-theme="nuit"]{--bg:#060709;--card:#0c0e12;--card2:#12151b;--line:#1b1f27;--tx:#bdb6a9;--tx2:#837c71;--tx3:#504b45;--acc:#c79560;--ltv:#d98b3c;--bad:#d4584e;--ok:#7fa77f;--track:#948d81;--mapf:brightness(.5) saturate(.6);--pdff:invert(.88) hue-rotate(180deg) brightness(.8) contrast(.9)}
 *,*::before,*::after{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:400 15px/1.35 var(--f);overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:400 15px/1.35 var(--f);overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:background .3s}
 button{font:inherit;color:inherit}
 svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
-.app{display:grid;grid-template-columns:29fr 36fr 35fr;gap:1px;height:100dvh;background:var(--hair);padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
-.col{background:var(--bg);display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}
-.bar{display:flex;align-items:center;gap:8px;height:48px;padding:0 10px;flex:none}
-.bar .ttl{flex:1;font-weight:600;font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ic{width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--tx2);display:grid;place-items:center;cursor:pointer;flex:none}
-.ic:active{background:var(--s3)}.ic.on{color:var(--acc)}
-.sw{display:inline-flex;background:var(--s2);border-radius:9px;padding:2px;flex:none}
-.sw button{border:0;background:transparent;color:var(--tx2);font-size:13px;font-weight:600;padding:6px 11px;border-radius:7px;min-height:32px;cursor:pointer}
-.sw button[aria-pressed="true"]{background:var(--s3);color:var(--tx)}
+.app{display:grid;grid-template-columns:29fr 36fr 35fr;gap:8px;height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 8px) calc(env(safe-area-inset-bottom,0px) + 8px) calc(env(safe-area-inset-left,0px) + 8px)}
+.col{background:var(--card);border-radius:20px;display:flex;flex-direction:column;min-height:0;min-width:0;position:relative;overflow:hidden}
+.bar{display:flex;align-items:center;gap:6px;height:54px;padding:0 10px;flex:none}
+.bar .ttl{flex:1;min-width:0;font-weight:600;font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ic{width:40px;height:40px;border:0;border-radius:12px;background:transparent;color:var(--tx2);display:grid;place-items:center;cursor:pointer;flex:none}
+.ic:active{background:var(--card2)}.ic.on{color:var(--acc)}
+.glass{background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.sw{display:inline-flex;background:var(--card2);border-radius:12px;padding:3px;flex:none}
+.sw button{border:0;background:transparent;color:var(--tx2);font-size:13px;font-weight:600;padding:6px 10px;border-radius:9px;min-height:32px;cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--line);color:var(--tx)}
+.lab{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--tx3)}
 /* gauche */
-#map{flex:1;min-height:0;background:#0b0c0e}
-.leaflet-container{background:#0b0c0e;font:inherit}
-.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#6b7078!important;font-size:9px!important}.leaflet-control-attribution a{color:#8a9098!important}
-#follow{position:absolute;top:8px;right:8px;z-index:500;background:rgba(12,13,15,.85)}
-.dash{padding:14px 16px 10px;flex:none}
-.lab{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3)}
-#pk{font:600 clamp(56px,7.6vw,96px)/1 var(--fd);font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin:2px 0 10px}
-.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.duo>div{background:var(--s1);border-radius:14px;padding:8px 12px;border:1px solid transparent}
-.duo .v{font:600 clamp(34px,4.2vw,52px)/1.05 var(--fd);font-variant-numeric:tabular-nums}
-.duo .u{font-size:13px;color:var(--tx3);margin-left:4px}
-#tLim{border-color:var(--s3)}
-#tLim.ltv .v{color:var(--ltv)}
-.over{border-color:var(--bad)!important}.over .v{color:var(--bad)!important}
-.meta{display:flex;justify-content:space-between;gap:8px;margin-top:10px;font-size:13px;color:var(--tx2);min-height:18px}
-#delay[data-s="late"]{color:var(--ltv)}#delay[data-s="early"]{color:var(--acc)}#delay[data-s="on"]{color:var(--tx2)}
-#kvbChip{color:var(--tx3);font-variant-numeric:tabular-nums}
-.nxt{padding:0 16px 10px;font-size:13px;color:var(--tx2);min-height:44px}.nxt div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nxt b{color:var(--tx);font-weight:600}
-#st{padding:9px 16px;font-size:12px;color:var(--tx3);border-top:1px solid var(--hair);flex:none}
+.mapw{position:relative;flex:1;min-height:0;margin:8px 8px 0;border-radius:14px;overflow:hidden}
+#map{position:absolute;inset:0;background:var(--card2)}
+#map .leaflet-tile-pane{filter:var(--mapf)}
+.leaflet-container{background:var(--card2);font:inherit}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--card) 70%,transparent)!important;color:var(--tx3)!important;font-size:9px!important}.leaflet-control-attribution a{color:var(--tx2)!important}
+.mapbtn{position:absolute;top:8px;right:8px;z-index:500;display:flex;gap:6px}
+.dash{padding:14px 16px 6px;flex:none}
+.pkrow{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+#pk{font:600 clamp(52px,6.8vw,84px)/1 var(--fd);font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:2px}
+.pills{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-bottom:6px}
+.pill{font-size:12px;font-weight:600;color:var(--tx2);background:var(--card2);border-radius:999px;padding:4px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}.pill:empty{display:none}
+#delay[data-s="late"]{color:var(--ltv)}#delay[data-s="early"]{color:var(--acc)}
+#kvbChip.warn{color:var(--ltv)}
+.duo{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
+.spd{background:var(--card2);border-radius:16px;padding:10px 14px 12px}
+.spd .v{font:600 clamp(40px,4.6vw,58px)/1.05 var(--fd);font-variant-numeric:tabular-nums}
+.spd .u,.sign .u{font-size:13px;color:var(--tx3);margin-left:4px}
+.gauge{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+.gauge i{display:block;height:100%;width:0;border-radius:3px;background:var(--acc);transition:width .4s,background .3s}
+.gauge i.near{background:var(--ltv)}.gauge i.over{background:var(--bad)}
+.sign{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ring{width:clamp(92px,9vw,116px);aspect-ratio:1;border-radius:50%;border:7px solid var(--track);display:grid;place-items:center;background:var(--card2);transition:border-color .3s}
+.ring .v{font:700 clamp(34px,3.8vw,46px)/1 var(--fd);font-variant-numeric:tabular-nums}
+#tLim.ltv .ring{border-color:var(--ltv)}#tLim.ltv .v{color:var(--ltv)}
+#tLim.over .ring{border-color:var(--bad)}#tLim.over .v{color:var(--bad)}
+#tSpd.over .v{color:var(--bad)}
+.nxt{margin:12px 0 4px;padding:9px 12px;border-radius:14px;background:var(--card2);font-size:13px;color:var(--tx2);min-height:52px}.nxt div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}.nxt b{color:var(--tx);font-weight:600}
+#st{padding:8px 16px 12px;font-size:12px;color:var(--tx3);flex:none}
 #st[data-s="warn"]{color:var(--ltv)}#st[data-s="bad"]{color:var(--bad)}
-/* milieu */
+/* milieu : schéma */
 #zone{flex:1;min-height:0;overflow:hidden}
 #zone text{font-family:var(--f)}
-.ztr{stroke:#e9ebee;stroke-width:3}.ztr.past{stroke:var(--tx3)}
-.zlim{stroke:var(--s3);stroke-width:4;stroke-linecap:round}
-.zchg{stroke:var(--tx3);stroke-width:1}
-.zv{fill:var(--tx);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}.zv.ltv{fill:var(--ltv);font-size:18px}
+.ztr{stroke:var(--track);stroke-width:4;stroke-linecap:round}.ztr.past{stroke:var(--line)}
+.zlim{stroke:var(--line);stroke-width:6;stroke-linecap:round}
+.zchg{stroke:var(--tx3);stroke-width:1}.zchg.clr{stroke-dasharray:3 3}
+.zv{fill:var(--tx);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}.zv.ltv{fill:var(--ltv);font-size:19px}
 .zp{fill:var(--tx3);font-size:11px;font-variant-numeric:tabular-nums}
-.zltv{stroke:var(--ltv);stroke-width:7}.zltvr{stroke:var(--ltv);stroke-width:4;stroke-linecap:round}.zltvt{stroke:var(--ltv);stroke-width:2.5}
+.zltv{stroke:var(--ltv);stroke-width:8;stroke-linecap:round;opacity:.9}.zltvr{stroke:var(--ltv);stroke-width:6;stroke-linecap:round}.zltvt{stroke:var(--ltv);stroke-width:2.5;stroke-linecap:round}
 .zgare{fill:var(--tx);stroke:none}.zgare.past{fill:var(--tx3)}
-.zn{fill:var(--tx2);font-size:13px}.zn.stop{fill:var(--tx);font-size:15px;font-weight:600}.zn.past{fill:var(--tx3)}
-.ztick{stroke:var(--tx2);stroke-width:1.5}
-.zsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:4 4}.zst{fill:var(--tx3);font-size:11px}
-.zk{stroke:var(--tx3);stroke-width:1}.zkt{fill:var(--tx3);font-size:11px}
-.zann{fill:var(--bg);stroke:var(--ltv);stroke-width:2.5}.zn.ltvt{fill:var(--ltv)}
+.zn{fill:var(--tx2);font-size:13px}.zn.stop{fill:var(--tx);font-size:15px;font-weight:600}.zn.past{fill:var(--tx3)}.zn.ltvt{fill:var(--ltv)}
+.ztick{stroke:var(--tx2);stroke-width:1.5;stroke-linecap:round}
+.zsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:4 5}.zst{fill:var(--tx3);font-size:11px}
+.zk{stroke:var(--line);stroke-width:1}.zkt{fill:var(--tx3);font-size:11px}
+.zann{fill:var(--card);stroke:var(--ltv);stroke-width:2.5}
+.zbody{stroke:var(--acc);stroke-width:8;stroke-linecap:round;opacity:.35}.zbody.off{stroke:var(--tx3)}
 .ztrain{fill:var(--acc)}.ztrain.off{fill:var(--tx3)}
-#list{flex:1;overflow:auto;min-height:0;-webkit-overflow-scrolling:touch}
-.r{display:grid;grid-template-columns:46px 56px 1fr;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--hair);cursor:pointer}
+/* milieu : fiche */
+#list{flex:1;overflow:auto;min-height:0;-webkit-overflow-scrolling:touch;padding:0 6px 8px}
+.r{display:grid;grid-template-columns:46px 56px 1fr;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;cursor:pointer}
 .r.past{color:var(--tx3)}
-.r.cur{background:var(--s2);box-shadow:inset 3px 0 var(--acc)}
+.r.cur{background:var(--card2);box-shadow:inset 3px 0 var(--acc)}
+.r.stop{box-shadow:inset 3px 0 var(--ltv)}.r.stop.cur{box-shadow:inset 3px 0 var(--acc)}
 .r .lm{font:600 18px var(--fd);font-variant-numeric:tabular-nums}.r .lm.ltv{color:var(--ltv)}
 .r .pkc{font-variant-numeric:tabular-nums;color:var(--tx2);font-size:14px}
-.r.stop .nm{font-weight:600}.r .sub{color:var(--tx2);font-size:13px}
+.r.stop .nm{font-weight:600;color:var(--tx)}.r.stop.past .nm{color:var(--tx3)}.r .sub{color:var(--tx2);font-size:13px}
 .r .x{color:var(--tx3);font-size:12px;margin-left:6px}
-.secr{padding:6px 14px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--tx3);background:var(--s1)}
+.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--bg);background:var(--ltv);border-radius:5px;padding:1px 6px;margin-right:6px;vertical-align:2px}
+.secr{margin:8px 6px 2px;padding:5px 10px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--tx3);background:var(--card2);border-radius:8px}
 .empty{padding:40px 24px;color:var(--tx3);text-align:center;font-size:14px}
-.foot{display:flex;gap:8px;padding:8px 10px;flex:none}.foot button{flex:1;border:0;background:var(--s2);border-radius:10px;min-height:44px;font-weight:600}
+.foot{display:flex;gap:8px;padding:8px 10px 10px;flex:none}.foot button{flex:1;border:0;background:var(--card2);border-radius:12px;min-height:46px;font-weight:600}
 /* droite */
-#pdfv{flex:1;overflow:auto;min-height:0;background:#000;-webkit-overflow-scrolling:touch}
-#pdfv canvas{display:block;margin:0 auto 8px;background:#fff}
+#pdfv{flex:1;overflow:auto;min-height:0;-webkit-overflow-scrolling:touch;padding:0 8px}
+#pdfv canvas{display:block;margin:0 auto 8px;background:#fff;border-radius:6px;filter:var(--pdff)}
 #pdfPg{font-size:13px;color:var(--tx3);font-variant-numeric:tabular-nums}
 /* réglages */
-#menu{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;justify-content:flex-end}
+#menu{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;justify-content:flex-end;padding:8px}
 #menu.hide{display:none}
-.sheet{width:min(560px,94vw);height:100%;background:var(--s1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);border-left:1px solid var(--hair)}
-.sheet .bar{border-bottom:1px solid var(--hair);height:56px}
-.tabs{display:flex;gap:2px;padding:10px 14px 0;overflow-x:auto;flex:none}
-.tabs button{border:0;background:transparent;color:var(--tx2);font-weight:600;padding:8px 12px;border-radius:8px;white-space:nowrap}
-.tabs button[aria-pressed="true"]{background:var(--s3);color:var(--tx)}
-.pane{flex:1;overflow:auto;padding:6px 18px 30px}
+.sheet{width:min(560px,94vw);height:100%;background:var(--card);border-radius:20px;display:flex;flex-direction:column;margin-top:env(safe-area-inset-top,0px);overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.sheet .bar{height:58px;padding:0 10px 0 18px}
+.tabs{display:flex;gap:4px;padding:0 14px 6px;overflow-x:auto;flex:none}
+.tabs button{border:0;background:transparent;color:var(--tx2);font-weight:600;padding:8px 12px;border-radius:10px;white-space:nowrap}
+.tabs button[aria-pressed="true"]{background:var(--card2);color:var(--tx)}
+.pane{flex:1;overflow:auto;padding:4px 18px 30px}
 .pane h3{font-size:13px;font-weight:600;color:var(--tx2);margin:22px 0 8px}
-.grp{background:var(--s2);border-radius:12px;overflow:hidden}
-.grp>.it{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--hair);min-height:48px}
+.grp{background:var(--card2);border-radius:14px;overflow:hidden}
+.grp>.it{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);min-height:48px}
 .grp>.it:last-child{border-bottom:0}.it .k{flex:1;color:var(--tx)}.it .val{color:var(--tx2);font-variant-numeric:tabular-nums}
 .it input[type=number]{width:110px;text-align:right;background:transparent;border:0;color:var(--tx);font:inherit;font-size:17px;font-variant-numeric:tabular-nums;padding:4px}
 .it input::placeholder{color:var(--tx3)}
-.btn{border:0;background:var(--s3);color:var(--tx);font-weight:600;padding:9px 14px;min-height:40px;border-radius:9px;cursor:pointer}
-.btn.pri{background:var(--acc);color:#fff}.btn.dng{color:var(--bad)}
+.btn{border:0;background:var(--line);color:var(--tx);font-weight:600;padding:9px 14px;min-height:40px;border-radius:11px;cursor:pointer}
+.btn.pri{background:var(--acc);color:var(--bg)}.btn.dng{color:var(--bad)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
 .muted{color:var(--tx2)}.small{font-size:13px}.err{color:var(--bad)}
 input[type=file]{color:var(--tx2);font-size:13px}
-input[type=range]{accent-color:var(--acc);width:150px}
-select{background:var(--s3);color:var(--tx);border:0;border-radius:8px;padding:6px 8px;font:inherit}
-textarea{width:100%;min-height:130px;font:14px/1.45 ui-monospace,Menlo,monospace;background:var(--s2);color:var(--tx);border:0;border-radius:12px;padding:12px}
+input[type=range]{accent-color:var(--acc);width:150px}input[type=checkbox]{accent-color:var(--acc);width:20px;height:20px}
+select{background:var(--line);color:var(--tx);border:0;border-radius:9px;padding:6px 8px;font:inherit}
+textarea{width:100%;min-height:130px;font:14px/1.45 ui-monospace,Menlo,monospace;background:var(--card2);color:var(--tx);border:0;border-radius:14px;padding:12px}
 pre{white-space:pre-wrap;font:13px/1.45 var(--f);margin:0;color:var(--tx2)}
-.box{background:var(--s2);border-radius:12px;padding:12px 14px}
-.gsec{background:var(--s2);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:14px}
+.box{background:var(--card2);border-radius:14px;padding:12px 14px}
+.gsec{background:var(--card2);border-radius:14px;padding:12px 14px;margin-top:10px;font-size:14px}
 .gt{border-collapse:collapse;width:100%;margin-top:8px;font-variant-numeric:tabular-nums;font-size:13px}
-.gt th,.gt td{border-bottom:1px solid var(--hair);padding:5px 4px;text-align:left}.gt th{color:var(--tx3);font-weight:600;font-size:11px}
+.gt th,.gt td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:left}.gt th{color:var(--tx3);font-weight:600;font-size:11px}
 .okc{color:var(--ok)}.wn{color:var(--ltv)}td.bad{color:var(--bad)}
-.kres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kres>div{background:var(--s2);border-radius:12px;padding:10px 14px}.kres b{display:block;font:600 30px/1.1 var(--fd);font-variant-numeric:tabular-nums;margin-top:2px}.kres b.err{color:var(--bad)}
-.r.stop{box-shadow:inset 3px 0 var(--ltv)}.r.stop .nm{font-weight:600;color:var(--tx)}.r.stop.past .nm{color:var(--tx3)}.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;color:#000;background:var(--ltv);border-radius:4px;padding:1px 5px;margin-right:6px;vertical-align:2px}
-.lcard{background:var(--s2);border-radius:12px;padding:12px 14px;margin-top:10px}.lcard.done{box-shadow:inset 3px 0 var(--ok)}
+.kres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kres>div{background:var(--card2);border-radius:14px;padding:10px 14px}.kres b{display:block;font:600 30px/1.1 var(--fd);font-variant-numeric:tabular-nums;margin-top:2px}.kres b.err{color:var(--bad)}
+.lcard{background:var(--card2);border-radius:14px;padding:12px 14px;margin-top:10px}.lcard.done{box-shadow:inset 3px 0 var(--ok)}
 .lhd{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
-.lcrop{display:block;border-radius:6px;background:#fff;margin-bottom:10px;max-width:100%}
+.lcrop{display:block;border-radius:8px;background:#fff;margin-bottom:10px;max-width:100%;filter:var(--pdff)}
 .lfields{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}.lfields label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--tx2);margin:0}
-.lfields input{width:86px;background:var(--s3);border:0;border-radius:8px;color:var(--tx);font:inherit;font-size:16px;padding:7px 8px;font-variant-numeric:tabular-nums}
-.pnl{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:8px}
+.lfields input{width:86px;background:var(--line);border:0;border-radius:9px;color:var(--tx);font:inherit;font-size:16px;padding:7px 8px;font-variant-numeric:tabular-nums}
+.pnl{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:9px;filter:var(--pdff)}
 .lft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
-.sug{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--s2);border-radius:12px;padding:10px 14px;margin-top:8px}
 a{color:var(--acc)}
 .note{font-size:12px;color:var(--tx3);margin-top:20px}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hide{display:none!important}
-@media (orientation:portrait){.app{grid-template-columns:1fr 1fr;grid-template-rows:50fr 50fr}.c-map{grid-row:1}.c-mid{grid-row:1}.c-pdf{grid-column:1/3;grid-row:2}#pk{font-size:52px}#map{min-height:120px}#ficheT{display:none}.c-mid .sw button{padding:6px 8px}.c-mid .bar{gap:4px;padding:0 6px}}
+@media (orientation:portrait){.app{grid-template-columns:1fr 1fr;grid-template-rows:52fr 48fr}.c-map{grid-row:1}.c-mid{grid-row:1}.c-pdf{grid-column:1/3;grid-row:2}#pk{font-size:48px}.mapw{min-height:110px}#ficheT{display:none}.c-mid .sw button{padding:6px 8px}.c-mid .bar{gap:4px;padding:0 6px}.ring{width:84px;border-width:6px}}
 </style>
 </head>
 <body>
@@ -134,22 +148,22 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></symbol>
+ <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
 </defs></svg>
 
 <div class="app">
  <section class="col c-map">
-  <div id="map" aria-label="Carte"></div>
-  <button class="ic on" id="follow" aria-pressed="true" aria-label="Suivre le train"><svg class="i"><use href="#i-loc"/></svg></button>
+  <div class="mapw"><div id="map" aria-label="Carte"></div>
+   <div class="mapbtn"><button class="ic glass" id="theme" aria-label="Mode nuit"><svg class="i"><use href="#i-moon"/></svg></button><button class="ic glass on" id="follow" aria-pressed="true" aria-label="Suivre le train"><svg class="i"><use href="#i-loc"/></svg></button></div></div>
   <div class="dash">
-   <div class="lab">PK</div><div id="pk">—</div>
+   <div class="pkrow"><div><div class="lab">PK</div><div id="pk">—</div></div><div class="pills"><span class="pill" id="delay"></span><span class="pill" id="kvbChip"></span></div></div>
    <div class="duo">
-    <div id="tSpd"><div class="lab">Vitesse</div><span class="v" id="spd">—</span><span class="u">km/h</span></div>
-    <div id="tLim"><div class="lab">Limite</div><span class="v" id="lim">—</span><span class="u">km/h</span></div>
+    <div class="spd" id="tSpd"><div class="lab">Vitesse</div><span class="v" id="spd">—</span><span class="u">km/h</span><div class="gauge"><i id="gBar"></i></div></div>
+    <div class="sign" id="tLim"><div class="ring"><span class="v" id="lim">—</span></div><div class="lab">Limite</div></div>
    </div>
-   <div class="meta"><span id="delay"></span><span id="kvbChip"></span></div>
+   <div class="nxt"><div id="nx"></div><div id="ns"></div></div>
   </div>
-  <div class="nxt"><div id="nx"></div><div id="ns"></div></div>
   <div id="st" data-s="warn">Aucune fiche chargée.</div>
  </section>
 
@@ -157,7 +171,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   <div class="bar">
    <div class="sw" role="group" aria-label="Affichage"><button id="vZone" aria-pressed="true">Schéma</button><button id="vList" aria-pressed="false">Fiche</button></div>
    <span class="ttl" id="ficheT"></span>
-   <div class="sw" role="group" aria-label="Distance affichée" id="zoomSw"><button data-k="2">2 km</button><button data-k="5">5 km</button><button data-k="10">10 km</button></div>
+   <div class="sw" role="group" aria-label="Distance affichée" id="zoomSw"><button data-k="2">2</button><button data-k="5">5</button><button data-k="10">10 km</button></div>
    <button class="ic" id="play" aria-label="Lecture"><svg class="i"><use href="#i-play"/></svg></button>
    <button class="ic" id="openMenu" aria-label="Réglages"><svg class="i"><use href="#i-menu"/></svg></button>
   </div>
@@ -185,6 +199,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
     <h3>Suivi de la position</h3>
     <div class="sw" role="group" aria-label="Mode"><button id="mSim" aria-pressed="true">Simulation</button><button id="mMan" aria-pressed="false">Manuel</button><button id="mGps" aria-pressed="false">GPS</button></div>
     <p class="muted small">Manuel : la position se règle à la main (boutons sous le schéma, ou toucher une ligne de la fiche), la vitesse vient du GPS. GPS : le PK est calculé depuis la position et la géométrie ; au moindre doute, PK et limite sont masqués.</p>
+    <h3>Affichage</h3>
+    <div class="sw" role="group" aria-label="Thème" id="thSw"><button data-t="soir" aria-pressed="true">Sombre</button><button data-t="nuit" aria-pressed="false">Nuit</button></div>
+    <p class="muted small">Nuit : couleurs chaudes et atténuées, carte assombrie et PDF en négatif. Aussi accessible par la lune sur la carte.</p>
     <div id="simBox"><h3>Simulation</h3>
      <div class="grp">
       <div class="it"><span class="k">Vitesse</span><input type="range" id="sv" min="0" max="140" step="5" value="90"><span class="val"><b id="svT">90</b> km/h</span></div>
@@ -411,6 +428,21 @@ function ltvZones(){const out=[];const secs=[...new Set(rows.map(r=>r.sec))];
   const d1=pkToD(sec,lo),d2=pkToD(sec,hi);if(d1==null||d2==null)continue;out.push({d1:Math.min(d1,d2),d2:Math.max(d1,d2),k,sec})}
  return out}
 
+/* ---------- limite effective avec dégagement de la longueur du train ----------
+   Une baisse s'applique dès que la tête l'atteint ; une hausse seulement quand la queue l'a dégagée.
+   Donc limite effective(tête) = minimum des limites (fiche et LTV) sur [tête − longueur, tête]. */
+function trainLen(){const c=kvbCalc();return c.L?c.L*100:0}
+function effLim(d,Z,Lt){const a=d-Lt;let v=null,ltvMin=false;
+ for(let j=0;j<rows.length;j++){const s0=Dc[j],s1=j<rows.length-1?Dc[j+1]:1e12;if(s0<=d&&s1>a&&rows[j].v!=null&&(v==null||rows[j].v<v))v=rows[j].v}
+ for(const z of Z)if(z.d1<=d&&z.d2>=a&&(v==null||z.k.v<v)){v=z.k.v;ltvMin=true}else if(z.d1<=d&&z.d2>=a&&z.k.v===v)ltvMin=true;
+ let raw=null;for(let j=rows.length-1;j>=0;j--)if(Dc[j]<=d){raw=rows[j].v;break}
+ return{v,ltv:ltvMin,clearing:raw!=null&&v!=null&&v<raw&&!Z.some(z=>z.d1<=d&&z.d2>=d&&z.k.v<=v)}}
+/* points où la limite effective change entre d0 et d1 : [{d,v,ltv,clr}] (clr = reprise après dégagement) */
+function effChanges(d0,d1,Z,Lt){const B=new Set();
+ for(let j=0;j<rows.length;j++){B.add(Dc[j]);B.add(Dc[j]+Lt)}for(const z of Z){B.add(z.d1);B.add(z.d2);B.add(z.d2+Lt)}
+ const P=[...B].filter(b=>b>d0&&b<=d1).sort((a,b)=>a-b);const out=[];let prev=effLim(d0,Z,Lt).v;
+ for(const b of P){const e=effLim(b+.5,Z,Lt);if(e.v!==prev){out.push({d:b,v:e.v,ltv:e.ltv,up:prev!=null&&e.v>prev,clr:Lt>0&&prev!=null&&e.v>prev});prev=e.v}}return out}
+
 /* ---------- horaires : avance / retard ---------- */
 let Tm=[];
 function buildT(){Tm=[];let off=0,last=null;for(const r of rows){const m=[...String(r.time||"").matchAll(/(\d{1,2})[:h](\d{2})/g)];
@@ -442,15 +474,15 @@ function drawZone(i,f,ok){
  const rx=tx-16;
  for(let j=0;j<rows.length-1;j++){const a=Dc[j],b=Dc[j+1];if(b<cur-behind||a>cur+ahead)continue;if(rows[j].sec!==rows[j+1].sec)continue;
   q.push('<line x1="'+rx+'" x2="'+rx+'" y1="'+y(Math.max(a,cur-behind))+'" y2="'+y(Math.min(b,cur+ahead))+'" class="zlim"/>')}
- /* changements de limite : priorité haute */
- const labs=[];for(let j=0;j<rows.length;j++){if(!vis(Dc[j]))continue;const r=rows[j],p=rows[j-1];if(r.v!=null&&(!p||p.v!==r.v||p.sec!==r.sec))labs.push(j)}
+ /* changements de la limite effective (avec dégagement) : priorité haute */
+ const Z=ltvZones(),Lt=trainLen(),labs=effChanges(cur-behind,cur+ahead,Z,Lt);
  /* LTV */
- for(const z of ltvZones()){if(z.d2<cur-behind||z.d1>cur+ahead)continue;const y1=y(Math.max(z.d1,cur-behind)),y2=y(Math.min(z.d2,cur+ahead));
+ for(const z of Z){if(z.d2<cur-behind||z.d1>cur+ahead)continue;const y1=y(Math.max(z.d1,cur-behind)),y2=y(Math.min(z.d2,cur+ahead));
   q.push('<line x1="'+tx+'" x2="'+tx+'" y1="'+y1+'" y2="'+y2+'" class="zltv"/>','<line x1="'+(rx-4)+'" x2="'+(rx-4)+'" y1="'+y1+'" y2="'+y2+'" class="zltvr"/>');
   if(z.k.ann!=null){const da=pkToD(z.sec,z.k.ann);if(da!=null&&vis(da)){const ya=y(da);q.push('<circle cx="'+tx+'" cy="'+ya+'" r="5" class="zann"/>');if(free(occR,ya,20))T(tx+14,ya+4,"Annonce LTV "+z.k.v,"zn ltvt")}}
   for(const d of [z.d1,z.d2])if(vis(d)){const yy=y(d);q.push('<line x1="'+(tx-12)+'" x2="'+(tx+12)+'" y1="'+yy+'" y2="'+yy+'" class="zltvt"/>')}
   const ym=Math.max(top+14,Math.min(bot-4,(y1+y2)/2));if(free(occL,ym,30)){T(rx-12,ym-2,"LTV "+z.k.v,"zv ltv","end");T(rx-12,ym+13,fk(Math.min(z.k.a,z.k.b))+"–"+fk(Math.max(z.k.a,z.k.b)),"zp","end")}}
- for(const j of labs){const yy=y(Dc[j]);q.push('<line x1="'+(rx-6)+'" x2="'+(tx)+'" y1="'+yy+'" y2="'+yy+'" class="zchg"/>');if(free(occL,yy,30)){T(rx-12,yy+2,String(rows[j].v),"zv","end");T(rx-12,yy+16,fk(rows[j].pk),"zp","end")}}
+ for(const c of labs){const yy=y(c.d);q.push('<line x1="'+(rx-6)+'" x2="'+(tx)+'" y1="'+yy+'" y2="'+yy+'" class="zchg'+(c.clr?" clr":"")+'"/>');if(free(occL,yy,30)){T(rx-12,yy+2,String(c.v),"zv"+(c.ltv?" ltv":""),"end");T(rx-12,yy+16,c.clr?"queue dégagée":"","zp","end")}}
  /* changement de ligne */
  for(let j=0;j<rows.length-1;j++)if(rows[j].sec!==rows[j+1].sec){const d=Dc[j+1];if(!vis(d))continue;const yy=y(d);q.push('<line x1="8" x2="'+(W-8)+'" y1="'+yy+'" y2="'+yy+'" class="zsec"/>');const g=geo.sec&&geo.sec[rows[j+1].sec];T(W-14,yy-5,"Changement de ligne"+(g?" "+g.split("/")[0]:""),"zst","end")}
  /* points de la fiche (à droite) : arrêts d'abord */
@@ -459,8 +491,9 @@ function drawZone(i,f,ok){
   if(r.stop){q.push('<path d="M'+(tx+8)+" "+(yy+6)+"v-8l7-6 7 6v8z\" class=\"zgare"+(Dc[j]<cur?" past":"")+'"/>');if(free(occR,yy,26)){T(tx+28,yy+5,nm,"zn stop"+(Dc[j]<cur?" past":""));}}
   else{if(!free(occR,yy,20))continue;q.push('<line x1="'+(tx-5)+'" x2="'+(tx+5)+'" y1="'+yy+'" y2="'+yy+'" class="ztick"/>');T(tx+14,yy+4,(r.pl?"PL · ":"")+(r.sub&&r.ctx?r.ctx+" "+r.name:nm),"zn"+(Dc[j]<cur?" past":""))}}
  /* train + limite en cours */
- const yt=y(cur);{let lv=rows[i].v,lt=false;const pkc=rows[i].pk+(rows[i+1]&&rows[i+1].sec===rows[i].sec?f*(rows[i+1].pk-rows[i].pk):0);for(const k of ltv)if(inLtv(k,pkc,rows[i].sec)&&(lv==null||k.v<lv)){lv=k.v;lt=true}
-  if(ok&&lv!=null&&free(occL,yt,30))T(rx-12,yt+7,String(lv),"zv"+(lt?" ltv":""),"end")}q.push('<path d="M'+tx+" "+(yt-11)+"l9 15h-18z\" class=\"ztrain"+(ok?"":" off")+'"/>');
+ const yt=y(cur);{const e=effLim(cur,Z,Lt);if(ok&&e.v!=null&&free(occL,yt,30))T(rx-12,yt+7,String(e.v),"zv"+(e.ltv?" ltv":""),"end");
+  if(Lt>0){const yq=y(cur-Lt);q.push('<line x1="'+tx+'" x2="'+tx+'" y1="'+yt+'" y2="'+Math.min(bot,yq)+'" class="zbody'+(ok?"":" off")+'"/>')}}
+ q.push('<path d="M'+tx+" "+(yt-11)+"l9 15h-18z\" class=\"ztrain"+(ok?"":" off")+'"/>');
  box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>";
 }
 
@@ -472,7 +505,7 @@ function kvbCalc(){const mt=num(kvb.mt),mf=num(kvb.mf),len=num(kvb.len);const r=
 function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});
  $("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";
  $("#kvbL").textContent=c.L!=null?c.L+" ("+c.L*100+" m)":"—";
- $("#kvbChip").textContent=c.dec||c.L?"KVB MA 10 · "+(c.L??"—")+" · "+(c.dec??"—"):"";
+ $("#kvbChip").textContent=c.dec||c.L?"KVB MA 10 · "+(c.L??"—")+" · "+(c.dec??"—"):"Longueur train non saisie";$("#kvbChip").classList.toggle("warn",!c.L);
  $("#kvbRes").innerHTML='<div><span class="lab">Catégorie</span><b>MA 10</b></div><div><span class="lab">Longueur</span><b>'+(c.L??"—")+'</b></div><div><span class="lab">Décélération</span><b'+(c.err?' class="err"':"")+">"+(c.dec??"—")+"</b></div>";
  $("#kvbOut").innerHTML=c.err?'<p class="err small">'+esc(c.err)+"</p>":c.dec?'<p class="muted small">Ligne « '+(c.row[0]?c.row[0]+" à "+c.row[1]:"jusqu’à 100")+" t » de la fiche 985 (masse totale arrondie au-dessus, masse freinée au-dessous)."+(c.next?" Décélération "+c.next.dec+" à partir de "+c.next.need+" t freinées.":"")+" Vérifie sur la fiche 985 avant de saisir au KVB.</p>":'<p class="muted small">Saisis la masse totale et la masse freinée totale.</p>'}
 
@@ -692,7 +725,7 @@ function renderList(){
 const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=20?Math.max(100,d*1000):1000};
 function masked(why,spd,i,f){
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
- $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");
+ $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
  setSt("warn",why+" PK et limite masqués.");if(i!=null)drawZone(i,f,false);
 }
@@ -719,16 +752,17 @@ function frame(now){
    if(!T.ok){masked("Test GPS : "+T.why,spd,i,f);markRows(i);mapPos(simPt,false);return}
   }}
  mapPos(mode==="sim"?simPt:gpsPt,true);
- let lim=r.v,inL=false;for(const k of ltv)if(inLtv(k,pk,r.sec)&&(lim==null||k.v<lim)){lim=k.v;inL=true}
+ const cur=Dc[i]+f*seg(i),Z=ltvZones(),Lt=trainLen(),E=effLim(cur,Z,Lt);let lim=E.v,inL=E.ltv;
  $("#pk").textContent=fk(T?T.pk:pk);$("#lim").textContent=lim==null?"?":lim;$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tLim").classList.toggle("ltv",inL);
  const over=spd!=null&&lim!=null&&spd>lim;$("#tSpd").classList.toggle("over",over);$("#tLim").classList.toggle("over",over);
- const cur=Dc[i]+f*seg(i),km=d=>((d-cur)/1000).toFixed(1).replace(".",",");let nx="";
- for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.v!==r.v){nx="Puis <b>"+c.v+"</b> dans "+km(Dc[j])+" km";break}}
- const zl=ltvZones().filter(z=>z.d1>cur).sort((a,b)=>a.d1-b.d1)[0];
- if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1)+" km";
+ {const g=$("#gBar");g.style.width=spd!=null&&lim?Math.min(100,spd/lim*100)+"%":"0";g.className=over?"over":spd!=null&&lim&&spd>=lim*.95?"near":""}
+ const km=d=>{const m=d-cur;return m<1000?Math.round(m/10)*10+" m":(m/1000).toFixed(1).replace(".",",")+" km"};let nx="";
+ const nc=effChanges(cur,cur+40000,Z,Lt)[0];if(nc)nx=(E.clearing&&nc.clr?"Dégagement : ":"Puis ")+"<b>"+nc.v+"</b> dans "+km(nc.d);
+ const zl=Z.filter(z=>z.d1>cur).sort((a,b)=>a.d1-b.d1)[0];
+ if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
- let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.stop){ns="Arrêt <b>"+esc(c.sub&&c.ctx?c.ctx:c.name)+"</b> dans "+km(Dc[j])+" km";break}}$("#ns").innerHTML=ns;
+ let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.stop){ns="Arrêt <b>"+esc(c.sub&&c.ctx?c.ctx:c.name)+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns;
  showDelay(cur,now);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
  else if(T)setSt("ok","Test GPS : écart de "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m avec le PK simulé.");
@@ -766,14 +800,17 @@ function initMap(){
  drawGeo();if(window.ResizeObserver)new ResizeObserver(()=>map.invalidateSize()).observe($("#map"));
 }
 function setFollow(){$("#follow").classList.toggle("on",follow);$("#follow").setAttribute("aria-pressed",follow)}
-function drawGeo(){if(!map)return;geoLayer.clearLayers();const B=[];
- for(const k of new Set(Object.values(geo.sec||{}))){const l=geo.lines[k];if(!l)continue;for(const p of l.pieces){const ll=p.c.map(c=>[c[1],c[0]]);B.push(...ll);L.polyline(ll,{color:"#e9ebee",weight:3,opacity:.9}).addTo(geoLayer);
-  for(const a of p.anch){const q=GEO.at(p.c,p.cum,a.s);L.circleMarker([q[1],q[0]],{radius:3,color:"#e9ebee",weight:2,fillColor:"#000",fillOpacity:1}).bindTooltip(a.n+" · "+fk3(a.pk)).addTo(geoLayer)}}}
- if(B.length)map.fitBounds(B,{padding:[20,20]})}
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#ccc";
+function drawGeo(noFit){if(!map)return;geoLayer.clearLayers();const B=[];
+ for(const k of new Set(Object.values(geo.sec||{}))){const l=geo.lines[k];if(!l)continue;for(const p of l.pieces){const ll=p.c.map(c=>[c[1],c[0]]);B.push(...ll);L.polyline(ll,{color:cssv("--track"),weight:3,opacity:.85}).addTo(geoLayer);
+  for(const a of p.anch){const q=GEO.at(p.c,p.cum,a.s);L.circleMarker([q[1],q[0]],{radius:3,color:cssv("--track"),weight:2,fillColor:cssv("--card"),fillOpacity:1}).bindTooltip(a.n+" · "+fk3(a.pk)).addTo(geoLayer)}}}
+ if(B.length&&!noFit)map.fitBounds(B,{padding:[20,20]})}
 function mapPos(p,ok){if(!map)return;if(!p){if(map.hasLayer(mk))mk.remove();return}
- mk.setLatLng([p[1],p[0]]).setStyle({fillColor:ok?"#4f9dff":"#5d636b"});if(!map.hasLayer(mk))mk.addTo(map);
+ mk.setLatLng([p[1],p[0]]).setStyle({fillColor:ok?cssv("--acc"):cssv("--tx3"),color:cssv("--tx")});if(!map.hasLayer(mk))mk.addTo(map);
  if(follow)map.setView([p[1],p[0]],Math.max(map.getZoom(),13),{animate:true})}
 $("#follow").onclick=()=>{follow=!follow;setFollow()};
+function setTheme(t){document.documentElement.dataset.theme=t;store("theme",t);$("#theme").classList.toggle("on",t==="nuit");$("#theme").setAttribute("aria-pressed",t==="nuit");document.querySelector('meta[name="theme-color"]').content=t==="nuit"?"#060709":"#0c0f15";document.querySelectorAll("#thSw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));drawGeo(true)}
+$("#theme").onclick=()=>setTheme(document.documentElement.dataset.theme==="nuit"?"soir":"nuit");
 
 /* ---------- étude de ligne (PDF libre) ---------- */
 let pdfDoc=null,pdfZoom=1,pdfRendering=0;
@@ -848,7 +885,8 @@ $("#file").onchange=async e=>{
 try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]");if(r&&r.length){rows=r;defit=d}}catch(e){}
 $("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
 $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
-buildD();buildT();renderList();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
+buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");document.querySelectorAll("#thSw button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
+renderList();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
 setInterval(tick,500);tick();
 </script>
