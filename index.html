@@ -19,7 +19,54 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:400 15px/1.35 var(--f);overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:background .3s}
 button{font:inherit;color:inherit}
 svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
-.app{display:grid;grid-template-columns:29fr 36fr 35fr;gap:8px;height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 8px) calc(env(safe-area-inset-bottom,0px) + 8px) calc(env(safe-area-inset-left,0px) + 8px)}
+.shell{display:flex;height:100dvh}
+#side{width:min(38vw,560px);flex:none;margin:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 8px) 0;background:var(--card);border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+#sideBtn.on{color:var(--acc)}
+.drv{flex:1;min-width:0;display:flex;flex-direction:column;height:100dvh;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 6px) calc(env(safe-area-inset-left,0px) + 10px);gap:8px}
+.top{display:flex;align-items:stretch;gap:clamp(5px,.8cqw,8px);flex:none}
+.tb{background:var(--card);border-radius:16px;padding:8px clamp(8px,1.4cqw,16px) 10px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.drv{container-type:inline-size}
+.tv{font:600 clamp(18px,3.4cqw,46px)/1.05 var(--fd);font-variant-numeric:tabular-nums;white-space:nowrap}.tv.sm{font-size:clamp(14px,2.4cqw,30px)}#pk{font-size:clamp(26px,5cqw,60px);letter-spacing:-.02em}
+.tb{overflow:hidden}
+.tb .u{font-size:13px;color:var(--tx3);margin-left:4px}
+.tno .tv{letter-spacing:.02em}
+.top .sign{background:var(--card);border-radius:16px;padding:6px 12px;display:grid;place-items:center}
+.top .ring{width:clamp(52px,7cqw,84px);border-width:clamp(4px,.6cqw,6px)}.top .ring .v{font-size:clamp(20px,3cqw,34px)}
+.tpills{display:flex;flex-direction:column;justify-content:center;gap:6px}
+.grow{flex:1}
+.top .ic{align-self:center;width:clamp(40px,5.4cqw,52px);height:clamp(40px,5.4cqw,52px);background:var(--card);border-radius:14px;color:var(--tx)}
+#route{flex:1;min-height:0;background:var(--card);border-radius:20px;overflow:hidden}
+#route text{font-family:var(--f)}
+.bot{display:flex;gap:14px;align-items:center;flex:none;padding:0 6px;font-size:13px;color:var(--tx2);min-height:22px;white-space:nowrap;overflow:hidden}.bot b{color:var(--tx);font-weight:600}
+.bot #st{padding:0;border:0}
+/* voie */
+.rtr{fill:none;stroke:var(--track);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.rtr.past{stroke:var(--line)}
+.rltv{fill:none;stroke:var(--ltv);stroke-width:9;stroke-linecap:butt;opacity:.95}.rltvt{stroke:var(--ltv);stroke-width:3;stroke-linecap:round}
+.rann{fill:var(--card);stroke:var(--ltv);stroke-width:3}
+.rov{fill:none;stroke-width:13;opacity:.35}.rov.rt{stroke:var(--tx3)}.rov.rb{stroke:var(--tx2);stroke-dasharray:4 4}
+.rbody{fill:none;stroke:var(--acc);stroke-width:9;stroke-linecap:round;opacity:.45}.rbody.off{stroke:var(--tx3)}
+.rtrain{fill:var(--acc)}.rtrain.off{fill:var(--tx3)}
+.rv{fill:var(--tx);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}.rv.ltv{fill:var(--ltv)}
+.rsm{fill:var(--tx3);font-size:11px}
+.rchg{stroke:var(--tx3);stroke-width:1;stroke-dasharray:2 4}.rchg.clr{stroke:var(--tx2)}
+.rg{fill:var(--tx3);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.rn{fill:var(--tx2);font-size:13px;text-anchor:middle}.rn.stop{fill:var(--tx);font-size:17px;font-weight:700}.rn.past,.rpk.past{fill:var(--tx3)}
+.rpk{fill:var(--tx3);font-size:11px;text-anchor:middle;font-variant-numeric:tabular-nums}
+.rlead{stroke:var(--line);stroke-width:1}.rlead.past{opacity:.5}
+.rdot{fill:var(--tx3)}.rdot.stop{fill:var(--acc)}.rdot.past{opacity:.4}
+.rax{stroke:var(--line);stroke-width:1.5}.rkm{fill:var(--tx3);font-size:11px}
+.rsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:5 5}.rst{fill:var(--tx3);font-size:11px}
+/* menu déroulant */
+#dd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 74px);right:calc(env(safe-area-inset-right,0px) + 10px);z-index:2500;width:300px;background:var(--card);border-radius:16px;padding:6px;box-shadow:0 12px 40px rgba(0,0,0,.5);border:1px solid var(--line)}
+#dd button[data-o],#dd button[data-t]{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--tx);padding:11px 12px;border-radius:10px;font-weight:500}
+#dd button[data-o]:active,#dd button[data-t]:active{background:var(--card2)}
+#dd hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.ddrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 6px 12px;color:var(--tx2);font-size:14px}
+/* panneaux */
+.ov{position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.5);padding:calc(env(safe-area-inset-top,0px) + 8px) 8px calc(env(safe-area-inset-bottom,0px) + 8px)}
+.ovbox{height:100%;background:var(--card);border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+.ovt{font-size:15px!important;color:var(--tx)!important}
+#ovMap .mapw{flex:1;margin:0 8px 8px}
 .col{background:var(--card);border-radius:20px;display:flex;flex-direction:column;min-height:0;min-width:0;position:relative;overflow:hidden}
 .bar{display:flex;align-items:center;gap:6px;height:54px;padding:0 10px;flex:none}
 .bar .ttl{flex:1;min-width:0;font-weight:600;font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -39,7 +86,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .mapbtn{position:absolute;top:8px;right:8px;z-index:500;display:flex;gap:6px}
 .dash{padding:14px 16px 6px;flex:none}
 .pkrow{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
-#pk{font:600 clamp(52px,6.8vw,84px)/1 var(--fd);font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:2px}
+
 .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:24px}
 .pill{font-size:12px;font-weight:600;color:var(--tx2);background:var(--card2);border-radius:999px;padding:4px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}.pill:empty{display:none}
 #delay[data-s="late"]{color:var(--ltv)}#delay[data-s="early"]{color:var(--acc)}
@@ -151,7 +198,7 @@ a{color:var(--acc)}
 .note{font-size:12px;color:var(--tx3);margin-top:20px}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hide{display:none!important}
-@media (orientation:portrait){.app{grid-template-columns:1fr 1fr;grid-template-rows:52fr 48fr}.c-map{grid-row:1}.c-mid{grid-row:1}.c-pdf{grid-column:1/3;grid-row:2}#pk{font-size:48px}.mapw{min-height:110px}#ficheT{display:none}.c-mid .sw button{padding:6px 8px}.c-mid .bar{gap:4px;padding:0 6px}.ring{width:84px;border-width:6px}}
+@media (orientation:portrait){.top{flex-wrap:wrap}.tpills{flex-direction:row}.bot{flex-wrap:wrap;white-space:normal}}
 </style>
 </head>
 <body>
@@ -164,47 +211,60 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></symbol>
  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+ <symbol id="i-fold" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
 </defs></svg>
 
-<div class="app">
- <section class="col c-map">
-  <div class="mapw"><div id="map" aria-label="Carte"></div>
-   <div class="mapbtn"><button class="ic glass" id="theme" aria-label="Mode nuit"><svg class="i"><use href="#i-moon"/></svg></button><button class="ic glass on" id="follow" aria-pressed="true" aria-label="Suivre le train"><svg class="i"><use href="#i-loc"/></svg></button></div></div>
-  <div class="profw"><div id="prof" aria-label="Profil en long"></div></div>
-  <div class="dash">
-   <div class="lab">PK</div><div id="pk">—</div>
-   <div class="pills"><span class="pill" id="gradNow"></span><span class="pill" id="delay"></span><span class="pill" id="kvbChip"></span></div>
-   <div class="duo">
-    <div class="spd" id="tSpd"><div class="lab">Vitesse</div><span class="v" id="spd">—</span><span class="u">km/h</span><div class="gauge"><i id="gBar"></i></div></div>
-    <div class="sign" id="tLim"><div class="ring"><span class="v" id="lim">—</span></div><div class="lab">Limite</div></div>
-   </div>
-   <div class="nxt"><div id="nx"></div><div id="ns"></div></div>
-  </div>
-  <div id="st" data-s="warn">Aucune fiche chargée.</div>
- </section>
+<div class="shell">
+<div class="drv">
+ <header class="top">
+  <div class="tb tno"><div class="lab">Train</div><div class="tv" id="ficheT">—</div></div>
+  <div class="tb"><div class="lab">KVB réglé</div><div class="tv sm" id="kvbChip">—</div></div>
+  <div class="tb" id="tSpd"><div class="lab">Vitesse</div><div><span class="tv" id="spd">—</span><span class="u">km/h</span></div><div class="gauge"><i id="gBar"></i></div></div>
+  <div class="tb"><div class="lab">PK</div><div class="tv" id="pk">—</div></div>
+  <div class="sign" id="tLim"><div class="ring"><span class="v" id="lim">—</span></div></div>
+  <span class="grow"></span>
+  <button class="ic" id="sideBtn" aria-label="Étude de ligne" aria-pressed="false"><svg class="i"><use href="#i-doc"/></svg></button>
+  <button class="ic" id="play" aria-label="Lecture"><svg class="i"><use href="#i-play"/></svg></button>
+  <button class="ic menu" id="openMenu" aria-label="Menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+ </header>
+ <div id="route" aria-label="Ce qui arrive"></div>
+ <footer class="bot"><span class="pill" id="gradNow"></span><span class="pill" id="delay"></span><span id="nx"></span><span id="ns"></span><span class="grow"></span><span id="st" data-s="warn">Aucune fiche chargée.</span></footer>
+ <div class="foot hide" id="manFoot"><button id="prev">Point précédent</button><button id="next">Point suivant</button></div>
+</div>
+<aside id="side" class="hide" aria-label="Étude de ligne">
+ <div class="bar"><span class="ttl ovt" id="pdfT">Étude de ligne</span><span id="pdfPg"></span>
+  <button class="ic" id="zOut" aria-label="Dézoomer"><svg class="i"><use href="#i-minus"/></svg></button>
+  <button class="ic" id="zIn" aria-label="Zoomer"><svg class="i"><use href="#i-plus"/></svg></button>
+  <label class="ic" aria-label="Ouvrir un PDF"><svg class="i"><use href="#i-doc"/></svg><input type="file" id="pdfFile" accept="application/pdf" class="hide"></label>
+  <button class="ic" id="sideClose" aria-label="Replier l’étude de ligne"><svg class="i"><use href="#i-fold"/></svg></button></div>
+ <div id="pdfv"><div class="empty">Ouvre ton étude de ligne (PDF) avec l’icône document.<br>Elle reste enregistrée sur l’iPad.</div></div>
+</aside>
+</div>
 
- <section class="col c-mid">
-  <div class="bar">
-   <div class="sw" role="group" aria-label="Affichage"><button id="vZone" aria-pressed="true">Schéma</button><button id="vList" aria-pressed="false">Fiche</button></div>
-   <span class="ttl" id="ficheT"></span>
-   <div class="sw" role="group" aria-label="Distance affichée" id="zoomSw"><button data-k="2">2</button><button data-k="5">5</button><button data-k="10">10 km</button></div>
-   <button class="ic" id="play" aria-label="Lecture"><svg class="i"><use href="#i-play"/></svg></button>
-   <button class="ic" id="openMenu" aria-label="Réglages"><svg class="i"><use href="#i-menu"/></svg></button>
-  </div>
-  <div id="zone" aria-label="Schéma de ce qui arrive"></div>
-  <div id="list" class="hide" aria-label="Fiche train"></div>
-  <div class="foot hide" id="manFoot"><button id="prev">Point précédent</button><button id="next">Point suivant</button></div>
- </section>
+<div id="dd" class="hide" role="menu">
+ <button data-o="map" role="menuitem">Carte</button>
+ <button data-o="fiche" role="menuitem">Fiche train</button>
+ <button data-o="pdf" role="menuitem">Étude de ligne (afficher / replier)</button>
+ <button data-o="sch" role="menuitem">Schémas de l’avis DEFIT</button>
+ <hr>
+ <button data-t="M" role="menuitem">Conduite et simulation</button>
+ <button data-t="I" role="menuitem">Importer une fiche</button>
+ <button data-t="K" role="menuitem">KVB</button>
+ <button data-t="L" role="menuitem">LTV</button>
+ <button data-t="G" role="menuitem">Géométrie et profil</button>
+ <button data-t="D" role="menuitem">Avis DEFIT</button>
+ <hr>
+ <div class="ddrow"><span>Distance</span><div class="sw" role="group" aria-label="Distance affichée" id="zoomSw"><button data-k="2">2 km</button><button data-k="5">5 km</button><button data-k="10">10 km</button></div></div>
+ <div class="ddrow"><span>Thème</span><div class="sw" id="thSw2"><button data-t2="soir">Sombre</button><button data-t2="nuit">Nuit</button></div></div>
+</div>
 
- <section class="col c-pdf">
-  <div class="bar"><span class="ttl" id="pdfT">Étude de ligne</span><span id="pdfPg"></span>
-   <button class="ic" id="zOut" aria-label="Dézoomer"><svg class="i"><use href="#i-minus"/></svg></button>
-   <button class="ic" id="zIn" aria-label="Zoomer"><svg class="i"><use href="#i-plus"/></svg></button>
-   <label class="ic" aria-label="Ouvrir un PDF"><svg class="i"><use href="#i-doc"/></svg><input type="file" id="pdfFile" accept="application/pdf" class="hide"></label>
-  </div>
-  <div id="pdfv"><div class="empty">Ouvre ton étude de ligne (PDF) avec l’icône document.<br>Elle reste enregistrée sur l’iPad.</div></div>
- </section>
+<div id="ovMap" class="ov hide" role="dialog" aria-label="Carte"><div class="ovbox">
+ <div class="bar"><span class="ttl ovt">Carte</span><button class="ic on" id="follow" aria-pressed="true" aria-label="Suivre le train"><svg class="i"><use href="#i-loc"/></svg></button><button class="ic" id="theme" aria-label="Mode nuit"><svg class="i"><use href="#i-moon"/></svg></button><button class="ic ovx" aria-label="Fermer"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <div class="mapw"><div id="map"></div></div></div></div>
+<div id="ovFiche" class="ov hide" role="dialog" aria-label="Fiche train"><div class="ovbox">
+ <div class="bar"><span class="ttl ovt">Fiche train</span><button class="ic ovx" aria-label="Fermer"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <div id="list"></div></div></div>
 </div>
 
 <div id="schv" class="hide" role="dialog" aria-label="Schémas">
@@ -549,7 +609,7 @@ function kvbCalc(){const mt=num(kvb.mt),mf=num(kvb.mf),len=num(kvb.len);const r=
 function renderKvb(){const c=kvbCalc();[["#kMt","mt"],["#kMf","mf"],["#kLen","len"]].forEach(([id,k])=>{const e=$(id);if(e&&document.activeElement!==e)e.value=kvb[k]});
  $("#kvbPct").textContent=c.pct!=null?c.pct.toFixed(1).replace(".",",")+" %":"—";
  $("#kvbL").textContent=c.L!=null?c.L+" ("+c.L*100+" m)":"—";
- $("#kvbChip").textContent=c.dec||c.L?"KVB MA 10 · "+(c.L??"—")+" · "+(c.dec??"—"):"Longueur train non saisie";$("#kvbChip").classList.toggle("warn",!c.L);
+ $("#kvbChip").textContent=c.dec||c.L?"MA 10 · "+(c.L??"—")+" · "+(c.dec??"—"):"à saisir";$("#kvbChip").classList.toggle("warn",!c.L);
  $("#kvbRes").innerHTML='<div><span class="lab">Catégorie</span><b>MA 10</b></div><div><span class="lab">Longueur</span><b>'+(c.L??"—")+'</b></div><div><span class="lab">Décélération</span><b'+(c.err?' class="err"':"")+">"+(c.dec??"—")+"</b></div>";
  $("#kvbOut").innerHTML=c.err?'<p class="err small">'+esc(c.err)+"</p>":c.dec?'<p class="muted small">Ligne « '+(c.row[0]?c.row[0]+" à "+c.row[1]:"jusqu’à 100")+" t » de la fiche 985 (masse totale arrondie au-dessus, masse freinée au-dessous)."+(c.next?" Décélération "+c.next.dec+" à partir de "+c.next.need+" t freinées.":"")+" Vérifie sur la fiche 985 avant de saisir au KVB.</p>":'<p class="muted small">Saisis la masse totale et la masse freinée totale.</p>'}
 
@@ -800,18 +860,66 @@ function drawProfile(cur,ok){const box=$("#prof");if(!box)return;const P=profPts
  for(const p of V){if(p.g==null)continue;const r=Math.round(p.g);if(last==null||Math.abs(r-last)>=3){if(p.d>d0&&p.d<d1){const xx=x(p.d);if(occ.every(o=>Math.abs(o-xx)>34)){occ.push(xx);lab+='<text x="'+(xx+3)+'" y="11" class="pg">'+(Math.abs(r)<1?"0":(r>0?"+":"−")+Math.abs(r))+"</text>"+'<line x1="'+xx+'" x2="'+xx+'" y1="13" y2="'+y(p.z)+'" class="ptick"/>'}}last=r}}
  const xc=x(cur);box.innerHTML='<svg width="'+W+'" height="'+H+'">'+paths+ov+lab+'<line x1="'+xc+'" x2="'+xc+'" y1="0" y2="'+H+'" class="pcur'+(ok?"":" off")+'"/><text x="'+(W-4)+'" y="'+(H-5)+'" class="pkm" text-anchor="end">'+zoneKm+" km</text></svg>"}
 
+/* ---------- vue de conduite horizontale : la voie en profil, ce qui arrive vers la droite ---------- */
+function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clientWidth,H=box.clientHeight;if(!W||!H)return;
+ if(!rows.length){box.innerHTML='<div class="empty">Aucune fiche chargée.<br>Menu ≡ → Fiche train.</div>';return}
+ const cur=Dc[i]+f*seg(i),span=zoneKm*1000,d0=cur-span*.12,d1=cur+span;
+ const X=d=>(d-d0)/(d1-d0)*W,vis=d=>d>=d0&&d<=d1;
+ const yLab=30,cTop=H*.2,cBot=H*.6,yAx=H-30,q=[];
+ const T=(x,y,t,c,a)=>q.push('<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" class="'+c+'"'+(a?' text-anchor="'+a+'"':"")+">"+esc(t)+"</text>");
+ /* profil : altitude interpolée le long du parcours */
+ const P=(typeof profPts==="function"?profPts():[]).filter(p=>p.d>=d0-600&&p.d<=d1+600&&p.z!=null);
+ let zmin=Infinity,zmax=-Infinity;for(const p of P){if(p.z<zmin)zmin=p.z;if(p.z>zmax)zmax=p.z}
+ if(P.length<2){zmin=0;zmax=1}else if(zmax-zmin<25){const m=(zmax+zmin)/2;zmin=m-12.5;zmax=m+12.5}
+ let pi=0;const zAt=d=>{if(P.length<2)return .5;while(pi>0&&P[pi].d>d)pi--;while(pi<P.length-2&&P[pi+1].d<d)pi++;const a=P[pi],b=P[pi+1];if(d<=a.d)return a.z;if(d>=b.d)return b.z;return a.z+(b.z-a.z)*(d-a.d)/(b.d-a.d)};
+ const Y=d=>{const z=zAt(d);return P.length<2?(cTop+cBot)/2:cBot-(z-zmin)/(zmax-zmin)*(cBot-cTop)};
+ const path=(a,b)=>{const n=Math.max(2,Math.ceil((X(b)-X(a))/4));let s="";for(let k=0;k<=n;k++){const d=a+(b-a)*k/n;s+=(k?"L":"M")+X(d).toFixed(1)+" "+Y(d).toFixed(1)}return s};
+ /* repères km sur l'axe du bas */
+ q.push('<line x1="0" x2="'+W+'" y1="'+yAx+'" y2="'+yAx+'" class="rax"/>');
+ const kstep=zoneKm<=2?.5:zoneKm<=5?1:2;for(let k=kstep;k<=zoneKm;k+=kstep){const x=X(cur+k*1000);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yAx-4)+'" y2="'+(yAx+4)+'" class="rax"/>');T(x,yAx+18,(k%1?k.toFixed(1).replace(".",","):k)+" km","rkm","middle")}
+ /* voie */
+ q.push('<path d="'+path(Math.max(d0,cur-span),cur)+'" class="rtr past"/>','<path d="'+path(cur,d1)+'" class="rtr"/>');
+ /* ouvrages (profil) */
+ for(let k=0;k<P.length;k++)if(P[k].o&&vis(P[k].d)){let j=k;while(j+1<P.length&&P[j+1].o===P[k].o&&P[j+1].d-P[j].d<200)j++;q.push('<path d="'+path(P[k].d,P[j].d+50)+'" class="rov '+(P[k].o==="t"?"rt":"rb")+'"/>');k=j}
+ /* changement de ligne */
+ let lsx=-1e9,lsk=0;for(let j=0;j<rows.length-1;j++)if(rows[j].sec!==rows[j+1].sec&&vis(Dc[j+1])){const x=X(Dc[j+1]);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yLab+8)+'" y2="'+yAx+'" class="rsec"/>');const g=geo.sec&&geo.sec[rows[j+1].sec];lsk=x-lsx<130?lsk+1:0;lsx=x;T(x+4,yAx-8-lsk*14,"Changement de ligne"+(g?" "+g.split("/")[0]:""),"rst")}
+ /* LTV : sur la voie, en orange */
+ const Z=ltvZones(),Lt=trainLen(),occT=[];const freeT=(x,w)=>{for(const o of occT)if(Math.abs(o-x)<w)return false;occT.push(x);return true};
+ for(const z of Z){if(z.d2<d0||z.d1>d1)continue;const a=Math.max(z.d1,d0),b=Math.min(z.d2,d1);q.push('<path d="'+path(a,b)+'" class="rltv"/>');
+  for(const d of [z.d1,z.d2])if(vis(d))q.push('<line x1="'+X(d)+'" x2="'+X(d)+'" y1="'+(Y(d)-10)+'" y2="'+(Y(d)+10)+'" class="rltvt"/>');
+  if(z.k.ann!=null){const da=pkToD(z.sec,z.k.ann);if(da!=null&&vis(da))q.push('<circle cx="'+X(da)+'" cy="'+Y(da)+'" r="5" class="rann"/>')}}
+ /* limites effectives (avec dégagement) : valeurs dans la bande du haut */
+ const E=effLim(cur,Z,Lt);if(E.v!=null){freeT(X(cur),70);T(X(cur)+14,yLab,String(E.v),"rv"+(E.ltv?" ltv":""))}
+ for(const c of effChanges(cur,d1,Z,Lt)){const x=X(c.d);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yLab+6)+'" y2="'+Y(c.d)+'" class="rchg'+(c.clr?" clr":"")+'"/>');if(freeT(x,64)){T(x+4,yLab,String(c.v),"rv"+(c.ltv?" ltv":""));if(c.clr)T(x+4,yLab+14,"queue dégagée","rsm")}}
+ /* déclivité (‰) au-dessus de la voie */
+ let last=null;const occG=[];for(const p of P){if(p.g==null||!vis(p.d))continue;const r=Math.round(p.g);if(last==null||Math.abs(r-last)>=3){const x=X(p.d);if(p.d>cur&&occG.every(o=>Math.abs(o-x)>46)){occG.push(x);T(x,Y(p.d)-12,(Math.abs(r)<1?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","middle")}last=r}}
+ /* gares et points de la fiche : sous la voie, repère sur l'axe */
+ const occ=[];const pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(rows[b].stop-rows[a].stop)||a-b);
+ const lane=[Math.min(cBot+52,yAx-58),Math.min(cBot+96,yAx-16)];
+ for(const j of pts){const r=rows[j],x=X(Dc[j]),past=Dc[j]<cur-30,nm=r.sub&&r.ctx?r.ctx+(/^\|?\s*BV\b/.test(r.name)?"":" "+r.name.replace(/^\|\s*/,"")):r.name;
+  const wdt=Math.min(200,(nm.length*(r.stop?9:7.2))+10);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x+wdt<o.x||x>o.x+o.w))L=k}
+  q.push('<circle cx="'+x+'" cy="'+yAx+'" r="'+(r.stop?6:3.5)+'" class="rdot'+(r.stop?" stop":"")+(past?" past":"")+'"/>');
+  if(L<0||(!r.stop&&zoneKm>5&&L>0))continue;occ.push({l:L,x,w:wdt});
+  q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(Y(Dc[j])+6)+'" y2="'+(lane[L]-18)+'" class="rlead'+(past?" past":"")+'"/>');
+  T(x,lane[L],nm,"rn"+(r.stop?" stop":"")+(past?" past":""));T(x,lane[L]+15,"PK "+fk(r.pk)+(r.time&&r.stop?"":""),"rpk"+(past?" past":""))}
+ /* train : corps sur la longueur KVB, triangle au-dessus de la tête */
+ const xt=X(cur),yt=Y(cur);if(Lt>0)q.push('<path d="'+path(Math.max(d0,cur-Lt),cur)+'" class="rbody'+(ok?"":" off")+'"/>');
+ q.push('<path d="M'+(xt-11)+" "+(yt-28)+"h22l-11 19z\" class=\"rtrain"+(ok?"":" off")+'"/>');
+ box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"}
+
 
 /* ---------- lecture du PDF de la fiche ---------- */
 function group(it){it.sort((a,b)=>a.y-b.y||a.f-b.f);const L=[];for(const i of it){const l=L[L.length-1];if(l&&Math.abs(l.y-i.y)<2.5)l.push(i);else{const n=[i];n.y=i.y;L.push(n)}}L.forEach(l=>l.sort((a,b)=>a.f-b.f));return L}
 function pdfLib(){if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return pdfjsLib}
 async function readPdf(buf){
  const pdf=await pdfLib().getDocument({data:buf,isOffscreenCanvasSupported:false}).promise;
- const out=[],dft=[],warn=[],dp=[],sch=[];let cur=null,ctx="",train="";
+ const out=[],dft=[],warn=[],dp=[],sch=[];let cur=null,ctx="",train="",trainNo="";
  for(let p=1;p<=pdf.numPages;p++){
   const pg=await pdf.getPage(p),W=pg.view[2],H=pg.view[3],tc=await pg.getTextContent();
   const lines=group(tc.items.filter(i=>i.str.trim()).map(i=>({s:i.str.trim(),f:i.transform[4]/W,y:H-i.transform[5]})));
   const txt=lines.map(l=>l.map(i=>i.s).join(" ")).join("\n");
   if(!/Etablissements et points/.test(txt)){if(/DEFIT/.test(txt)){dft.push(txt);if(/Fiche DEFIT/.test(txt))dp.push(p)}if(/Sch[ée]ma\s*N/.test(txt))sch.push(txt);continue}
+  if(!trainNo){const k=lines.findIndex(l=>l.some(i=>/^Train\s*:?$/.test(i.s)||/Train\s*:/.test(i.s)));if(k>=0)for(const l of lines.slice(k,k+3)){const m=l.map(i=>i.s).join(" ").match(/\b\d{5,6}\b/g);if(m){trainNo=m[m.length-1];break}}}
   const yH=(lines.find(l=>l.some(i=>/^Etablissements/.test(i.s)))||{y:0}).y;
   const fl=lines.find(l=>l.some(i=>/^Les vitesses limites/.test(i.s)));const yF=fl?fl.y:1e9;
   const mk=[],pr=[];
@@ -835,7 +943,7 @@ async function readPdf(buf){
  if(out.some(r=>r.v==null))warn.push("Certaines lignes n’ont pas de limite lue : vérifie-les.");
  if(out.length<5)warn.push("Très peu de lignes lues : le format du PDF est peut-être différent.");
  let ltvD=[];try{ltvD=await readDefit(pdf,dp,sch)}catch(e){warn.push("Lecture des LTV de l’avis DEFIT impossible : "+e.message)}
- return{rows:out,defit:dft,warn,ltvD};
+ return{rows:out,defit:dft,warn,ltvD,trainNo};
 }
 
 /* découpage en tronçons : un tronçon = un repérage kilométrique continu.
@@ -865,7 +973,7 @@ function saveLtv(){ltv=parseLtv($("#taL").value);store("ltv",$("#taL").value);$(
 function renderList(){
  const L=$("#list");L.innerHTML="";let sec=0;
  if(!rows.length)L.innerHTML='<div class="empty">Aucune fiche chargée.<br>Réglages → Fiche.</div>';
- const trains=[...new Set(rows.map(r=>r.train).filter(Boolean))];$("#ficheT").textContent=trains.join(" · ");
+ const trains=[...new Set(rows.map(r=>r.train).filter(Boolean))],tn=rows.length?store("trainNo"):null;$("#ficheT").textContent=(tn||"")+(trains.length?(tn?" → ":"")+trains.join(" → "):"")||"—";
  const many=new Set(rows.map(x=>x.sec)).size>1;
  rows.forEach((r,i)=>{
   if(r.sec!==sec){sec=r.sec;if(many){const d=document.createElement("div");d.className="secr";const g=geo.sec&&geo.sec[sec];d.textContent="Tronçon "+sec+(g?" · ligne "+g.split("/")[0]:"");L.appendChild(d)}}
@@ -886,10 +994,10 @@ function masked(why,spd,i,f){
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
- setSt("warn",why+" PK et limite masqués.");if(i!=null){drawZone(i,f,false);drawProfile(Dc[i]+f*seg(i),false)}
+ setSt("warn",why+" PK et limite masqués.");if(i!=null)drawRoute(i,f,false)
 }
 function frame(now){
- if(!rows.length){mapPos(mode!=="sim"&&gps?[gps.lon,gps.lat]:null,false);$("#zone").innerHTML='<div class="empty">Aucune fiche chargée.<br>Réglages → Fiche.</div>';return}
+ if(!rows.length){mapPos(mode!=="sim"&&gps?[gps.lon,gps.lat]:null,false);drawRoute(0,0,false);return}
  let spd=null;if(mode==="sim")spd=sim.v;else if(gps&&(now-gps.ts)/1000<=5)spd=Math.round(gps.v);
  const gpsPt=gps&&(now-gps.ts)/1000<=10?[gps.lon,gps.lat]:null;
  if(mode==="gps"){
@@ -929,7 +1037,7 @@ function frame(now){
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
  else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Position réglée à la main.");
  else setSt("ok",mode==="sim"?(sim.run?"Simulation":"Simulation à l’arrêt"):"Position réglée à la main · vitesse GPS ±"+Math.round(gps.acc)+" m");
- drawZone(i,f,true);drawProfile(cur,true);markRows(i);
+ drawRoute(i,f,true);markRows(i);
 }
 function markRows(i){if(i===lastRow)return;lastRow=i;$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)});gotoRow()}
 function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
@@ -969,7 +1077,7 @@ function mapPos(p,ok){if(!map)return;if(!p){if(map.hasLayer(mk))mk.remove();retu
  mk.setLatLng([p[1],p[0]]).setStyle({fillColor:ok?cssv("--acc"):cssv("--tx3"),color:cssv("--tx")});if(!map.hasLayer(mk))mk.addTo(map);
  if(follow)map.setView([p[1],p[0]],Math.max(map.getZoom(),13),{animate:true})}
 $("#follow").onclick=()=>{follow=!follow;setFollow()};
-function setTheme(t){document.documentElement.dataset.theme=t;store("theme",t);$("#theme").classList.toggle("on",t==="nuit");$("#theme").setAttribute("aria-pressed",t==="nuit");document.querySelector('meta[name="theme-color"]').content=t==="nuit"?"#060709":"#0c0f15";document.querySelectorAll("#thSw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));drawGeo(true)}
+function setTheme(t){document.documentElement.dataset.theme=t;store("theme",t);$("#theme").classList.toggle("on",t==="nuit");$("#theme").setAttribute("aria-pressed",t==="nuit");document.querySelector('meta[name="theme-color"]').content=t==="nuit"?"#060709":"#0c0f15";document.querySelectorAll("#thSw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));document.querySelectorAll("#thSw2 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t2===t));if(rows.length)lastRow=-1;drawGeo(true)}
 $("#theme").onclick=()=>setTheme(document.documentElement.dataset.theme==="nuit"?"soir":"nuit");
 
 /* ---------- étude de ligne (PDF libre) ---------- */
@@ -1009,18 +1117,27 @@ function startGps(){
 function stopGps(){if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}}
 function playIcon(){$("#play use").setAttribute("href",sim.run?"#i-pause":"#i-play")}
 function setMode(m){mode=m;store("mode",m);["Sim","Man","Gps"].forEach(k=>$("#m"+k).setAttribute("aria-pressed",m===k.toLowerCase()));$("#simBox").classList.toggle("hide",m!=="sim");$("#play").classList.toggle("hide",m!=="sim");$("#manFoot").classList.toggle("hide",m!=="man");sim.run=false;playIcon();stopGps();trkReset();lastRow=-1;if(m!=="sim")startGps()}
-function setMid(v){midView=v;store("midView",v);$("#vZone").setAttribute("aria-pressed",v==="zone");$("#vList").setAttribute("aria-pressed",v==="list");$("#zone").classList.toggle("hide",v!=="zone");$("#list").classList.toggle("hide",v!=="list");$("#zoomSw").classList.toggle("hide",v!=="zone");lastRow=-1}
+function setMid(v){}
 function setZoom(k){zoneKm=k;store("zoneKm",String(k));document.querySelectorAll("#zoomSw button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.k===k))}
 
 /* ---------- réglages ---------- */
 const V=["M","I","K","L","G","D"];
 function view(v){V.forEach(k=>{$("#v"+k).classList.toggle("hide",k!==v);$("#t"+k).setAttribute("aria-pressed",k===v)});if(v==="G")renderGeo();if(v==="L")renderLtvSug();if(v==="K")renderKvb()}
 V.forEach(k=>$("#t"+k).onclick=()=>view(k));
-$("#openMenu").onclick=()=>$("#menu").classList.remove("hide");
+$("#openMenu").onclick=()=>ddOpen(dd.classList.contains("hide"));
 $("#closeMenu").onclick=()=>$("#menu").classList.add("hide");
 $("#menu").onclick=e=>{if(e.target.id==="menu")$("#menu").classList.add("hide")};
 $("#mSim").onclick=()=>setMode("sim");$("#mMan").onclick=()=>setMode("man");$("#mGps").onclick=()=>setMode("gps");
-$("#vZone").onclick=()=>setMid("zone");$("#vList").onclick=()=>setMid("list");
+/* menu déroulant et panneaux */
+const dd=$("#dd");const ddOpen=o=>{dd.classList.toggle("hide",!o);$("#openMenu").setAttribute("aria-expanded",o)};
+document.addEventListener("pointerdown",e=>{if(!dd.classList.contains("hide")&&!dd.contains(e.target)&&!$("#openMenu").contains(e.target))ddOpen(false)});
+function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add("hide"));$(id).classList.remove("hide");if(id==="#ovMap"&&map)setTimeout(()=>map.invalidateSize(),50);if(id==="#ovFiche"){lastRow=-1;setTimeout(()=>gotoRow(true),50)}}
+document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
+function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
+$("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
+dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="pdf")setSide($("#side").classList.contains("hide"));else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
+dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
+dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
 document.querySelectorAll("#zoomSw button").forEach(b=>b.onclick=()=>setZoom(+b.dataset.k));
 $("#next").onclick=()=>{if(s<rows.length-1){s=Math.floor(s)+1;gotoRow(true)}};
 $("#prev").onclick=()=>{if(s>0){s=Math.ceil(s)-1;gotoRow(true)}};
@@ -1042,7 +1159,7 @@ $("#geoFile").onchange=e=>{if(e.target.files.length)geoFiles([...e.target.files]
 $("#geoClr").onclick=()=>{store("geo",null);geo={lines:{},sec:{},rep:{}};geoRaw=null;geoOv={};$("#geoMsg").textContent="";renderGeo();drawGeo()};
 $("#file").onchange=async e=>{
  const f=e.target.files[0];if(!f)return;$("#rep").textContent="Lecture du PDF…";
- try{const buf=await f.arrayBuffer();await idbSet("fiche",buf.slice(0));ficheDoc=null;annex=null;const r=await readPdf(buf);setData(r.rows,r.defit);ltvD=prepLtvD(r.ltvD||[]);store("ltvD",JSON.stringify(ltvD));renderLtvSug();if(ltvD.length)$("#rep").innerHTML+="<div>"+ltvD.length+" LTV trouvée(s) dans l’avis DEFIT : valide-les dans l’onglet LTV.</div>";if(r.warn.length)$("#rep").innerHTML+='<div class="err">'+r.warn.map(esc).join("<br>")+"</div>"}
+ try{const buf=await f.arrayBuffer();await idbSet("fiche",buf.slice(0));ficheDoc=null;annex=null;const r=await readPdf(buf);store("trainNo",r.trainNo||null);setData(r.rows,r.defit);ltvD=prepLtvD(r.ltvD||[]);store("ltvD",JSON.stringify(ltvD));renderLtvSug();if(ltvD.length)$("#rep").innerHTML+="<div>"+ltvD.length+" LTV trouvée(s) dans l’avis DEFIT : valide-les dans l’onglet LTV.</div>";if(r.warn.length)$("#rep").innerHTML+='<div class="err">'+r.warn.map(esc).join("<br>")+"</div>"}
  catch(x){$("#rep").innerHTML='<span class="err">Impossible de lire ce PDF : '+esc(x.message)+"</span>"}
 };
 
@@ -1054,6 +1171,7 @@ buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");document.query
 renderList();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
+setSide(store("side")==="1");
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
 setInterval(tick,500);tick();
 </script>
