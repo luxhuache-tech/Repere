@@ -381,6 +381,12 @@ const isSup=r=>isCond(r)&&cSup.has(rkey(r));
 const isStop=r=>!!r.stop&&!isSup(r);
 const stopName=r=>r.sub&&r.ctx?r.ctx:r.name;
 function setSup(r,on){if(on)cSup.add(rkey(r));else cSup.delete(rkey(r));store("cSup",JSON.stringify([...cSup]));buildT();renderList();renderCond();lastRow=-1}
+/* suppression automatique : le train a franchi un arrêt [C] de plus de 1 km sans s'y être arrêté */
+const cWatch={};let cNote="",cNoteT=0;
+function autoC(cur,spd){if(mode==="man"||spd==null)return;
+ for(let j=0;j<rows.length;j++){const r=rows[j];if(!isCond(r)||isSup(r))continue;const k=rkey(r),w=cWatch[k]||(cWatch[k]={seen:false,halt:false}),dd=cur-Dc[j];
+  if(dd>=-2000&&dd<=400){w.seen=true;if(spd<2&&Math.abs(dd)<=400)w.halt=true}
+  if(w.seen&&!w.halt&&dd>1000&&dd<4000){setSup(r,true);cNote="Arrêt [C] de "+stopName(r)+" supprimé : passé sans arrêt.";cNoteT=Date.now()}}}
 function renderCond(){const E=$("#condList");if(!E)return;const C=rows.filter(isCond);
  E.innerHTML=C.length?'<div class="grp">'+C.map((r,n)=>'<div class="it"><span class="k">'+esc(stopName(r))+' <span class="muted small">PK '+fk(r.pk)+'</span></span><span class="val small">'+(isSup(r)?"supprimé":"maintenu")+'</span><input type="checkbox" data-c="'+n+'"'+(isSup(r)?" checked":"")+' aria-label="Arrêt supprimé"></div>').join("")+"</div>":'<p class="muted small">Aucun arrêt [C] dans cette fiche.</p>';
  E.querySelectorAll("input[data-c]").forEach(c=>c.onchange=()=>setSup(C[+c.dataset.c],c.checked))}
@@ -996,7 +1002,7 @@ function splitSec(out){const tm=r=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(r.time
   r.sec=sec;if(t!=null)lt={t,pk:r.pk}});return out}
 
 /* ---------- données ---------- */
-function setData(r,d){rows=r;cSup=new Set();store("cSup",null);defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));renderCond();geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
+function setData(r,d){rows=r;cSup=new Set();for(const k in cWatch)delete cWatch[k];store("cSup",null);defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));renderCond();geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
 function demo(){const m=(pk,name,v,time,pl,stop)=>({pk,name,ctx:"",sub:false,stop:!!stop,pl:!!pl,time,reg:"",rad:"",sec:1,v});
  return[m(100,"TEST-A",90,"19:13","",1),m(100.8,"PN 12",60,"",1),m(102,"Bif. de Test",100,""),m(104.5,"Poste 4",120,"19:18"),m(106.2,"PN 15",80,"",1),m(108,"Signal 108",120,"19:22"),m(110.5,"Entrée Test-B",40,"19:25"),m(111,"TEST-B",40,"19:26","",1)]}
 function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||"",ann:c[5]!==undefined&&c[5]!==""&&!isNaN(+c[5])?+c[5]:null}))}
@@ -1065,8 +1071,9 @@ function frame(now){
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
  let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(isStop(c)){ns="Arrêt <b>"+esc(stopName(c))+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns;
- showDelay(cur,now);
+ showDelay(cur,now);autoC(cur,spd);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
+ else if(cNote&&Date.now()-cNoteT<60000)setSt("warn",cNote);
  else if(T)setSt("ok","Test GPS : écart de "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m avec le PK simulé.");
  else if(mode==="gps")setSt("ok","GPS · ligne "+geo.sec[r.sec].split("/")[0]+" · à "+Math.round(trk.res.d)+" m du tracé · ±"+Math.round(gps.acc)+" m");
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
