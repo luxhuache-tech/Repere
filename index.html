@@ -149,6 +149,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .r.stop .nm{font-weight:600;color:var(--tx)}.r.stop.past .nm{color:var(--tx3)}.r .sub{color:var(--tx2);font-size:13px}
 .r .x{color:var(--tx3);font-size:12px;margin-left:6px}
 .par{font-weight:800;color:var(--tx)}
+.tag.off{background:var(--line);color:var(--tx2)}.r.sup .nm{color:var(--tx2)}
+.csw{border:0;background:var(--line);color:var(--tx);font-size:12px;font-weight:600;border-radius:8px;padding:4px 8px;margin-left:8px}
 .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--bg);background:var(--ltv);border-radius:5px;padding:1px 6px;margin-right:6px;vertical-align:2px}
 .secr{margin:8px 6px 2px;padding:5px 10px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--tx3);background:var(--card2);border-radius:8px}
 .empty{padding:40px 24px;color:var(--tx3);text-align:center;font-size:14px}
@@ -310,6 +312,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
     <p class="muted small">Le PDF reste sur l’appareil, rien n’est envoyé.</p>
     <div class="row"><input type="file" id="file" accept="application/pdf"></div>
     <div class="box small" id="rep">Aucune fiche chargée.</div>
+    <h3>Arrêts [C]</h3>
+    <p class="muted small">Un arrêt [C] peut être supprimé : coche-le pour passer sans t’arrêter (plus d’affichage d’arrêt ni d’horaire à ce point).</p>
+    <div id="condList"></div>
     <div class="row"><button class="btn" id="demo">Charger l’exemple fictif</button><button class="btn dng" id="clear">Effacer les données</button></div>
    </section>
    <section id="vK" class="hide">
@@ -368,6 +373,17 @@ const fk=x=>x.toFixed(1).replace(".",",");
 const fk3=x=>x.toFixed(3).replace(".",",");
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}return null}
 let rows=[],defit=[],ltv=[],s=0,mode="sim",sim={run:false,v:90,mult:5,t:0,clock:null},gps=null,watchId=null,geoErr="",lastRow=-1,midView=store("midView")||"zone";
+/* arrêts [C] : peuvent être supprimés, le train passe alors sans s'arrêter */
+let cSup=new Set();try{cSup=new Set(JSON.parse(store("cSup")||"[]"))}catch(e){}
+const isCond=r=>/\[C\]/.test(r.time||"");
+const rkey=r=>r.pk+"|"+(r.ctx||"")+"|"+r.name;
+const isSup=r=>isCond(r)&&cSup.has(rkey(r));
+const isStop=r=>!!r.stop&&!isSup(r);
+const stopName=r=>r.sub&&r.ctx?r.ctx:r.name;
+function setSup(r,on){if(on)cSup.add(rkey(r));else cSup.delete(rkey(r));store("cSup",JSON.stringify([...cSup]));buildT();renderList();renderCond();lastRow=-1}
+function renderCond(){const E=$("#condList");if(!E)return;const C=rows.filter(isCond);
+ E.innerHTML=C.length?'<div class="grp">'+C.map((r,n)=>'<div class="it"><span class="k">'+esc(stopName(r))+' <span class="muted small">PK '+fk(r.pk)+'</span></span><span class="val small">'+(isSup(r)?"supprimé":"maintenu")+'</span><input type="checkbox" data-c="'+n+'"'+(isSup(r)?" checked":"")+' aria-label="Arrêt supprimé"></div>').join("")+"</div>":'<p class="muted small">Aucun arrêt [C] dans cette fiche.</p>';
+ E.querySelectorAll("input[data-c]").forEach(c=>c.onchange=()=>setSup(C[+c.dataset.c],c.checked))}
 /* ---------- géométrie : bases SNCF Réseau -> PK depuis GPS ---------- */
 const GEO={};
 GEO.pk=v=>{if(v==null||v==="")return null;if(typeof v==="number")return v;const s=String(v).trim().replace(",",".");let m=/^(-?\d+)\+(\d{1,3})$/.exec(s);if(m)return(+m[1])+(m[1].startsWith("-")?-1:1)*(+m[2].padEnd(3,"0"))/1000;return isNaN(+s)?null:+s};
@@ -555,7 +571,7 @@ function effChanges(d0,d1,Z,Lt){const B=new Set();
 
 /* ---------- horaires : avance / retard ---------- */
 let Tm=[];
-function buildT(){Tm=[];let off=0,last=null;for(const r of rows){const m=[...String(r.time||"").matchAll(/(\d{1,2})[:h](\d{2})(\+?)/g)];
+function buildT(){Tm=[];let off=0,last=null;for(const r of rows){if(typeof isSup==="function"&&isSup(r)){Tm.push(null);continue}const m=[...String(r.time||"").matchAll(/(\d{1,2})[:h](\d{2})(\+?)/g)];
  if(!m.length){Tm.push(null);continue}const x=m[m.length-1];let t=+x[1]*60+ +x[2]+(x[3]?.5:0)+off;if(last!=null&&t<last-600){off+=1440;t+=1440}last=t;Tm.push(t)}}
 function schedAt(d){let p=-1,n=-1;for(let j=0;j<rows.length;j++){if(Tm[j]==null)continue;if(Dc[j]<=d)p=j;else{n=j;break}}
  if(p<0&&n<0)return null;if(p<0)return Tm[n];if(n<0)return Tm[p];return Tm[p]+(d-Dc[p])/(Dc[n]-Dc[p]||1)*(Tm[n]-Tm[p])}
@@ -901,23 +917,23 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   const n=pieces[k+1];if(n&&n.v!=null)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+y+'" y2="'+Ys(n.v)+'" class="rspv"/>');
   if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":""));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
  /* points de passage, en bas */
- const occ=[],pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(rows[b].stop-rows[a].stop)||(!!rows[b].train-!!rows[a].train)||a-b);
+ const occ=[],pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(isStop(rows[b])-isStop(rows[a]))||(!!rows[b].train-!!rows[a].train)||a-b);
  const lane=[yAx-56,yAx-22];
  for(const j of pts){const r=rows[j],x=X(Dc[j]),past=Dc[j]<cur-30,nm=r.sub&&r.ctx?r.ctx+(/^\|?\s*BV\b/.test(r.name)?"":" "+r.name.replace(/^\|\s*/,"")):r.name;
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT-5)+'" y2="'+(yT+5)+'" class="rtick'+(past?" past":"")+'"/>');
-  const sub="PK "+fk(r.pk)+(r.reg?" · M. rég. "+r.reg+" min":"");
-  const wdt=Math.max(nm.length*(r.stop?9.5:7.4)+(r.train?78:0),sub.length*6.2)+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
+  const sub="PK "+fk(r.pk)+(r.reg?" · M. rég. "+r.reg+" min":"")+(isSup(r)?" · arrêt [C] supprimé":isCond(r)?" · [C]":"");
+  const st0=isStop(r);const wdt=Math.max(nm.length*(st0?9.5:7.4)+(r.train?78:0),sub.length*6.2)+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
   if(L<0)continue;occ.push({l:L,x0,x1});
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT+6)+'" y2="'+(lane[L]-17)+'" class="rlead'+(past?" past":"")+'"/>');
-  q.push('<text x="'+x+'" y="'+lane[L]+'" class="rn'+(r.stop?" stop":"")+(past?" past":"")+'">'+esc(nm)+(r.train?'<tspan class="rpar" dx="8">→ '+esc(r.train)+"</tspan>":"")+"</text>");
+  q.push('<text x="'+x+'" y="'+lane[L]+'" class="rn'+(st0?" stop":"")+(past?" past":"")+'">'+esc(nm)+(r.train?'<tspan class="rpar" dx="8">→ '+esc(r.train)+"</tspan>":"")+"</text>");
   T(x,lane[L]+14,sub,"rpk"+(past?" past":""))}
  /* train sur la voie */
  const xt=X(cur);if(Lt>0)q.push('<line x1="'+X(Math.max(d0,cur-Lt))+'" x2="'+xt+'" y1="'+yT+'" y2="'+yT+'" class="rbody'+(ok?"":" off")+'"/>');
  q.push('<path d="M'+(xt+13)+" "+yT+"l-20 -11v22z\" class=\"rtrain"+(ok?"":" off")+'"/>');
  /* à l'arrêt en gare : départ prévu */
  let ban="";const spd=mode==="sim"?sim.v:(gps&&(Date.now()-gps.ts)/1000<=5?gps.v:null);
- if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(rows[j].stop&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
-  if(best!=null){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=r.sub&&r.ctx?r.ctx:r.name;
+ if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
+  if(best!=null){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=stopName(r);
    ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" et 30 s":"")+"</b></div>":"")+"</div>"}}
  box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban}
 /* numéro de train en cours : dernier changement de parité dépassé */
@@ -980,7 +996,7 @@ function splitSec(out){const tm=r=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(r.time
   r.sec=sec;if(t!=null)lt={t,pk:r.pk}});return out}
 
 /* ---------- données ---------- */
-function setData(r,d){rows=r;defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
+function setData(r,d){rows=r;cSup=new Set();store("cSup",null);defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));renderCond();geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
 function demo(){const m=(pk,name,v,time,pl,stop)=>({pk,name,ctx:"",sub:false,stop:!!stop,pl:!!pl,time,reg:"",rad:"",sec:1,v});
  return[m(100,"TEST-A",90,"19:13","",1),m(100.8,"PN 12",60,"",1),m(102,"Bif. de Test",100,""),m(104.5,"Poste 4",120,"19:18"),m(106.2,"PN 15",80,"",1),m(108,"Signal 108",120,"19:22"),m(110.5,"Entrée Test-B",40,"19:25"),m(111,"TEST-B",40,"19:26","",1)]}
 function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||"",ann:c[5]!==undefined&&c[5]!==""&&!isNaN(+c[5])?+c[5]:null}))}
@@ -995,13 +1011,13 @@ function renderList(){
  const many=new Set(rows.map(x=>x.sec)).size>1;
  rows.forEach((r,i)=>{
   if(r.sec!==sec){sec=r.sec;if(many){const d=document.createElement("div");d.className="secr";const g=geo.sec&&geo.sec[sec];d.textContent="Tronçon "+sec+(g?" · ligne "+g.split("/")[0]:"");L.appendChild(d)}}
-  const e=document.createElement("div");e.className="r"+(r.stop?" stop":"");e.dataset.i=i;
+  const e=document.createElement("div");e.className="r"+(isStop(r)?" stop":"")+(isSup(r)?" sup":"");e.dataset.i=i;
   const t=ltv.filter(k=>inLtv(k,r.pk,r.sec)).reduce((m,k)=>Math.min(m,k.v),1e9);
   const eff=t<1e9&&(r.v==null||t<r.v);
   const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name.replace(/^\|\s*/,""))+"</span>":esc(r.name||"—");
   const x=[r.pl?"PL":"",r.reg?"M. rég. "+r.reg+" min":"",r.rad].filter(Boolean).map(esc).join(" · ");
-  e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+(r.stop?'<span class="tag">ARRÊT</span>':"")+nm+(r.train?' <b class="par">→ '+esc(r.train)+"</b>":"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
-  e.onclick=()=>{if(mode==="man"){s=i;lastRow=-1;gotoRow(true)}};
+  e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+(isStop(r)?'<span class="tag">ARRÊT'+(isCond(r)?" [C]":"")+"</span>":isSup(r)?'<span class="tag off">[C] SUPPRIMÉ</span>':"")+nm+(isCond(r)?' <button class="csw" data-cs="'+i+'">'+(isSup(r)?"Rétablir l’arrêt":"Arrêt supprimé ?")+"</button>":"")+(r.train?' <b class="par">→ '+esc(r.train)+"</b>":"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
+  e.onclick=ev=>{const b=ev.target.closest("button[data-cs]");if(b){ev.stopPropagation();setSup(rows[+b.dataset.cs],!isSup(rows[+b.dataset.cs]));return}if(mode==="man"){s=i;lastRow=-1;gotoRow(true)}};
   L.appendChild(e);
  });
  const n=new Set(rows.map(r=>r.sec)).size;
@@ -1048,7 +1064,7 @@ function frame(now){
  const zl=Z.filter(z=>z.d1>cur).sort((a,b)=>a.d1-b.d1)[0];
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
- let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(c.stop){ns="Arrêt <b>"+esc(c.sub&&c.ctx?c.ctx:c.name)+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns;
+ let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(isStop(c)){ns="Arrêt <b>"+esc(stopName(c))+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns;
  showDelay(cur,now);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
  else if(T)setSt("ok","Test GPS : écart de "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m avec le PK simulé.");
@@ -1187,7 +1203,7 @@ try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]")
 $("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
 $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
 buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");document.querySelectorAll("#thSw button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
-renderList();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
+renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
 setSide(store("side")==="1");
