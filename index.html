@@ -35,6 +35,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .vit>.vcol{display:flex;flex-direction:column;gap:2px;min-width:clamp(56px,9cqw,112px)}
 .tiv{width:clamp(50px,7cqw,82px);aspect-ratio:1;flex:none;display:grid;place-items:center;background:var(--plate);color:var(--ink);border-radius:clamp(7px,1cqw,12px);box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--ink);transition:background .3s}
 .tiv .v{font:700 clamp(22px,3.5cqw,42px)/1 var(--fd);font-variant-numeric:tabular-nums}
+.tiv .v.l3{font-size:clamp(16px,2.6cqw,31px);letter-spacing:-.02em}
 #tLim.ltv{background:var(--ltv);box-shadow:inset 0 0 0 3px var(--ltv),inset 0 0 0 5px var(--ink)}
 #tLim.over{outline:4px solid var(--bad);outline-offset:2px}
 #tSpd.over #spd{color:var(--bad)}
@@ -49,7 +50,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .rsl{stroke:var(--tx3);stroke-width:16;stroke-dasharray:2 14;opacity:.35}
 .rtr{stroke:var(--track);stroke-width:2.5}.rtr.past{stroke:var(--tx3)}
 .rpa{fill:var(--tx3);opacity:.06}.rpl{fill:none;stroke:var(--tx3);stroke-width:1.2;opacity:.4}
-.rg{fill:var(--tx3);font-size:10px;font-weight:600;opacity:.8;font-variant-numeric:tabular-nums}
+.rgt{stroke:var(--tx3);stroke-width:1}.rg{fill:var(--tx3);font-size:10px;font-weight:600;opacity:.8;font-variant-numeric:tabular-nums}
 .rsa{fill:var(--tx);opacity:.045}.rsa.ltv{fill:var(--ltv);opacity:.12}.rsa.past{opacity:.02}
 .rsp.off{opacity:.35}.rsp{stroke:var(--plate);stroke-width:3}.rsp.ltv{stroke:var(--ltv);stroke-width:4}.rsp.past{opacity:.25}
 .rspv{stroke:var(--tx3);stroke-width:1.5}
@@ -836,6 +837,50 @@ function kvbDecel(mt,mf){const M=Math.ceil(mt),F=Math.floor(mf);const row=KVB_MA
  if(k<0)return{err:"Masse freinée insuffisante pour la plus petite décélération du tableau ("+row[2].find(v=>v!=null)+" t minimum pour "+row[0]+" à "+row[1]+" t)."};
  return{dec:KVB_DEC[k],row,col:k,next:row[2][k+1]!=null?{dec:KVB_DEC[k+1],need:row[2][k+1]}:null}}
 
+/* ---------- du terrain au profil de la voie ----------
+   Une voie ne suit pas le relief à 100 m près : elle enchaîne de longues sections de déclivité
+   constante, raccordées en douceur. On part de l'altitude du terrain (bruitée par les remblais,
+   tranchées et ponts), on en tire une pente sur 1 km, bornée à ±25 ‰, puis on regroupe en
+   sections d'au moins 600 m. La déclivité mesurée SNCF Réseau reste prioritaire là où elle existe. */
+const PENTE={WIN:5,MAXEST:25,TOL:2.5,MINSEG:0.6,NOISE:4};
+/* T : échantillons d'un tronçon triés par PK {pk, z, o, cl, rg} ; D : déclivités SNCF ; grad(D,cl,rg,pk) */
+function shapeSection(T,D,grad){const n=T.length;if(!n)return;
+ /* 1. ouvrages et trous : interpolation linéaire */
+ const bad=T.map(s=>s.z==null||!!s.o),zi=new Array(n).fill(null);
+ for(let i=0;i<n;i++){if(!bad[i]){zi[i]=T[i].z;continue}let a=i-1;while(a>=0&&bad[a])a--;let b=i;while(b<n&&bad[b])b++;
+  for(let k=i;k<b;k++)zi[k]=a>=0&&b<n?T[a].z+(T[b].z-T[a].z)*(T[k].pk-T[a].pk)/(T[b].pk-T[a].pk):a>=0?T[a].z:b<n?T[b].z:null;i=b-1}
+ /* 2. médiane sur 700 m : enlève les pointes (remblai, tranchée) */
+ const zm=zi.map((_,i)=>{const w=[];for(let k=Math.max(0,i-3);k<=Math.min(n-1,i+3);k++)if(zi[k]!=null)w.push(zi[k]);w.sort((a,b)=>a-b);return w.length?w[w.length>>1]:null});
+ /* 3. pente par moindres carrés sur ±500 m, et dispersion autour de la droite */
+ const ge=new Array(n).fill(null),nz=new Array(n).fill(0);
+ for(let i=0;i<n;i++){let sx=0,sy=0,sxx=0,sxy=0,c=0;const P=[];
+  for(let k=Math.max(0,i-PENTE.WIN);k<=Math.min(n-1,i+PENTE.WIN);k++){if(zm[k]==null||Math.abs(T[k].pk-T[i].pk)>PENTE.WIN*0.1+0.05)continue;const x=T[k].pk-T[i].pk,y=zm[k];sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;c++;P.push([x,y])}
+  const den=c*sxx-sx*sx;if(c<4||den<=1e-9)continue;const sl=(c*sxy-sx*sy)/den,ic=(sy-sl*sx)/c;
+  let e=0;for(const[x,y]of P)e+=(y-(ic+sl*x))**2;nz[i]=Math.sqrt(e/c);ge[i]=Math.max(-PENTE.MAXEST,Math.min(PENTE.MAXEST,sl))}
+ /* 4. moyenne glissante sur 1 km, puis mesure SNCF prioritaire */
+ const gs=ge.map((_,i)=>{let a=0,c=0;for(let k=Math.max(0,i-PENTE.WIN);k<=Math.min(n-1,i+PENTE.WIN);k++)if(ge[k]!=null){a+=ge[k];c++}return c?a/c:null});
+ for(let i=0;i<n;i++){const s=T[i],m=grad?grad(D,s.cl,s.rg,s.pk):null;
+  if(m!=null){s.g=m;s.src="S"}else if(gs[i]!=null){s.g=gs[i];s.src=nz[i]>PENTE.NOISE?"U":"I"}else{s.g=null;s.src=""}}
+ /* 5. sections : valeurs voisines regroupées, sections estimées trop courtes fusionnées */
+ const G=[],near=(i,j)=>Math.abs(T[j].pk-T[i].pk)<0.15;
+ for(let i=0;i<n;i++){const s=T[i],g=G[G.length-1],est=s.src!=="S";
+  if(g&&s.g!=null&&g.v!=null&&g.est===est&&near(g.e,i)&&(est?Math.abs(s.g-g.v)<=PENTE.TOL:s.g===g.v)){g.e=i;g.sum+=s.g;g.c++;g.v=g.sum/g.c;g.u+=s.src==="U"?1:0}
+  else G.push({a:i,e:i,sum:s.g??0,c:s.g==null?0:1,v:s.g,est,u:s.src==="U"?1:0})}
+ const len=g=>T[g.e].pk-T[g.a].pk+0.1,mer=x=>x&&x.est&&x.v!=null;
+ for(;;){let k=-1,best=1e9;
+  G.forEach((g,j)=>{if(!mer(g)||len(g)>=PENTE.MINSEG)return;const L=G[j-1],R=G[j+1];if(!(mer(L)&&near(L.e,g.a))&&!(mer(R)&&near(g.e,R.a)))return;if(len(g)<best){best=len(g);k=j}});
+  if(k<0)break;const g=G[k],L=G[k-1],R=G[k+1],lo=mer(L)&&near(L.e,g.a),ro=mer(R)&&near(g.e,R.a);
+  const t=lo&&ro?(Math.abs(L.v-g.v)<=Math.abs(R.v-g.v)?L:R):lo?L:R,j=G.indexOf(t);
+  const m={a:Math.min(t.a,g.a),e:Math.max(t.e,g.e),sum:t.sum+g.sum,c:t.c+g.c,est:true,u:t.u+g.u};m.v=m.sum/m.c;G.splice(Math.min(k,j),2,m)}
+ /* 6. valeurs finales : arrondi au ‰ pour l'estimation, section incertaine si le terrain est trop bruité */
+ for(const g of G){const unc=g.est&&g.u>(g.e-g.a+1)/2;for(let i=g.a;i<=g.e;i++){const s=T[i];if(g.v==null){s.g=null;continue}
+  s.g=g.est?Math.round(g.v):s.g;s.src=g.est?(unc?"U":"I"):"S";s.b=i===g.a&&(g.est?len(g)>=PENTE.MINSEG:true)?1:0}}
+ /* 7. altitude de la voie : intégration des pentes, recalée sur la tendance du terrain */
+ let z0=zm.find(v=>v!=null);if(z0==null)return;const zr=[z0];for(let i=1;i<n;i++){const dk=T[i].pk-T[i-1].pk,g=T[i-1].g??0;zr.push(zr[i-1]+g*dk)}
+ const dr=zr.map((v,i)=>zm[i]==null?0:zm[i]-v),off=dr.map((_,i)=>{let a=0,c=0;for(let k=Math.max(0,i-25);k<=Math.min(n-1,i+25);k++){a+=dr[k];c++}return a/c});
+ T.forEach((s,i)=>s.zs=Math.round((zr[i]+off[i])*10)/10)}
+
+
 /* ---------- profil en long ----------
    Sources : altitude du terrain IGN (Géoplateforme), tunnels et ponts ferroviaires OpenStreetMap (Overpass),
    déclivité mesurée SNCF Réseau (prioritaire pour les ‰). Le profil est calculé à l'import et gardé sur l'appareil. */
@@ -877,35 +922,32 @@ async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.k
   profMsg("Profil : tunnels et ponts (OpenStreetMap)…");let st=[],osmOk=true;try{st=prepStruct(await osmStructures(S.map(s=>[s.lon,s.lat])))}catch(e){osmOk=false}
   let nT=0,nB=0;for(const x of st)x.t==="tunnel"?nT++:nB++;
   S.forEach((s,i)=>{s.z=zs[i];s.o=st.length?nearStruct(st,s.lon,s.lat):null});
-  /* 4. par tronçon : ouvrages remplacés par une droite, lissage, pente */
-  const D=await loadDecl();let nS=0,nI=0;
-  for(const sec of [...new Set(S.map(s=>s.sec))]){const T=S.filter(s=>s.sec===sec).sort((a,b)=>a.pk-b.pk);
-   const bad=T.map(s=>s.z==null||s.o!=null);
-   for(let i=0;i<T.length;i++)if(bad[i]){let a=i-1;while(a>=0&&bad[a])a--;let b=i;while(b<T.length&&bad[b])b++;
-    for(let k=i;k<b;k++)T[k].zi=a>=0&&b<T.length?T[a].z+(T[b].z-T[a].z)*(k-a)/(b-a):a>=0?T[a].z:b<T.length?T[b].z:null;i=b-1}
-   T.forEach((s,i)=>{if(!bad[i])s.zi=s.z});
-   /* médiane glissante (5) puis moyenne glissante (5) : ±250 m */
-   const zi=T.map(s=>s.zi),med=zi.map((_,i)=>{const w=zi.slice(Math.max(0,i-2),i+3).filter(v=>v!=null).sort((a,b)=>a-b);return w.length?w[w.length>>1]:null});
-   const sm=med.map((_,i)=>{const w=med.slice(Math.max(0,i-2),i+3).filter(v=>v!=null);return w.length?w.reduce((a,b)=>a+b,0)/w.length:null});
-   T.forEach((s,i)=>{s.zs=sm[i];const a=sm[Math.max(0,i-2)],b=sm[Math.min(T.length-1,i+2)],dk=(T[Math.min(T.length-1,i+2)].pk-T[Math.max(0,i-2)].pk);
-    s.gi=a!=null&&b!=null&&dk?Math.round((b-a)/dk*10)/10:null;   /* m/km = ‰, sens PK croissants */
-    const g=sncfGrad(D,s.cl,s.rg,s.pk);if(g!=null){s.g=g;s.src="S";nS++}else if(s.gi!=null){s.g=Math.max(-40,Math.min(40,s.gi));s.src="I";nI++}else s.g=null})}
-  prof={sig,v:1,s:S.map(s=>[s.sec,s.pk,s.zs==null?null:Math.round(s.zs*10)/10,s.g,s.src||"",s.o?s.o[0]:""]),info:{ign:ignOk,osm:osmOk,nT,nB,nS,nI,n:S.length,date:new Date().toISOString().slice(0,10)}};
+  /* 4. par tronçon : profil de voie (voir pente.js) */
+  const D=await loadDecl();
+  for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
+  const nS=S.filter(x=>x.src==="S").length,nI=S.length-nS;
+  prof={sig,v:2,s:S.map(s=>[s.sec,s.pk,s.zs==null?null:s.zs,s.g,s.src||"",s.o?s.o[0]:"",s.z==null?null:Math.round(s.z*10)/10,s.b||0]),info:{ign:ignOk,osm:osmOk,nT,nB,nS,nI,n:S.length,date:new Date().toISOString().slice(0,10)}};
   store("prof",JSON.stringify(prof));profMsg(profInfo());
  }catch(e){profMsg("Profil impossible : "+e.message)}finally{profBusy=false}}
-function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. Altitude IGN "+(i.ign?"✓":"indisponible")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":"indisponibles")+" · déclivité SNCF mesurée sur "+Math.round(i.nS/i.n*100)+" % du trajet, déduite du terrain ailleurs."}
+function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. Altitude IGN "+(i.ign?"✓":"indisponible")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":"indisponibles")+" · déclivité SNCF mesurée sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
 /* profil projeté sur la fiche : [{d, z, g (sens de marche), src, o}] */
 let profD=null,profDsig="";
+/* profil calculé avec l'ancienne méthode : recalcul sur place à partir des altitudes déjà gardées, sans réseau */
+async function upgradeProfile(){if(!prof||prof.v>=2||!prof.s)return;const D=await loadDecl();
+ const S=prof.s.map(([sec,pk,z,g,src,o])=>{const k=(geo.sec&&geo.sec[sec]||"/").split("/");return{sec,pk,z,o:o||null,cl:k[0],rg:+k[1]||1}});
+ for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
+ prof.s=S.map(x=>[x.sec,x.pk,x.zs??null,x.g,x.src||"",x.o?x.o[0]:"",x.z,x.b||0]);prof.v=2;prof.info.nS=S.filter(x=>x.src==="S").length;prof.info.nI=S.length-prof.info.nS;
+ store("prof",JSON.stringify(prof));profD=null;lastRow=-1;profMsg(profInfo())}
 function profPts(){if(!prof)return[];const sig=prof.sig+"|"+Dc.length+"|"+Dc[Dc.length-1];if(profD&&profDsig===sig)return profD;
  const dirOf={};for(const sec of [...new Set(rows.map(r=>r.sec))]){const R=secRows(sec);dirOf[sec]=R.length>1?Math.sign(R[R.length-1][0].pk-R[0][0].pk)||1:1}
- profD=prof.s.map(([sec,pk,z,g,src,o])=>{const d=pkToD(sec,pk);return d==null?null:{d,sec,z,g:g==null?null:g*(dirOf[sec]||1),src,o}}).filter(Boolean).sort((a,b)=>a.d-b.d);profDsig=sig;return profD}
+ profD=prof.s.map(([sec,pk,z,g,src,o,zt,b])=>{const d=pkToD(sec,pk);return d==null?null:{d,sec,z,g:g==null?null:g*(dirOf[sec]||1),src,o,b:!!b,dir:dirOf[sec]||1}}).filter(Boolean).sort((a,b)=>a.d-b.d);profDsig=sig;return profD}
 function gradAt(cur){const P=profPts();let b=null;for(const p of P){if(Math.abs(p.d-cur)<=60&&(!b||Math.abs(p.d-cur)<Math.abs(b.d-cur)))b=p}return b}
-function gradTxt(g){if(g==null)return"";const v=Math.round(Math.abs(g));return v<1?"Palier":(g>0?"Rampe ":"Pente ")+v+" ‰"}
+function gradTxt(g,src){if(g==null||src==="U")return"";const v=Math.round(Math.abs(g)),e=src==="S"?"":"≈ ";return v<1?"Palier":(g>0?"Rampe ":"Pente ")+e+v+" ‰"}
 /* dessin : bande horizontale sous la carte */
 function drawProfile(cur,ok){const box=$("#prof");if(!box)return;const P=profPts();const W=box.clientWidth,H=box.clientHeight;
  if(!P.length||!W){box.innerHTML='<div class="pempty">'+(rows.length?(profBusy?"Profil en cours de calcul…":"Pas de profil pour cette fiche"):"")+"</div>";$("#gradNow").textContent="";return}
  const span=zoneKm*1000,d0=cur-span*.15,d1=cur+span*.85,V=P.filter(p=>p.d>=d0-200&&p.d<=d1+200&&p.z!=null);
- const g=ok?gradAt(cur):null;$("#gradNow").textContent=g&&g.g!=null?gradTxt(g.g):"";$("#gradNow").dataset.s=g&&g.g!=null?(g.g>=1?"r":g.g<=-1?"p":"0"):"";
+ const g=ok?gradAt(cur):null;$("#gradNow").textContent=g&&g.g!=null?gradTxt(g.g,g.src):"";$("#gradNow").dataset.s=g&&g.g!=null?(g.g>=1?"r":g.g<=-1?"p":"0"):"";
  if(V.length<2){box.innerHTML='<div class="pempty">Pas de profil ici</div>';return}
  let zmin=Math.min(...V.map(p=>p.z)),zmax=Math.max(...V.map(p=>p.z));if(zmax-zmin<20){const m=(zmax+zmin)/2;zmin=m-10;zmax=m+10}
  const pt=16,pb=14,x=d=>(d-d0)/(d1-d0)*W,y=z=>pt+(1-(z-zmin)/(zmax-zmin))*(H-pt-pb);
@@ -933,7 +975,10 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  if(P.length>1){let zmin=Infinity,zmax=-Infinity;for(const p of P){if(p.z<zmin)zmin=p.z;if(p.z>zmax)zmax=p.z}if(zmax-zmin<25){const m=(zmax+zmin)/2;zmin=m-12.5;zmax=m+12.5}
   const Yp=z=>pBot-(z-zmin)/(zmax-zmin)*(pBot-pTop);let run=[];const flush=()=>{if(run.length>1){const l=run.map((p,k)=>(k?"L":"M")+X(p.d).toFixed(1)+" "+Yp(p.z).toFixed(1)).join("");q.push('<path d="'+l+"L"+X(run[run.length-1].d).toFixed(1)+" "+yT+"L"+X(run[0].d).toFixed(1)+" "+yT+'Z" class="rpa"/><path d="'+l+'" class="rpl"/>')}run=[]};
   for(let k=0;k<P.length;k++){if(k&&(P[k].sec!==P[k-1].sec||P[k].d-P[k-1].d>350))flush();run.push(P[k])}flush();
-  let last=null;const occG=[];for(const p of P){if(p.g==null||!vis(p.d))continue;const r=Math.round(p.g);if(last==null||Math.abs(r-last)>=3){const x=X(p.d);if(p.d>cur&&occG.every(o=>Math.abs(o-x)>50)){occG.push(x);T(x,Yp(p.z)-8,(Math.abs(r)<1?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","middle")}last=r}}}
+  /* déclivité : une étiquette par section, au début de la section dans le sens de marche */
+  const occG=[];for(let k=0;k<P.length;k++){const p=P[k];if(p.g==null||p.src==="U")continue;const pr=P[k-1];if(pr&&pr.sec===p.sec&&pr.g!=null&&pr.src!=="U"&&Math.round(pr.g)===Math.round(p.g))continue;
+   if(!vis(p.d)||p.d<=cur)continue;const x=X(p.d),r=Math.round(p.g);if(occG.some(o=>Math.abs(o-x)<56))continue;occG.push(x);
+   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(Yp(p.z)-4)+'" y2="'+Yp(p.z)+'" class="rgt"/>');T(x+3,Yp(p.z)-8,(p.src==="S"?"":"≈")+(r===0?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","start")}}
  /* voie horizontale */
  q.push('<line x1="'+(-((X(0)*-1)%16+16)%16)+'" x2="'+W+'" y1="'+yT+'" y2="'+yT+'" class="rsl"/>');
  for(const dy of [-5,5])q.push('<line x1="0" x2="'+X(cur)+'" y1="'+(yT+dy)+'" y2="'+(yT+dy)+'" class="rtr past"/><line x1="'+X(cur)+'" x2="'+W+'" y1="'+(yT+dy)+'" y2="'+(yT+dy)+'" class="rtr"/>');
@@ -955,6 +1000,8 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+y+'" y2="'+y+'" class="rsp'+(p.lt?" ltv":"")+(past?" past":"")+(ok?"":" off")+'"/>');
   const n=pieces[k+1];if(n&&n.v!=null)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+y+'" y2="'+Ys(n.v)+'" class="rspv"/>');
   if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;if(ok||p.a>cur)T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":"")+(ok?"":" off"));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
+ /* déclivité en cours (pastille du bas) */
+ {const g=ok&&!viewOff?gradAt(cur):ok?gradAt(cur):null,E=$("#gradNow");if(E){E.textContent=g&&g.g!=null?gradTxt(g.g,g.src):"";E.dataset.s=g&&g.g!=null?(g.g>=1?"r":g.g<=-1?"p":"0"):""}}
  /* points de passage, en bas */
  const occ=[],pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(isStop(rows[b])-isStop(rows[a]))||(!!rows[b].train-!!rows[a].train)||a-b);
  const lane=[yAx-62,yAx-22],lab=[];
@@ -1123,7 +1170,7 @@ function frame(now){
   }}
  mapPos(mode==="sim"?simPt:gpsPt,true);
  const cur=Dc[i]+f*seg(i),Z=ltvZones(),Lt=trainLen(),E=effLim(cur,Z,Lt);let lim=E.v,inL=E.ltv;
- $("#pk").textContent=fk(T?T.pk:pk);$("#lim").textContent=lim==null?"?":lim;$("#spd").textContent=spd==null?"—":Math.round(spd);
+ $("#pk").textContent=fk(T?T.pk:pk);$("#lim").textContent=lim==null?"?":lim;$("#lim").classList.toggle("l3",String(lim).length>2);$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tLim").classList.toggle("ltv",inL);
  const over=spd!=null&&lim!=null&&spd>lim;$("#tSpd").classList.toggle("over",over);$("#tLim").classList.toggle("over",over);
  {const g=$("#gBar");g.style.width=spd!=null&&lim?Math.min(100,spd/lim*100)+"%":"0";g.className=over?"over":spd!=null&&lim&&spd>=lim*.95?"near":""}
@@ -1276,7 +1323,7 @@ $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis
 buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");document.querySelectorAll("#thSw button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
 renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
-profMsg(profInfo());if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
+profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
 setSide(store("side")==="1");
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
 setInterval(tick,500);tick();
