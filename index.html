@@ -67,7 +67,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .rpar{fill:var(--tx);font-weight:800}
 .rpk{fill:var(--tx3);font-size:11px;text-anchor:middle;font-variant-numeric:tabular-nums}
 .rlead{stroke:var(--line);stroke-width:1}.rlead.past{opacity:.5}
-.rsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:5 5}.rst{fill:var(--tx3);font-size:11px}
+.perr{fill:var(--ltv)!important}.rsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:5 5}.rst{fill:var(--tx3);font-size:11px}
 .stopban{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);background:var(--email);color:var(--emailtx);border-radius:10px;padding:16px 30px 18px;text-align:center;box-shadow:inset 0 0 0 3px var(--email),inset 0 0 0 4px var(--emailtx)}
 .stopban .sb1{font-size:clamp(18px,2.4cqw,26px)}.stopban .sb2{font:700 clamp(24px,3.4cqw,38px)/1.2 var(--fd);margin-top:4px}.stopban b{font-weight:700}
 /* bandeau horaires */
@@ -961,28 +961,38 @@ function prepStruct(S){for(const s of S){s.cum=[0];for(let i=1;i<s.c.length;i++)
 function nearStruct(S,lon,lat){for(const s of S){const b=s.bb;if(lon<b[0]||lon>b[2]||lat<b[1]||lat>b[3])continue;if(GEO.proj(s.c,s.cum,lon,lat).d<=25)return s.t}return null}
 /* déclivité SNCF à un PK d'une ligne (‰, sens PK croissants), voie la mieux renseignée */
 function sncfGrad(D,cl,rg,pk){let best=null;for(const x of D)if(x[0]===cl&&x[1]===rg&&pk>=x[3]&&pk<=x[4]){if(!best||x[2]==="V1"||x[2]==="UNIQUE")best=x}return best?best[5]:null}
+let profState={busy:false,pct:0,step:"",err:""};
+function profStep(step,pct){profState.step=step;profState.pct=pct;profMsg("Profil : "+step+(pct!=null?" ("+Math.round(pct*100)+" %)":"")+"…")}
+function finishProfile(S,sig,info,D){for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
+ info.nS=S.filter(x=>x.src==="S").length;info.nI=S.length-info.nS;
+ prof={sig,v:2,s:S.map(s=>[s.sec,s.pk,s.zs==null?null:s.zs,s.g,s.src||"",s.o?s.o[0]:"",s.z==null?null:Math.round(s.z*10)/10,s.b||0]),info};
+ store("prof",JSON.stringify(prof));profD=null;lastRow=-1}
 async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.keys(geo.sec||{}).length)return;
- const sig=JSON.stringify([rows.length,rows[0].pk,rows[rows.length-1].pk,geo.sec]);if(!force&&prof&&prof.sig===sig)return;
- profBusy=true;try{
+ const sig=JSON.stringify([rows.length,rows[0].pk,rows[rows.length-1].pk,geo.sec]);
+ /* un profil sans aucune altitude n'est pas gardé : on réessaie */
+ const empty=prof&&prof.s&&!prof.s.some(x=>x[2]!=null);
+ if(!force&&prof&&prof.sig===sig&&!empty&&!(prof.info&&prof.info.osm===false&&prof.info.retry!==false))return;
+ profBusy=true;profState={busy:true,pct:0,step:"",err:""};lastRow=-1;try{
   /* 1. échantillons tous les 100 m sur les tronçons dont la ligne est connue */
   const S=[];for(const sec of Object.keys(geo.sec).map(Number)){const L=lineFor(sec),R=secRange(sec);if(!L||!R)continue;const k=geo.sec[sec].split("/");
    for(let pk=Math.ceil(R[0]/PSTEP)*PSTEP;pk<=R[1]+1e-9;pk+=PSTEP){const p=GEO.point(L,pk);if(p)S.push({sec,cl:k[0],rg:+k[1],pk:+pk.toFixed(3),lon:p[0],lat:p[1]})}}
-  if(!S.length){profMsg("Aucun tronçon avec géométrie : pas de profil.");return}
-  /* 2. altitudes IGN */
-  profMsg("Profil : altitudes IGN (0 %)…");let zs=null,ignOk=true;
-  try{zs=await ignElev(S.map(s=>[s.lon,s.lat]),f=>profMsg("Profil : altitudes IGN ("+Math.round(f*100)+" %)…"))}catch(e){ignOk=false;zs=S.map(()=>null)}
-  /* 3. tunnels et ponts OSM */
-  profMsg("Profil : tunnels et ponts (OpenStreetMap)…");let st=[],osmOk=true;try{st=prepStruct(await osmStructures(S.map(s=>[s.lon,s.lat])))}catch(e){osmOk=false}
-  let nT=0,nB=0;for(const x of st)x.t==="tunnel"?nT++:nB++;
-  S.forEach((s,i)=>{s.z=zs[i];s.o=st.length?nearStruct(st,s.lon,s.lat):null});
-  /* 4. par tronçon : profil de voie (voir pente.js) */
-  const D=await loadDecl();
-  for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
-  const nS=S.filter(x=>x.src==="S").length,nI=S.length-nS;
-  prof={sig,v:2,s:S.map(s=>[s.sec,s.pk,s.zs==null?null:s.zs,s.g,s.src||"",s.o?s.o[0]:"",s.z==null?null:Math.round(s.z*10)/10,s.b||0]),info:{ign:ignOk,osm:osmOk,nT,nB,nS,nI,n:S.length,date:new Date().toISOString().slice(0,10)}};
-  store("prof",JSON.stringify(prof));profMsg(profInfo());
- }catch(e){profMsg("Profil impossible : "+e.message)}finally{profBusy=false}}
-function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. Altitude IGN "+(i.ign?"✓":"indisponible")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":"indisponibles")+" · déclivité SNCF mesurée sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
+  if(!S.length)throw new Error("aucun tronçon de la fiche n’a de géométrie");
+  /* 2. altitudes IGN : réutilisées si le profil existant couvre déjà ces points */
+  let zs=null;if(prof&&prof.sig===sig&&!empty&&prof.v>=2){const m=new Map(prof.s.map(x=>[x[0]+"|"+x[1],x[6]]));zs=S.map(s=>m.get(s.sec+"|"+s.pk)??null);if(!zs.some(z=>z!=null))zs=null}
+  if(!zs){profStep("altitudes IGN",0);zs=await ignElev(S.map(s=>[s.lon,s.lat]),f=>{profStep("altitudes IGN",f);lastRow=-1})}
+  if(!zs.some(z=>z!=null))throw new Error("aucune altitude reçue de l’IGN");
+  const D=await loadDecl();S.forEach((s,i)=>{s.z=zs[i];s.o=null});
+  const info={ign:true,osm:null,nT:0,nB:0,n:S.length,date:new Date().toISOString().slice(0,10)};
+  /* profil affiché tout de suite, sans les ouvrages */
+  finishProfile(S,sig,info,D);
+  /* 3. tunnels et ponts OSM, puis profil affiné */
+  profStep("tunnels et ponts (OpenStreetMap)",null);lastRow=-1;
+  try{const st=prepStruct(await osmStructures(S.map(s=>[s.lon,s.lat])));for(const x of st)x.t==="tunnel"?info.nT++:info.nB++;S.forEach(s=>{s.o=st.length?nearStruct(st,s.lon,s.lat):null});info.osm=true}catch(e){info.osm=false}
+  S.forEach(s=>{delete s.zs;delete s.g;delete s.src;delete s.b});finishProfile(S,sig,info,D);profMsg(profInfo());
+ }catch(e){profState.err=e.message||"erreur";profMsg("Profil indisponible : "+profState.err+". Il sera recalculé au prochain lancement avec du réseau, ou avec « Recalculer le profil ».")}
+ finally{profBusy=false;profState.busy=false;lastRow=-1}}
+window.addEventListener("online",()=>{if(!profBusy&&(!prof||profState.err))buildProfile()});
+function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. Altitude IGN "+(i.ign?"✓":"indisponible")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":i.osm===false?"indisponibles (nouvel essai au prochain lancement)":"en attente")+" · déclivité SNCF mesurée sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
 /* profil projeté sur la fiche : [{d, z, g (sens de marche), src, o}] */
 let profD=null,profDsig="";
 /* profil calculé avec l'ancienne méthode : recalcul sur place à partir des altitudes déjà gardées, sans réseau */
@@ -1032,6 +1042,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   const occG=[];for(let k=0;k<P.length;k++){const p=P[k];if(p.g==null||p.src==="U")continue;const pr=P[k-1];if(pr&&pr.sec===p.sec&&pr.g!=null&&pr.src!=="U"&&Math.round(pr.g)===Math.round(p.g))continue;
    if(!vis(p.d)||p.d<=cur)continue;const x=X(p.d),r=Math.round(p.g);if(occG.some(o=>Math.abs(o-x)<56))continue;occG.push(x);
    q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(Yp(p.z)-4)+'" y2="'+Yp(p.z)+'" class="rgt"/>');T(x+3,Yp(p.z)-8,(p.src==="S"?"":"≈")+(r===0?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","start")}}
+ if(P.length<2){const why=profState.busy?(profState.step?"Profil en cours de calcul : "+profState.step+(profState.pct!=null?" "+Math.round(profState.pct*100)+" %":"")+"…":"Profil en cours de calcul…"):profState.err?"Profil indisponible : "+profState.err+".":!Object.keys(geo.sec||{}).length?"Profil : en attente de la géométrie des lignes.":prof?"":"Profil pas encore calculé.";if(why)T(12,pBot-6,why,"rst"+(profState.err?" perr":""))}
  /* voie horizontale */
  q.push('<line x1="'+(-((X(0)*-1)%16+16)%16)+'" x2="'+W+'" y1="'+yT+'" y2="'+yT+'" class="rsl"/>');
  for(const dy of [-5,5])q.push('<line x1="0" x2="'+X(cur)+'" y1="'+(yT+dy)+'" y2="'+(yT+dy)+'" class="rtr past"/><line x1="'+X(cur)+'" x2="'+W+'" y1="'+(yT+dy)+'" y2="'+(yT+dy)+'" class="rtr"/>');
