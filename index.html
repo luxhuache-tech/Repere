@@ -169,6 +169,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .pov{stroke-width:4;stroke-linecap:round}.pov.pt{stroke:var(--tx3)}.pov.pb{stroke:var(--tx2);stroke-dasharray:3 3}
 .pempty{height:100%;display:grid;place-items:center;font-size:12px;color:var(--tx3)}
 #gradNow[data-s="r"],#gradNow[data-s="p"]{color:var(--tx)}
+.rdc{stroke:var(--tx2);stroke-width:1.5;opacity:.7}.rdct{fill:var(--tx2);font-size:12px;font-weight:500}
 /* milieu : schéma */
 #zone{flex:1;min-height:0;overflow:hidden}
 #zone text{font-family:var(--f)}
@@ -422,7 +423,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
     </div>
     <h3>Profil en long</h3>
     <div class="box small"><div id="profMsg" class="muted"></div>
-     <p class="muted" style="margin-bottom:0">Courbe grise sous la carte : altitude du terrain IGN, tunnels et ponts OpenStreetMap remplacés par une droite, déclivité mesurée SNCF Réseau (état 2021) prioritaire pour les ‰. Indicatif seulement.</p>
+     <p class="muted" style="margin-bottom:0">Courbe grise sous la carte : altitude du terrain IGN, tunnels et ponts OpenStreetMap remplacés par une droite, déclivité mesurée SNCF Réseau (état 2021) prioritaire pour les ‰. Avec tes livrets de ligne importés, la déclivité caractéristique de chaque section (rampe et pente maxi dans ton sens de marche) s’affiche au-dessus de la courbe et borne les pentes estimées. Indicatif seulement.</p>
      <div class="row"><button class="btn" id="profRe">Recalculer le profil</button></div></div>
     <div id="geoRep"></div>
     <div class="row"><button class="btn dng" id="geoClr">Effacer la géométrie</button></div>
@@ -911,6 +912,100 @@ function chkFoot(){const n=chkCount(),r=CHECK.length-n;$("#chkGo").textContent=r
 function openCheck(reset){if(reset){chk={};chkSave()}renderCheck();$("#chkv").classList.remove("hide")}
 let chkBack=false;
 
+/* ---------- déclivités caractéristiques des livrets de ligne ----------
+   Tableau « Déclivités caractéristiques de la ligne » : colonnes Rampes/Pentes (sens PAIR), sections de freinage,
+   Pentes/Rampes (sens IMPAIR). Une valeur peut couvrir plusieurs gares : on lit les bordures du tableau pour
+   connaître l'étendue de chaque case. Résultat : [{a, b, pair:{r,p}, imp:{r,p}, txt}] (valeurs en ‰). */
+async function declPage(pg,lib){const H=pg.view[3],O=lib.OPS,U=lib.Util;
+ const tc=await pg.getTextContent();const R=tc.items.filter(i=>i.str.trim()).map(i=>({s:i.str,x:i.transform[4],w:i.width||0,y:H-i.transform[5],h:Math.abs(i.transform[3])||8}));
+ /* morceaux de texte recollés quand il n'y a pas de vrai blanc entre eux (« Pent » + « es », « FLAMBOIN » + « - ») */
+ R.sort((a,b)=>a.y-b.y||a.x-b.x);const T=[];for(const i of R){const l=T[T.length-1];if(l&&Math.abs(l.y-i.y)<1.5&&i.x-(l.x+l.w)<1.2&&i.x>=l.x){l.s+=i.s;l.w=i.x+i.w-l.x}else if(i.s.trim())T.push({...i})}
+ for(const t of T)t.s=t.s.replace(/\s+/g," ").trim();for(let k=T.length-1;k>=0;k--)if(!T[k].s)T.splice(k,1);
+ const tit=T.find(t=>/clivit.s caract.ristiques de la ligne/i.test(t.s));if(!tit)return[];
+ /* en-têtes de colonnes */
+ const hd=T.filter(t=>t.y>tit.y&&t.y<tit.y+90&&/^(Rampes|Pentes)$/.test(t.s)).sort((a,b)=>a.x-b.x);
+ const sec=T.find(t=>/^Sections de freinage/.test(t.s));if(hd.length<4||!sec)return[];
+ const cols=[{k:"pr",x:hd[0].x+hd[0].w/2},{k:"pp",x:hd[1].x+hd[1].w/2},{k:"ip",x:hd[2].x+hd[2].w/2},{k:"ir",x:hd[3].x+hd[3].w/2}];
+ const top=Math.max(...hd.map(h=>h.y))+4,cx0=cols[1].x+14,cx1=cols[2].x-14;
+ /* bordures horizontales du tableau */
+ const ops=await pg.getOperatorList();let ctm=[1,0,0,1,0,0];const stk=[],hz=[];
+ for(let i=0;i<ops.fnArray.length;i++){const fn=ops.fnArray[i],a=ops.argsArray[i];
+  if(fn===O.save)stk.push(ctm.slice());else if(fn===O.restore)ctm=stk.pop()||ctm;else if(fn===O.transform)ctm=U.transform(ctm,a);
+  else if(fn===O.constructPath){const[o2,co]=a;let k=0,px=0,py=0;const P=(x,y)=>U.applyTransform([x,y],ctm);
+   for(const o of o2){if(o===O.rectangle){const[x,y,w,h]=co.slice(k,k+4);k+=4;const p1=P(x,y),p2=P(x+w,y+h);if(Math.abs(p2[1]-p1[1])<2&&Math.abs(p2[0]-p1[0])>3)hz.push({x0:Math.min(p1[0],p2[0]),x1:Math.max(p1[0],p2[0]),y:H-(p1[1]+p2[1])/2})}
+    else if(o===O.moveTo){[px,py]=co.slice(k,k+2);k+=2}else if(o===O.lineTo){const[x,y]=co.slice(k,k+2);k+=2;const p1=P(px,py),p2=P(x,y);if(Math.abs(p2[1]-p1[1])<.6&&Math.abs(p2[0]-p1[0])>3)hz.push({x0:Math.min(p1[0],p2[0]),x1:Math.max(p1[0],p2[0]),y:H-p1[1]});px=x;py=y}
+    else if(o===O.curveTo)k+=6;else if(o===O.curveTo2||o===O.curveTo3)k+=4}}}
+ const foot=T.find(t=>/^CTF-LILI|^Version \d/.test(t.s)&&t.y>top),bot=foot?foot.y-20:H;
+ const cell=(x,y)=>{let a=top-6,b=bot;for(const l of hz){if(l.x0-1>x||l.x1+1<x||l.y<top-8)continue;if(l.y<=y&&l.y>a)a=l.y;if(l.y>y&&l.y<b)b=l.y}return[a,b]};
+ const mid=t=>t.y-t.h*.35;
+ /* textes de la colonne centrale, regroupés par case */
+ const C=T.filter(t=>t.y>top&&t.y<bot&&t.x+t.w/2>cx0&&t.x+t.w/2<cx1&&!/^(Forfaitaire|Arrêt|dérive|e)$/i.test(t.s)&&!/^[\d()\-]+$/.test(t.s));
+ const cc=new Map();for(const t of C){const[a,b]=cell(t.x+t.w/2,mid(t));const k=a.toFixed(1);if(!cc.has(k))cc.set(k,{a,b,L:[]});cc.get(k).L.push(t)}
+ const cells=[...cc.values()].map(c=>{c.L.sort((p,q)=>p.y-q.y||p.x-q.x);const lines=[];for(const t of c.L){const l=lines[lines.length-1];if(l&&Math.abs(l.y0-t.y)<3)l.s+=" "+t.s;else lines.push({s:t.s,y:mid(t),y0:t.y})}
+  /* lignes de suite : « (Bif. …) », « Combault » après « Pontault- », « Sec » après « Noisy-le- » */
+  const J=[];for(const l of lines){const p=J[J.length-1];if(p&&(/[-\/]$/.test(p.s)||/\s(à|de|du|des)$/.test(p.s)||/^[(a-zé]/.test(l.s))&&l.y-p.yl<16){p.s+=(/-$/.test(p.s)?"":" ")+l.s;p.yl=l.y}else J.push({...l,yl:l.y})}
+  c.txt=J.map(l=>l.s).join(" ").replace(/\s+/g," ").trim();
+  const clean=x=>x.replace(/\s*\((?:km|bif|voie|via|saut)[^)]*\)/gi,"").replace(/\s+Voies?\b.*$/i,"").trim();
+  const m=/^(.+?)\s+à\s+(.+)$/.exec(J.map(l=>l.s).filter(x=>!/^Voies?\b/i.test(x)).join(" "));
+  c.sec=m?{a:clean(m[1]),b:clean(m[2])}:null;c.st=m?[]:J.filter(l=>!/^Voies?\b/i.test(l.s)).map(l=>({n:clean(l.s),y:l.y}));return c});
+ /* valeurs */
+ const out=new Map();
+ for(const t of T){if(!(t.y>top&&t.y<bot))continue;const v=/^(\d{1,2})(?:\(\d\))?$/.exec(t.s)||(t.s==="---"?[0,null]:null);if(!v)continue;
+  const xc=t.x+t.w/2;const col=cols.reduce((p,q)=>Math.abs(q.x-xc)<Math.abs(p.x-xc)?q:p);if(Math.abs(col.x-xc)>30)continue;
+  const[a,b]=cell(xc,mid(t));
+  /* sections couvertes par la case : case centrale « X à Y » qui la recoupe, ou gares listées dans son étendue */
+  const ov=cells.filter(c=>c.b>a+2&&c.a<b-2);
+  for(const c of ov){let segs=[];
+   if(c.sec)segs=[[c.sec.a,c.sec.b,c.txt]];
+   else{const st=c.st;if(st.length===1&&st[0].y>=a-3&&st[0].y<=b+3)segs.push([st[0].n,st[0].n,c.txt]);
+    /* une case couvre l'intervalle gare i → gare i+1 quand le milieu des deux noms tombe dans la case */
+    for(let i=0;i<st.length-1;i++){const m=(st[i].y+st[i+1].y)/2;if(m>=a&&m<=b)segs.push([st[i].n,st[i+1].n,c.txt])}}
+   for(const[sa,sb,tx]of segs){const key=sa+"|"+sb+"|"+tx;if(!out.has(key))out.set(key,{a:sa,b:sb,txt:tx,pair:{r:null,p:null},imp:{r:null,p:null}});const o=out.get(key);
+    const val=v[1]==null?null:+v[1];if(col.k==="pr")o.pair.r=val;else if(col.k==="pp")o.pair.p=val;else if(col.k==="ip")o.imp.p=val;else o.imp.r=val}}}
+ return[...out.values()]}
+/* le premier tableau est celui de la ligne ; les suivants sont ceux des fiches de détournement (moins prioritaires) */
+async function readDecl(pdf,lib){const all=[];let first=null;for(let p=1;p<=pdf.numPages;p++){try{const pg=await pdf.getPage(p);const tc=await pg.getTextContent();if(!tc.items.some(i=>/clivit.s caract.ristiques de la ligne/i.test(i.str)))continue;
+  const D=await declPage(pg,lib);if(!D.length)continue;if(first==null)first=p;all.push(...D.map(x=>({...x,page:p,det:p!==first})))}catch(e){}}return all}
+/* ---------- dans l'appli : sections placées sur la fiche ---------- */
+const DC_GEN=new Set(["BIF","BIFURCATION","RACC","RACCORDEMENT","DIRECT","GARE","POSTE","VOIE","VOIES","JONCTION","TRIAGE","SOUTERRAIN","DE","DU","DES","LA","LE","LES","BV","GC"]);
+const dcTok=n=>GEO.norm(n).split(" ").filter(w=>w.length>=2&&!/^\d+$/.test(w)&&!DC_GEN.has(w));
+let dcCache=null,dcSig="";
+function dcRowsFor(n,RT){const t=dcTok(n);if(!t.length||/^KM\b/i.test(n.trim()))return[];const out=[];
+ RT.forEach((rt,j)=>{if(!rt.length)return;const S=new Set(rt);if(t.every(w=>S.has(w))||(rt.length>=1&&rt.every(w=>t.includes(w))&&rt.join("").length>=5))out.push(j)});return out}
+/* gares de la base SNCF Réseau portant ce nom */
+function dcGares(n){const t=dcTok(n);if(!t.length||typeof geoRaw==="undefined"||!geoRaw||!geoRaw.gares)return[];
+ return geoRaw.gares.filter(g=>{const k=g._t||(g._t=dcTok(g.n));return k.length&&(t.every(w=>k.includes(w))||k.every(w=>t.includes(w))&&k.join("").length>=5)})}
+/* positions possibles d'un point sur la fiche : par le nom d'une rangée, ou par une gare de la base à moins de 400 m de la voie */
+function dcPos(n,RT){const out=dcRowsFor(n,RT).map(j=>Dc[j]);const secs=[...new Set(rows.map(r=>r.sec))].filter(s=>lineFor(s));
+ for(const g of dcGares(n))for(const sec of secs){const rg=secRange(sec);for(const c of GEO.locate(lineFor(sec),g.lon,g.lat)){if(c.d>400||!rg||c.pk<rg[0]-.05||c.pk>rg[1]+.05)continue;const d=pkToD(sec,Math.max(rg[0],Math.min(rg[1],c.pk)));if(d!=null)out.push(d)}}
+ return out}
+function rowXY(j){const L=lineFor(rows[j].sec);return L?GEO.point(L,rows[j].pk):null}
+function declIntervals(){if(!rows.length||!LIV.idx)return[];const sig=rows.length+"|"+Dc[Dc.length-1]+"|"+(typeof geoRaw!=="undefined"&&geoRaw?1:0)+"|"+LIV.idx.map(x=>x.id+":"+(x.decl?x.decl.length:"-")).join(",");if(dcCache&&dcSig===sig)return dcCache;
+ const RT=rows.map(r=>dcTok(stopName(r)+" "+(r.sub&&r.ctx?"":r.name||"")));const out=[],ends=rows.map((r,j)=>j).filter(j=>j===0||j===rows.length-1||rows[j].sec!==rows[j-1].sec||rows[j].sec!==rows[j+1].sec).map(j=>({j,xy:rowXY(j)})).filter(e=>e.xy);
+ for(const x of LIV.idx)for(const d of x.decl||[]){if(!d.a||!d.b||d.a===d.b)continue;const A=dcPos(d.a,RT),B=dcPos(d.b,RT);let best=null;
+  for(const da of A)for(const db of B){const L=Math.abs(db-da);if(L<200||L>150000)continue;if(!best||L<best.L)best={L,d1:Math.min(da,db),d2:Math.max(da,db)}}
+  /* une extrémité sur la fiche, l'autre au-delà du bout de la fiche ou d'un changement de ligne : la section va jusque-là */
+  if(!best)for(const[P,far]of[[A,d.b],[B,d.a]]){if(!P.length)continue;const G=dcGares(far);if(!G.length)continue;
+   for(const e of ends){const de=Math.min(...G.map(g=>GEO.dist([g.lon,g.lat],e.xy)));if(de>40000)continue;
+    for(const dp of P){const L=Math.abs(Dc[e.j]-dp);if(L<1000||L>150000)continue;
+     /* le bout de la fiche doit être plus près du point manquant que l'extrémité trouvée */
+     const jp=Dc.findIndex(v=>v>=dp-1),xp=jp>=0?rowXY(jp):null;if(!xp||Math.min(...G.map(g=>GEO.dist([g.lon,g.lat],xp)))*.5<de)continue;
+     if(!best||L<best.L)best={L,d1:Math.min(dp,Dc[e.j]),d2:Math.max(dp,Dc[e.j]),open:1}}}}
+  if(best)out.push({d1:best.d1,d2:best.d2,L:best.L,open:!!best.open,pair:d.pair,imp:d.imp,det:!!d.det,liv:x.num,txt:d.a+" → "+d.b})}
+ dcCache=out;dcSig=sig;return out}
+/* pair ou impair là où se trouve le train : dernier changement de parité dépassé */
+function parityAt(d){let j=0;while(j+1<rows.length&&Dc[j+1]<=d)j++;const tn=curTrain(j)||store("trainNo");const m=/(\d)\D*$/.exec(String(tn||""));return m?(+m[1]%2?"imp":"pair"):null}
+/* déclivité caractéristique à une distance de la fiche : rampe et pente maxi dans le sens de marche */
+/* plusieurs sections ou livrets au même endroit (voies différentes, lignes qui se recouvrent) : on garde la valeur la plus forte */
+function declAt(d){const I=declIntervals();let C=I.filter(o=>!o.det&&d>=o.d1&&d<=o.d2);if(!C.length)C=I.filter(o=>d>=o.d1&&d<=o.d2);if(!C.length)return null;
+ /* une section repérée par ses deux extrémités l'emporte sur une section prolongée jusqu'au bout de la fiche */
+ if(C.some(o=>!o.open))C=C.filter(o=>!o.open);const par=parityAt(d);if(!par)return null;
+ let r=null,p=null;for(const o of C){const v=o[par];if(v.r!=null)r=Math.max(r??0,v.r);if(v.p!=null)p=Math.max(p??0,v.p)}if(r==null&&p==null)return null;
+ const liv=[...new Set(C.map(o=>o.liv))].join(", ");return{r,p,par,liv,d1:Math.max(...C.map(o=>o.d1)),d2:Math.min(...C.map(o=>o.d2)),txt:C.map(o=>o.txt).join(" ; "),var:C.length>1}}
+/* lecture en arrière-plan pour les livrets importés avant cette fonction */
+async function declBackfill(){if(!LIV.idx)return;let ch=false;for(const x of LIV.idx){if(x.decl!==undefined)continue;try{const buf=await idbGet("liv:"+x.id);if(!buf)continue;const lib=pdfLib();const pdf=await lib.getDocument({data:new Uint8Array(buf.slice(0)),isOffscreenCanvasSupported:false}).promise;x.decl=await readDecl(pdf,lib);ch=true}catch(e){x.decl=[]}}
+ if(ch){await idbSet("livIdx",{idx:LIV.idx,date:new Date().toISOString().slice(0,10)});dcCache=null;profD=null;lastRow=-1}}
+
 /* ---------- livrets de ligne : PDF importés sur l'appareil, jamais envoyés ni publiés ---------- */
 const LIV={idx:null,cur:null,doc:null,zoom:1,busy:false,rend:0};
 async function livRead(buf,name){const pdf=await pdfLib().getDocument({data:new Uint8Array(buf.slice(0)),isOffscreenCanvasSupported:false}).promise;
@@ -925,12 +1020,13 @@ async function livRead(buf,name){const pdf=await pdfLib().getDocument({data:new 
  title=title.replace(/\s+/g," ").replace(/^\d+\s*[–-]\s*/,"").trim()||name.replace(/\.pdf$/i,"");
  const ver=/Version\s+(\d+)\s+du\s+([\d-]+)/.exec(p1),app=/Applicable\s+à\s+partir\s+du\s+([\d-]+)/.exec(p1);
  const w=[...new Set(GEO.norm(all).split(" ").filter(x=>x.length>=4&&!/^\d+$/.test(x)))];
- return{id:code,code,num:code.split("-").pop(),title,version:ver?ver[1]:"",du:ver?ver[2]:"",app:app?app[1]:"",pages:pdf.numPages,w,tn:GEO.norm(title)}}
+ let decl=[];try{decl=await readDecl(pdf,pdfLib())}catch(e){}
+ return{decl,id:code,code,num:code.split("-").pop(),title,version:ver?ver[1]:"",du:ver?ver[2]:"",app:app?app[1]:"",pages:pdf.numPages,w,tn:GEO.norm(title)}}
 async function livImport(files){if(LIV.busy)return;LIV.busy=true;const M=$("#livMsg");const idx=(LIV.idx||[]).slice();let ok=0,bad=[];
  try{for(let i=0;i<files.length;i++){const f=files[i];if(M)M.textContent="Lecture des livrets ("+(i+1)+" / "+files.length+")…";
    try{const buf=await f.arrayBuffer(),x=await livRead(buf,f.name);await idbSet("liv:"+x.id,buf);const k=idx.findIndex(y=>y.id===x.id);if(k>=0)idx[k]=x;else idx.push(x);ok++}
    catch(e){bad.push(f.name)}}
-  LIV.idx=idx;await idbSet("livIdx",{idx,date:new Date().toISOString().slice(0,10)});
+  LIV.idx=idx;dcCache=null;profD=null;lastRow=-1;await idbSet("livIdx",{idx,date:new Date().toISOString().slice(0,10)});
   LIV.msg=(ok?ok+" livret"+(ok>1?"s":"")+" enregistré"+(ok>1?"s":"")+" sur l’iPad.":"")+(bad.length?" Illisible"+(bad.length>1?"s":"")+" : "+bad.join(", ")+".":"")}
  finally{LIV.busy=false;renderLiv()}}
 /* livrets concernés : noms des points de la fiche retrouvés dans le livret */
@@ -961,7 +1057,7 @@ function renderLiv(){const B=$("#livv");if(!B)return;$("#livBack").classList.tog
  html+='<div class="livfoot">'+pick+'<p class="small muted" id="livMsg">Une version plus récente d’un livret remplace l’ancienne. <button class="lnk" id="livLock">Retirer tous les livrets de l’iPad</button></p></div>';
  B.innerHTML=html;B.querySelectorAll("button[data-liv]").forEach(b=>b.onclick=()=>livOpen(b.dataset.liv));
  $("#livFile").onchange=e=>{if(e.target.files.length)livImport([...e.target.files])};
- $("#livLock").onclick=async()=>{for(const x of LIV.idx)await idbSet("liv:"+x.id,null);await idbSet("livIdx",null);LIV.idx=null;LIV.cur=null;renderLiv()}}
+ $("#livLock").onclick=async()=>{for(const x of LIV.idx)await idbSet("liv:"+x.id,null);await idbSet("livIdx",null);LIV.idx=null;dcCache=null;profD=null;lastRow=-1;LIV.cur=null;renderLiv()}}
 async function livOpen(id){const x=LIV.idx.find(y=>y.id===id);if(!x)return;const B=$("#livv");B.innerHTML='<div class="empty">Ouverture…</div>';
  try{const buf=await idbGet("liv:"+id);if(!buf)throw new Error("livret absent de l’iPad : importe-le de nouveau");LIV.doc=await pdfLib().getDocument({data:new Uint8Array(buf.slice(0)),isOffscreenCanvasSupported:false}).promise;LIV.cur=x;LIV.zoom=1;
   $("#livT").textContent=x.num+" · "+livShort(x);store("livCur",id);await livRender(0)}
@@ -977,7 +1073,7 @@ function setSideTab(t){sideTab=t;store("sideTab",t);document.querySelectorAll("#
  document.querySelectorAll(".etd").forEach(e=>e.classList.toggle("hide",t!=="etude"));document.querySelectorAll(".lvd").forEach(e=>e.classList.toggle("hide",t!=="liv"));
  if(t==="liv"){if(LIV.cur&&LIV.doc)livRender(true);else renderLiv()}else setTimeout(()=>renderStudy(),30)}
 async function livInit(){try{const d=await idbGet("livIdx");if(d&&d.idx){LIV.idx=d.idx;const c=store("livCur");if(c&&sideTab==="liv"&&!$("#side").classList.contains("hide")&&LIV.idx.some(x=>x.id===c))livOpen(c)}}catch(e){}
- if(sideTab==="liv")renderLiv();setInterval(livTick,3000)}
+ if(sideTab==="liv")renderLiv();setInterval(livTick,3000);setTimeout(declBackfill,1500)}
 
 /* ---------- du terrain au profil de la voie ----------
    Une voie ne suit pas le relief à 100 m près : elle enchaîne de longues sections de déclivité
@@ -1090,10 +1186,16 @@ async function upgradeProfile(){if(!prof||prof.v>=2||!prof.s)return;const D=awai
  for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
  prof.s=S.map(x=>[x.sec,x.pk,x.zs??null,x.g,x.src||"",x.o?x.o[0]:"",x.z,x.b||0]);prof.v=2;prof.info.nS=S.filter(x=>x.src==="S").length;prof.info.nI=S.length-prof.info.nS;
  store("prof",JSON.stringify(prof));profD=null;lastRow=-1;profMsg(profInfo())}
-function profPts(){if(!prof)return[];const sig=prof.sig+"|"+Dc.length+"|"+Dc[Dc.length-1];if(profD&&profDsig===sig)return profD;
+function profPts(){if(!prof)return[];const sig=prof.sig+"|"+Dc.length+"|"+Dc[Dc.length-1]+"|"+(typeof declIntervals==="function"?declIntervals().length+":"+dcSig:"");if(profD&&profDsig===sig)return profD;
  const dirOf={};for(const sec of [...new Set(rows.map(r=>r.sec))]){const R=secRows(sec);dirOf[sec]=R.length>1?Math.sign(R[R.length-1][0].pk-R[0][0].pk)||1:1}
- profD=prof.s.map(([sec,pk,z,g,src,o,zt,b])=>{const d=pkToD(sec,pk);return d==null?null:{d,sec,z,g:g==null?null:g*(dirOf[sec]||1),src,o,b:!!b,dir:dirOf[sec]||1}}).filter(Boolean).sort((a,b)=>a.d-b.d);profDsig=sig;return profD}
+ profD=prof.s.map(([sec,pk,z,g,src,o,zt,b])=>{const d=pkToD(sec,pk);return d==null?null:{d,sec,z,g:g==null?null:g*(dirOf[sec]||1),src,o,b:!!b,dir:dirOf[sec]||1}}).filter(Boolean).sort((a,b)=>a.d-b.d);
+ /* une pente estimée ne peut pas dépasser la déclivité caractéristique du livret dans le sens de marche */
+ if(typeof declAt==="function")for(const p of profD){if(p.g==null||p.src==="S")continue;const c=declAt(p.d);if(!c)continue;p.car=c;
+  if(p.g>0&&c.r!=null&&p.g>c.r){p.g=c.r;p.cap=1}else if(p.g<0&&c.p!=null&&-p.g>c.p){p.g=-c.p;p.cap=1}
+  if(p.src==="U"&&c.r!=null&&c.p!=null&&c.r===0&&c.p===0){p.g=0;p.src="I"}}
+ profDsig=sig;return profD}
 function gradAt(cur){const P=profPts();let b=null;for(const p of P){if(Math.abs(p.d-cur)<=60&&(!b||Math.abs(p.d-cur)<Math.abs(b.d-cur)))b=p}return b}
+function carTxt(c){if(!c)return"";return"livret "+c.liv+" : "+(c.r!=null?"rampe "+c.r:"")+(c.r!=null&&c.p!=null?" · ":"")+(c.p!=null?"pente "+c.p:"")+" ‰ maxi"}
 function gradTxt(g,src){if(g==null||src==="U")return"";const v=Math.round(Math.abs(g)),e=src==="S"?"":"≈ ";return v<1?"Palier":(g>0?"Rampe ":"Pente ")+e+v+" ‰"}
 /* dessin : bande horizontale sous la carte */
 function drawProfile(cur,ok){const box=$("#prof");if(!box)return;const P=profPts();const W=box.clientWidth,H=box.clientHeight;
@@ -1131,6 +1233,12 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   const occG=[];for(let k=0;k<P.length;k++){const p=P[k];if(p.g==null||p.src==="U")continue;const pr=P[k-1];if(pr&&pr.sec===p.sec&&pr.g!=null&&pr.src!=="U"&&Math.round(pr.g)===Math.round(p.g))continue;
    if(!vis(p.d)||p.d<=cur)continue;const x=X(p.d),r=Math.round(p.g);if(occG.some(o=>Math.abs(o-x)<56))continue;occG.push(x);
    q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(Yp(p.z)-4)+'" y2="'+Yp(p.z)+'" class="rgt"/>');T(x+3,Yp(p.z)-8,(p.src==="S"?"":"≈")+(r===0?"0":(r>0?"+":"−")+Math.abs(r))+" ‰","rg","start")}}
+ /* déclivités caractéristiques des livrets : bande fine en haut du profil, une par section */
+ if(typeof declAt==="function"&&declIntervals().length){let d=Math.max(d0,cur),last=null;const yb=pTop-14;
+  while(d<d1){const c=declAt(d);if(!c){d+=250;continue}const a=Math.max(c.d1,d0),b=Math.min(c.d2,d1),key=c.d1+"|"+c.d2+"|"+c.r+"|"+c.p;
+   if(key!==last){last=key;const xa=X(Math.max(a,cur)),xb=X(b);q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+yb+'" y2="'+yb+'" class="rdc"/>');if(c.d2<=d1)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+(yb-4)+'" y2="'+(yb+4)+'" class="rdc"/>');
+    const t="Décl. car. livret : "+[c.r!=null?"rampe "+c.r:"",c.p!=null?"pente "+c.p:""].filter(Boolean).join(" · ")+" ‰"+(c.var?" (selon la voie)":"");if(xb-xa>tw(t,"500 12px ",6.5)+10)T(xa+4,yb-5,t,"rdct","start")}
+   d=Math.max(d+250,c.d2+1)}}
  if(P.length<2){const why=profState.busy?(profState.step?"Profil en cours de calcul : "+profState.step+(profState.pct!=null?" "+Math.round(profState.pct*100)+" %":"")+"…":"Profil en cours de calcul…"):profState.err?"Profil indisponible : "+profState.err+".":!Object.keys(geo.sec||{}).length?"Profil : en attente de la géométrie des lignes.":prof?"":"Profil pas encore calculé.";if(why)T(12,pBot-6,why,"rst"+(profState.err?" perr":""))}
  /* voie horizontale */
  q.push('<line x1="'+(-((X(0)*-1)%16+16)%16)+'" x2="'+W+'" y1="'+yT+'" y2="'+yT+'" class="rsl"/>');
@@ -1154,7 +1262,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   const n=pieces[k+1];if(n&&n.v!=null)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+y+'" y2="'+Ys(n.v)+'" class="rspv"/>');
   if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;if(ok||p.a>cur)T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":"")+(ok?"":" off"));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
  /* déclivité en cours (pastille du bas) */
- {const g=ok&&!viewOff?gradAt(cur):ok?gradAt(cur):null,E=$("#gradNow");if(E){E.textContent=g&&g.g!=null?gradTxt(g.g,g.src):"";E.dataset.s=g&&g.g!=null?(g.g>=1?"r":g.g<=-1?"p":"0"):""}}
+ {const g=ok&&!viewOff?gradAt(cur):ok?gradAt(cur):null,E=$("#gradNow");if(E){const cc=ok&&typeof declAt==="function"?declAt(cur):null;E.textContent=(g&&g.g!=null?gradTxt(g.g,g.src):"")+(cc?(g&&g.g!=null&&g.src!=="U"?" · ":"")+"car. "+(cc.r!=null?"↗"+cc.r:"")+(cc.p!=null?" ↘"+cc.p:"")+" ‰":"");E.title=cc?carTxt(cc):"";E.dataset.s=g&&g.g!=null?(g.g>=1?"r":g.g<=-1?"p":"0"):""}}
  /* points de passage, en bas */
  const occ=[],pts=[];for(let j=0;j<rows.length;j++)if(vis(Dc[j]))pts.push(j);pts.sort((a,b)=>(isStop(rows[b])-isStop(rows[a]))||(!!rows[b].train-!!rows[a].train)||a-b);
  const lane=[yAx-62,yAx-22],lab=[];
