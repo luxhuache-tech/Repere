@@ -75,7 +75,7 @@ body.ui-banner #nban:not(.empty){display:block!important}
 .ncard .np[data-s="late"]{background:color-mix(in srgb,var(--ltv) 25%,var(--card));color:var(--ltv)}.ncard .np[data-s="early"]{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--ok)}
 .ncard.quai{background:var(--email);border-color:var(--email);color:var(--emailtx)}.ncard.quai .nl,.ncard.quai .nd{color:var(--emailtx)}
 .ncard .ar{position:absolute;bottom:-9px;width:14px;height:14px;background:inherit;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}.ncard.quai .ar{border-color:var(--email)}
-.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
+.nsb.dim{opacity:.45}.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
 /* voie */
 #route{position:relative}
 .rsl{stroke:var(--tx3);stroke-width:16;stroke-dasharray:2 14;opacity:.35}
@@ -726,7 +726,7 @@ function showDelay(d,now){const E=$("#delay"),B=$("#dlBox");const sch=schedAt(d)
 function renderNext(i,cur,spd,km){const B=$("#nsBox");if(!B)return;let j0=null,quai=false;
  if(spd!=null&&spd<2)for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(j0==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[j0]-cur))){j0=j;quai=true}
  if(j0==null)for(let j=i+1;j<rows.length;j++)if(isStop(rows[j])&&Dc[j]>cur){j0=j;break}
- B.classList.toggle("quai",quai);quaiDep=null;NEXT=null;
+ B.classList.toggle("quai",quai);B.classList.remove("dim");quaiDep=null;NEXT=null;
  {let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(isStop(c)){ns="Arrêt <b>"+esc(stopName(c))+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns}
  if(j0==null){$("#nsL").textContent="";$("#nsN").textContent="";$("#nsT").innerHTML="";$("#dlM").textContent="";return}
  const r=rows[j0],t=rowTimes(r);$("#nsN").textContent=stopName(r);$("#nsN").classList.toggle("long",stopName(r).length>16);
@@ -1500,6 +1500,8 @@ function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
+ /* barre du bas : plus de retard calculé sans position ; l'arrêt reste affiché, grisé */
+ {const D=$("#dlBox");if(D){D.dataset.s="";$("#dlL").textContent="Position perdue";$("#dlV").textContent="—";$("#dlM").textContent="";delayMin=null}const N=$("#nsBox");if(N)N.classList.add("dim")}
  setSt("warn",why+" PK et limite masqués.");if(i!=null)drawRoute(i,f,false)
 }
 function frame(now){
