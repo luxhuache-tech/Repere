@@ -1102,7 +1102,7 @@ function shapeSection(T,D,grad){const n=T.length;if(!n)return;
  /* 5. sections : valeurs voisines regroupées, sections estimées trop courtes fusionnées */
  const G=[],near=(i,j)=>Math.abs(T[j].pk-T[i].pk)<0.15;
  for(let i=0;i<n;i++){const s=T[i],g=G[G.length-1],est=s.src!=="S";
-  if(g&&s.g!=null&&g.v!=null&&g.est===est&&near(g.e,i)&&(est?Math.abs(s.g-g.v)<=PENTE.TOL:s.g===g.v)){g.e=i;g.sum+=s.g;g.c++;g.v=g.sum/g.c;g.u+=s.src==="U"?1:0}
+  if(g&&s.g!=null&&g.v!=null&&g.est===est&&near(g.e,i)&&(est?Math.abs(s.g-g.v)<=PENTE.TOL:Math.abs(s.g-g.v)<=0.35)){g.e=i;g.sum+=s.g;g.c++;g.v=g.sum/g.c;g.u+=s.src==="U"?1:0}
   else G.push({a:i,e:i,sum:s.g??0,c:s.g==null?0:1,v:s.g,est,u:s.src==="U"?1:0})}
  const len=g=>T[g.e].pk-T[g.a].pk+0.1,mer=x=>x&&x.est&&x.v!=null;
  for(;;){let k=-1,best=1e9;
@@ -1112,10 +1112,12 @@ function shapeSection(T,D,grad){const n=T.length;if(!n)return;
   const m={a:Math.min(t.a,g.a),e:Math.max(t.e,g.e),sum:t.sum+g.sum,c:t.c+g.c,est:true,u:t.u+g.u};m.v=m.sum/m.c;G.splice(Math.min(k,j),2,m)}
  /* 6. valeurs finales : arrondi au ‰ pour l'estimation, section incertaine si le terrain est trop bruité */
  for(const g of G){const unc=g.est&&g.u>(g.e-g.a+1)/2;for(let i=g.a;i<=g.e;i++){const s=T[i];if(g.v==null){s.g=null;continue}
-  s.g=g.est?Math.round(g.v):s.g;s.src=g.est?(unc?"U":"I"):"S";s.b=i===g.a&&(g.est?len(g)>=PENTE.MINSEG:true)?1:0}}
+  s.g=g.est?Math.round(g.v):Math.round(g.v*10)/10;s.src=g.est?(unc?"U":"I"):"S";s.b=i===g.a&&(g.est?len(g)>=PENTE.MINSEG:true)?1:0}}
  /* 7. altitude de la voie : intégration des pentes, recalée sur la tendance du terrain */
  let z0=zm.find(v=>v!=null);if(z0==null)return;const zr=[z0];for(let i=1;i<n;i++){const dk=T[i].pk-T[i-1].pk,g=T[i-1].g??0;zr.push(zr[i-1]+g*dk)}
  const dr=zr.map((v,i)=>zm[i]==null?0:zm[i]-v),off=dr.map((_,i)=>{let a=0,c=0;for(let k=Math.max(0,i-25);k<=Math.min(n-1,i+25);k++){a+=dr[k];c++}return a/c});
+ /* là où la déclivité SNCF est connue, la courbe en découle seule : un seul recalage d'altitude pour toute la section mesurée */
+ for(let i=0;i<n;){if(T[i].src!=="S"){i++;continue}let j=i;while(j+1<n&&T[j+1].src==="S")j++;let a=0;for(let k=i;k<=j;k++)a+=dr[k];a/=j-i+1;for(let k=i;k<=j;k++)off[k]=a;i=j+1}
  T.forEach((s,i)=>s.zs=Math.round((zr[i]+off[i])*10)/10)}
 
 
@@ -1129,6 +1131,10 @@ let prof=null;try{prof=JSON.parse(store("prof")||"null")}catch(e){}
 let declData=null,profBusy=false;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function profMsg(t){const e=$("#profMsg");if(e)e.textContent=t}
+/* déclivités SNCF Réseau par hectomètre, une ligne par fichier (extras-opendata-sncf-reseau, ODbL) */
+const HECTO={};
+async function loadHecto(cls){for(const c of new Set(cls)){if(!c||c in HECTO)continue;try{const r=await fetch("data/pentes/"+c+".json");HECTO[c]=r.ok?(await r.json()).r:null}catch(e){}}}
+function hectoGrad(cl,pk){const R=HECTO[cl];if(!R)return null;for(const[p0,g]of R){const k=Math.floor((pk-p0)*10+1e-6);if(k>=0&&k<g.length)return g[k]/10;if(k===g.length&&Math.abs(pk-(p0+g.length/10))<1e-6)return g[k-1]/10}return null}
 async function loadDecl(){if(declData)return declData;try{const r=await fetch("data/declivite.json");if(r.ok)declData=(await r.json()).d}catch(e){}return declData||[]}
 /* altitudes IGN par lots (5 requêtes/s au plus) */
 async function ignElev(pts,onp){const out=new Array(pts.length).fill(null),N=150;
@@ -1145,12 +1151,14 @@ async function osmStructures(pts){const step=Math.max(1,Math.floor(pts.length/40
 function prepStruct(S){for(const s of S){s.cum=[0];for(let i=1;i<s.c.length;i++)s.cum.push(s.cum[i-1]+GEO.dist(s.c[i-1],s.c[i]));const xs=s.c.map(c=>c[0]),ys=s.c.map(c=>c[1]);s.bb=[Math.min(...xs)-.0006,Math.min(...ys)-.0004,Math.max(...xs)+.0006,Math.max(...ys)+.0004]}return S}
 function nearStruct(S,lon,lat){for(const s of S){const b=s.bb;if(lon<b[0]||lon>b[2]||lat<b[1]||lat>b[3])continue;if(GEO.proj(s.c,s.cum,lon,lat).d<=25)return s.t}return null}
 /* déclivité SNCF à un PK d'une ligne (‰, sens PK croissants), voie la mieux renseignée */
-function sncfGrad(D,cl,rg,pk){let best=null;for(const x of D)if(x[0]===cl&&x[1]===rg&&pk>=x[3]&&pk<=x[4]){if(!best||x[2]==="V1"||x[2]==="UNIQUE")best=x}return best?best[5]:null}
+function sncfGrad(D,cl,rg,pk){let best=null;for(const x of D)if(x[0]===cl&&x[1]===rg&&pk>=x[3]&&pk<=x[4]){if(!best||x[2]==="V1"||x[2]==="UNIQUE")best=x}if(best)return best[5];
+ /* sinon, déclivité SNCF Réseau ramenée à la ligne, par hectomètre */
+ const h=hectoGrad(cl,pk);return h==null?null:Math.round(h*10)/10}
 let profState={busy:false,pct:0,step:"",err:""};
 function profStep(step,pct){profState.step=step;profState.pct=pct;profMsg("Profil : "+step+(pct!=null?" ("+Math.round(pct*100)+" %)":"")+"…")}
 function finishProfile(S,sig,info,D){for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
  info.nS=S.filter(x=>x.src==="S").length;info.nI=S.length-info.nS;
- prof={sig,v:2,s:S.map(s=>[s.sec,s.pk,s.zs==null?null:s.zs,s.g,s.src||"",s.o?s.o[0]:"",s.z==null?null:Math.round(s.z*10)/10,s.b||0]),info};
+ prof={sig,v:3,s:S.map(s=>[s.sec,s.pk,s.zs==null?null:s.zs,s.g,s.src||"",s.o?s.o[0]:"",s.z==null?null:Math.round(s.z*10)/10,s.b||0]),info};
  store("prof",JSON.stringify(prof));profD=null;lastRow=-1}
 async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.keys(geo.sec||{}).length)return;
  const sig=JSON.stringify([rows.length,rows[0].pk,rows[rows.length-1].pk,geo.sec]);
@@ -1166,7 +1174,7 @@ async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.k
   let zs=null;if(prof&&prof.sig===sig&&!empty&&prof.v>=2){const m=new Map(prof.s.map(x=>[x[0]+"|"+x[1],x[6]]));zs=S.map(s=>m.get(s.sec+"|"+s.pk)??null);if(!zs.some(z=>z!=null))zs=null}
   if(!zs){profStep("altitudes IGN",0);zs=await ignElev(S.map(s=>[s.lon,s.lat]),f=>{profStep("altitudes IGN",f);lastRow=-1})}
   if(!zs.some(z=>z!=null))throw new Error("aucune altitude reçue de l’IGN");
-  const D=await loadDecl();S.forEach((s,i)=>{s.z=zs[i];s.o=null});
+  const D=await loadDecl();await loadHecto(S.map(s=>s.cl));S.forEach((s,i)=>{s.z=zs[i];s.o=null});
   const info={ign:true,osm:null,nT:0,nB:0,n:S.length,date:new Date().toISOString().slice(0,10)};
   /* profil affiché tout de suite, sans les ouvrages */
   finishProfile(S,sig,info,D);
@@ -1177,14 +1185,15 @@ async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.k
  }catch(e){profState.err=e.message||"erreur";profMsg("Profil indisponible : "+profState.err+". Il sera recalculé au prochain lancement avec du réseau, ou avec « Recalculer le profil ».")}
  finally{profBusy=false;profState.busy=false;lastRow=-1}}
 window.addEventListener("online",()=>{if(!profBusy&&(!prof||profState.err))buildProfile()});
-function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. Altitude IGN "+(i.ign?"✓":"indisponible")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":i.osm===false?"indisponibles (nouvel essai au prochain lancement)":"en attente")+" · déclivité SNCF mesurée sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
+function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. Altitude IGN "+(i.ign?"✓":"indisponible")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":i.osm===false?"indisponibles (nouvel essai au prochain lancement)":"en attente")+" · déclivité SNCF Réseau sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
 /* profil projeté sur la fiche : [{d, z, g (sens de marche), src, o}] */
 let profD=null,profDsig="";
 /* profil calculé avec l'ancienne méthode : recalcul sur place à partir des altitudes déjà gardées, sans réseau */
-async function upgradeProfile(){if(!prof||prof.v>=2||!prof.s)return;const D=await loadDecl();
- const S=prof.s.map(([sec,pk,z,g,src,o])=>{const k=(geo.sec&&geo.sec[sec]||"/").split("/");return{sec,pk,z,o:o||null,cl:k[0],rg:+k[1]||1}});
+async function upgradeProfile(){if(!prof||prof.v>=3||!prof.s)return;const D=await loadDecl();
+ const S=prof.s.map(x=>{const[sec,pk]=x,k=(geo.sec&&geo.sec[sec]||"/").split("/");return{sec,pk,z:prof.v>=2?x[6]:x[2],o:x[5]||null,cl:k[0],rg:+k[1]||1}});
+ await loadHecto(S.map(s=>s.cl));
  for(const sec of [...new Set(S.map(x=>x.sec))])shapeSection(S.filter(x=>x.sec===sec).sort((a,b)=>a.pk-b.pk),D,sncfGrad);
- prof.s=S.map(x=>[x.sec,x.pk,x.zs??null,x.g,x.src||"",x.o?x.o[0]:"",x.z,x.b||0]);prof.v=2;prof.info.nS=S.filter(x=>x.src==="S").length;prof.info.nI=S.length-prof.info.nS;
+ prof.s=S.map(x=>[x.sec,x.pk,x.zs??null,x.g,x.src||"",x.o?x.o[0]:"",x.z,x.b||0]);prof.v=3;prof.info.nS=S.filter(x=>x.src==="S").length;prof.info.nI=S.length-prof.info.nS;
  store("prof",JSON.stringify(prof));profD=null;lastRow=-1;profMsg(profInfo())}
 function profPts(){if(!prof)return[];const sig=prof.sig+"|"+Dc.length+"|"+Dc[Dc.length-1]+"|"+(typeof declIntervals==="function"?declIntervals().length+":"+dcSig:"");if(profD&&profDsig===sig)return profD;
  const dirOf={};for(const sec of [...new Set(rows.map(r=>r.sec))]){const R=secRows(sec);dirOf[sec]=R.length>1?Math.sign(R[R.length-1][0].pk-R[0][0].pk)||1:1}
