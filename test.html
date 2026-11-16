@@ -56,6 +56,16 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .bk .bv{font:700 clamp(26px,3cqw,36px)/1.1 var(--fd);font-variant-numeric:tabular-nums;color:var(--tx)}
 .dlb[data-s="late"]{background:color-mix(in srgb,var(--ltv) 20%,var(--card))}.dlb[data-s="late"] .bl,.dlb[data-s="late"] .bv{color:var(--ltv)}
 .dlb[data-s="early"]{background:color-mix(in srgb,var(--ok) 18%,var(--card))}.dlb[data-s="early"] .bl,.dlb[data-s="early"] .bv{color:var(--ok)}
+body:not(.ui-bar) .bot.b3{align-items:center;padding:0 6px;gap:18px;white-space:nowrap}body:not(.ui-bar) .bot.b3 .nsb,body:not(.ui-bar) .bot.b3 .dlb{display:none}
+body:not(.ui-bar) .bot.b3 .nxb{display:contents}body:not(.ui-bar) #delay,body:not(.ui-bar) #ns{display:inline!important}body:not(.ui-bar) #delay{font-size:13px;font-weight:600}
+.ncard{position:absolute;width:230px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--tx);pointer-events:none}
+.ncard .nl{font-size:12px;color:var(--tx2)}.ncard .nn{font:700 20px/1.2 var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ncard .nt{font-size:16px;font-variant-numeric:tabular-nums;margin-top:2px}.ncard .nt b{font-weight:700}
+body.ui-card #delay,body.ui-card #ns{display:none!important}
+.ncard .np,.ncard .nd span{white-space:nowrap}
+.ncard .nd{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px;color:var(--tx2)}.ncard .np{font:700 17px/1 var(--fd);border-radius:7px;padding:4px 8px;font-variant-numeric:tabular-nums;background:var(--card);color:var(--tx)}
+.ncard .np[data-s="late"]{background:color-mix(in srgb,var(--ltv) 25%,var(--card));color:var(--ltv)}.ncard .np[data-s="early"]{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--ok)}
+.ncard.quai{background:var(--email);border-color:var(--email);color:var(--emailtx)}.ncard.quai .nl,.ncard.quai .nd{color:var(--emailtx)}
+.ncard .ar{position:absolute;bottom:-9px;width:14px;height:14px;background:inherit;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}.ncard.quai .ar{border-color:var(--email)}
 .nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
 /* voie */
 #route{position:relative}
@@ -686,7 +696,9 @@ function rowTimes(r){const m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(
 const hTxt=t=>t?t.h+"h"+String(t.m).padStart(2,"0")+(t.p?"<small>+30</small>":""):"";
 function regMin(r){const v=parseFloat(String(r.reg||"").replace(",","."));return isFinite(v)?v:0}
 const fmtReg=m=>{const t=Math.round(m*60),mi=Math.floor(t/60),se=t%60;return se?mi+" min "+String(se).padStart(2,"0"):mi+" min"};
-let delayMin=null,quaiDep=null;
+let delayMin=null,quaiDep=null,NEXT=null;
+/* présentation du prochain arrêt selon la page : barre du bas (test.html), carte sur la vue (test2.html), ou classique */
+const NEXTUI=/test2\.html/.test(location.pathname)?"card":/test\.html/.test(location.pathname)?"bar":"classic";
 function showDelay(d,now){const E=$("#delay"),B=$("#dlBox");const sch=schedAt(d);
  if(sch==null){E.textContent="";E.dataset.s="";delayMin=null;if(B){B.dataset.s="";$("#dlL").textContent="";$("#dlV").textContent=""}return}
  /* à quai : en retard seulement une fois l'heure de départ passée */
@@ -697,13 +709,15 @@ function showDelay(d,now){const E=$("#delay"),B=$("#dlBox");const sch=schedAt(d)
 function renderNext(i,cur,spd,km){const B=$("#nsBox");if(!B)return;let j0=null,quai=false;
  if(spd!=null&&spd<2)for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(j0==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[j0]-cur))){j0=j;quai=true}
  if(j0==null)for(let j=i+1;j<rows.length;j++)if(isStop(rows[j])&&Dc[j]>cur){j0=j;break}
- B.classList.toggle("quai",quai);quaiDep=null;
+ B.classList.toggle("quai",quai);quaiDep=null;NEXT=null;
+ {let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(isStop(c)){ns="Arrêt <b>"+esc(stopName(c))+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns}
  if(j0==null){$("#nsL").textContent="";$("#nsN").textContent="";$("#nsT").innerHTML="";$("#dlM").textContent="";return}
  const r=rows[j0],t=rowTimes(r);$("#nsN").textContent=stopName(r);$("#nsN").classList.toggle("long",stopName(r).length>16);
  if(quai){$("#nsL").textContent="À quai";let w="";if(t){quaiDep=t.dep.v;const dt=t.dep.v-nowMin();w="départ <b>"+hTxt(t.dep)+"</b>"+(dt>0&&dt<120?" dans "+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min"):"")}$("#nsT").innerHTML=w}
  else{$("#nsL").textContent="Prochain arrêt · "+km(Dc[j0]);$("#nsT").innerHTML=t?(t.arr.v!==t.dep.v?"arr. <b>"+hTxt(t.arr)+"</b> · dép. <b>"+hTxt(t.dep)+"</b>":"<b>"+hTxt(t.arr)+"</b>"):""}
  /* minutes rattrapables : marges de régularité des points d'ici l'arrêt (celle de l'arrêt comprise) */
  let reg=0;if(!quai)for(let j=i+1;j<=j0;j++)if(Dc[j]>cur)reg+=regMin(rows[j]);
+ NEXT={j:j0,quai,t,reg,name:stopName(r),dist:km(Dc[j0]),d:Dc[j0]};
  $("#dlM").textContent=reg>0?fmtReg(reg)+" rattrapable"+(reg>=2?"s":""):quai?"":"rien à rattraper"}
 /* ---------- schéma de zone ---------- */
 let zoneKm=+store("zoneKm")||5;
@@ -1341,9 +1355,15 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  /* à l'arrêt en gare : départ prévu */
  let ban="";const spd=mode==="sim"?sim.v:(gps&&(Date.now()-gps.ts)/1000<=5?gps.v:null);
  if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
-  if(best!=null&&!$("#nsBox")){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=stopName(r);
+  if(best!=null&&NEXTUI==="classic"){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=stopName(r);
    ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" et 30 s":"")+"</b></div>":"")+"</div>"}}
  if(mode!=="sim"&&netState&&netState.off&&gps&&(Date.now()-gps.ts)/1000<=10)ban='<div class="stopban off"><div class="sb1"><b>Hors du réseau ferré</b></div><div class="sb3">'+esc(netState.txt)+"</div></div>";
+ /* proposition 2 : carte du prochain arrêt posée au-dessus de la gare */
+ if(NEXTUI==="card"&&ok&&NEXT&&!ban.includes("off")){const N=NEXT,cw=230,xs=X(N.d),inV=xs>=0&&xs<=W,xc=Math.max(cw/2+8,Math.min(W-cw/2-8,inV?xs:W)),top=Math.max(8,yT-150);
+  const pill=delayMin==null?"":(()=>{const s=delayMin>=.5?"late":delayMin<=-.5?"early":"on";return'<span class="np" data-s="'+s+'">'+(s==="on"?"à l’heure":(s==="late"?"+":"−")+mmss(delayMin))+"</span>"})();
+  const t=N.t,tt=t?(N.quai?"départ <b>"+hTxt(t.dep)+"</b>":t.arr.v!==t.dep.v?"<b>"+hTxt(t.arr)+"</b> → <b>"+hTxt(t.dep)+"</b>":"<b>"+hTxt(t.arr)+"</b>"):"";
+  const sub=N.quai?(t?(()=>{const dt=t.dep.v-nowMin();return dt>0&&dt<120?"départ dans "+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min"):""})():""):N.reg>0?fmtReg(N.reg)+" à rattraper":"rien à rattraper";
+  ban+='<div class="ncard'+(N.quai?" quai":"")+'" style="left:'+(xc-cw/2)+'px;top:'+top+'px"><div class="nl">'+(N.quai?"À quai":"Prochain arrêt · "+N.dist)+'</div><div class="nn">'+esc(N.name)+'</div><div class="nt">'+tt+'</div><div class="nd">'+pill+"<span>"+sub+"</span></div>"+(inV?'<span class="ar" style="left:'+Math.max(10,Math.min(cw-24,xs-(xc-cw/2)-7))+'px"></span>':"")+"</div>"}
  const back=Math.abs(viewOff)>50?'<button class="rback" id="rBack">Revenir au train</button>':"";
  box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban+back;const rb=$("#rBack");if(rb)rb.onclick=e=>{e.stopPropagation();viewOff=0;lastRow=-1;frame(Date.now())}}
 /* numéro de train en cours : dernier changement de parité dépassé */
@@ -1650,7 +1670,7 @@ buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();doc
 renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
-setSideTab(sideTab);setSide(store("side")==="1");livInit();
+setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
 setInterval(tick,500);tick();
 </script>
