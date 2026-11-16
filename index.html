@@ -45,6 +45,37 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 #route text{font-family:var(--f)}
 .bot{display:flex;gap:18px;align-items:center;flex:none;padding:0 6px;font-size:13px;color:var(--tx2);min-height:22px;white-space:nowrap;overflow:hidden}.bot b{color:var(--tx);font-weight:600}
 .bot #st{padding:0;border:0}
+.bot.b3{gap:8px;padding:8px 0 0;white-space:normal;align-items:stretch;min-height:0}
+.bk{background:var(--card);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}
+.bk:has(.bn:empty):has(.bv:empty){display:none}
+.nsb{flex:2}.dlb{flex:1}.nxb{flex:1;font-size:14px;color:var(--tx2)}.nxb>*{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk .bl{font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk .bn{font:700 clamp(20px,2.3cqw,28px)/1.15 var(--fd);color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk .bn.long{font-size:clamp(17px,1.9cqw,22px)}
+.bk .bt{font-size:15px;color:var(--tx);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bk .bt b{font-weight:700}
+.bk .bv{font:700 clamp(26px,3cqw,36px)/1.1 var(--fd);font-variant-numeric:tabular-nums;color:var(--tx)}
+.dlb[data-s="late"]{background:color-mix(in srgb,var(--ltv) 20%,var(--card))}.dlb[data-s="late"] .bl,.dlb[data-s="late"] .bv{color:var(--ltv)}
+.dlb[data-s="early"]{background:color-mix(in srgb,var(--ok) 18%,var(--card))}.dlb[data-s="early"] .bl,.dlb[data-s="early"] .bv{color:var(--ok)}
+body:not(.ui-bar) .bot.b3{align-items:center;padding:0 6px;gap:18px;white-space:nowrap}body:not(.ui-bar) .bot.b3 .nsb,body:not(.ui-bar) .bot.b3 .dlb{display:none}
+body:not(.ui-bar) .bot.b3 .nxb{display:contents}body:not(.ui-bar) #delay,body:not(.ui-bar) #ns{display:inline!important}body:not(.ui-bar) #delay{font-size:13px;font-weight:600}
+.ncard{position:absolute;width:230px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--tx);pointer-events:none}
+.ncard .nl{font-size:12px;color:var(--tx2)}.ncard .nn{font:700 20px/1.2 var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ncard .nt{font-size:16px;font-variant-numeric:tabular-nums;margin-top:2px}.ncard .nt b{font-weight:700}
+body.ui-card #delay,body.ui-card #ns,body.ui-banner #delay,body.ui-banner #ns{display:none!important}
+body.ui-banner #nban:not(.empty){display:block!important}
+#nban{flex:none;background:var(--card);border-radius:12px;padding:10px 18px;margin-top:8px}
+#nban .nb1{display:flex;align-items:baseline;gap:12px;min-width:0}#nban .nbl{font-size:15px;color:var(--tx2)}
+#nban .nbn{font:700 clamp(22px,2.6cqw,30px)/1.15 var(--fd);color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#nban .np{font:700 20px/1 var(--fd);border-radius:8px;padding:5px 10px;font-variant-numeric:tabular-nums;background:var(--card2);color:var(--tx);white-space:nowrap;flex:none}
+#nban .np[data-s="late"]{background:color-mix(in srgb,var(--ltv) 25%,var(--card));color:var(--ltv)}#nban .np[data-s="early"]{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--ok)}
+#nban .nb2{font-size:18px;color:var(--tx);margin-top:4px;font-variant-numeric:tabular-nums;display:flex;gap:18px;flex-wrap:wrap}#nban .nb2 b{font-weight:700}#nban .nb2 .mu{color:var(--tx2);font-size:15px;align-self:center}
+#nban .nb3{font-size:15px;color:var(--tx2);margin-top:3px}#nban .nb3 b{color:var(--tx);font-weight:700}#nban .nb3:empty{display:none}
+#nban.quai{background:var(--email)}#nban.quai .nbl,#nban.quai .nbn,#nban.quai .nb2,#nban.quai .nb2 .mu,#nban.quai .nb3{color:var(--emailtx)}
+.ncard .np,.ncard .nd span{white-space:nowrap}
+.ncard .nd{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px;color:var(--tx2)}.ncard .np{font:700 17px/1 var(--fd);border-radius:7px;padding:4px 8px;font-variant-numeric:tabular-nums;background:var(--card);color:var(--tx)}
+.ncard .np[data-s="late"]{background:color-mix(in srgb,var(--ltv) 25%,var(--card));color:var(--ltv)}.ncard .np[data-s="early"]{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--ok)}
+.ncard.quai{background:var(--email);border-color:var(--email);color:var(--emailtx)}.ncard.quai .nl,.ncard.quai .nd{color:var(--emailtx)}
+.ncard .ar{position:absolute;bottom:-9px;width:14px;height:14px;background:inherit;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}.ncard.quai .ar{border-color:var(--email)}
+.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
 /* voie */
 #route{position:relative}
 .rsl{stroke:var(--tx3);stroke-width:16;stroke-dasharray:2 14;opacity:.35}
@@ -287,9 +318,14 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   <button class="ic" id="play" aria-label="Lecture"><svg class="i"><use href="#i-play"/></svg></button>
   <button class="ic menu" id="openMenu" aria-label="Menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
  </header>
+ <div id="nban" class="hide"><div class="nb1"><span class="nbl" id="nbL"></span><span class="nbn" id="nbN"></span><span class="np" id="nbD"></span></div><div class="nb2" id="nbT"></div><div class="nb3" id="nbR"></div></div>
  <div id="hstrip"><button id="hTog" aria-expanded="false"><svg class="i"><use href="#i-fold"/></svg>Horaires</button><div id="hList"></div></div>
  <div id="route" aria-label="Ce qui arrive"></div>
- <footer class="bot"><span class="pill" id="gradNow"></span><span class="pill" id="delay"></span><span id="nx"></span><span id="ns"></span><span class="grow"></span><span id="st" data-s="warn">Aucune fiche chargée.</span></footer>
+ <footer class="bot b3">
+  <div class="bk nsb" id="nsBox"><span class="bl" id="nsL"></span><span class="bn" id="nsN"></span><span class="bt" id="nsT"></span></div>
+  <div class="bk dlb" id="dlBox" data-s=""><span class="bl" id="dlL"></span><span class="bv" id="dlV"></span><span class="bt" id="dlM"></span></div>
+  <div class="bk nxb"><span id="nx"></span><span class="pill" id="gradNow"></span><span id="st" data-s="warn">Aucune fiche chargée.</span><span class="hide" id="delay"></span><span class="hide" id="ns"></span></div>
+ </footer>
  <div class="foot hide" id="manFoot"><button id="prev">Point précédent</button><button id="next">Point suivant</button></div>
 </div>
 <aside id="side" class="hide" aria-label="Documents">
@@ -661,11 +697,45 @@ function buildT(){Tm=[];let off=0,last=null;for(const r of rows){if(typeof isSup
 function schedAt(d){let p=-1,n=-1;for(let j=0;j<rows.length;j++){if(Tm[j]==null)continue;if(Dc[j]<=d)p=j;else{n=j;break}}
  if(p<0&&n<0)return null;if(p<0)return Tm[n];if(n<0)return Tm[p];return Tm[p]+(d-Dc[p])/(Dc[n]-Dc[p]||1)*(Tm[n]-Tm[p])}
 function firstTime(){const t=Tm.find(x=>x!=null);return t==null?null:t}
-function showDelay(d,now){const E=$("#delay");const sch=schedAt(d);if(sch==null){E.textContent="";E.dataset.s="";return}
- let cur;if(mode==="sim"){if(sim.clock==null)sim.clock=firstTime();cur=sim.clock}else{const n=new Date(now);cur=n.getHours()*60+n.getMinutes()+n.getSeconds()/60}
- const dm=((cur-sch)%1440+1440+720)%1440-720,m=Math.round(dm);
- E.dataset.s=m>=1?"late":m<=-1?"early":"on";E.textContent=m>=1?"Retard "+m+" min":m<=-1?"Avance "+(-m)+" min":"À l’heure"}
-
+/* heure courante en minutes (horloge de simulation ou vraie heure) */
+function nowMin(now){if(mode==="sim"){if(sim.clock==null)sim.clock=firstTime();return sim.clock}const n=new Date(now||Date.now());return n.getHours()*60+n.getMinutes()+n.getSeconds()/60}
+/* « 03:50 » à partir de minutes */
+const mmss=m=>{const t=Math.round(Math.abs(m)*60);return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0")};
+/* heures d'une rangée de fiche : arrivée = première, départ = dernière ; « + » = 30 s */
+function rowTimes(r){const m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)].map(x=>({h:+x[1],m:+x[2],p:!!x[3],v:+x[1]*60+ +x[2]+(x[3]?.5:0)}));return m.length?{arr:m[0],dep:m[m.length-1]}:null}
+const hTxt=t=>t?t.h+"h"+String(t.m).padStart(2,"0")+(t.p?"<small>+30</small>":""):"";
+function regMin(r){const v=parseFloat(String(r.reg||"").replace(",","."));return isFinite(v)?v:0}
+const fmtReg=m=>{const t=Math.round(m*60),mi=Math.floor(t/60),se=t%60;return se?mi+" min "+String(se).padStart(2,"0"):mi+" min"};
+let delayMin=null,quaiDep=null,NEXT=null;
+/* présentation du prochain arrêt selon la page : barre du bas (test.html), carte sur la vue (test2.html), ou classique */
+const NEXTUI=/test1\.html/.test(location.pathname)?"banner":/test2\.html/.test(location.pathname)?"card":"bar";
+/* proposition 1 : bandeau sous la barre du haut */
+function renderBanner(){const B=$("#nban");if(!B||NEXTUI!=="banner")return;const N=NEXT;B.classList.toggle("empty",!N);if(!N)return;B.classList.toggle("quai",N.quai);
+ $("#nbL").textContent=N.quai?"À quai":"Arrêt";$("#nbN").textContent=N.name;
+ const D=$("#nbD");if(delayMin==null){D.textContent="";D.style.display="none"}else{D.style.display="";const s=delayMin>=.5?"late":delayMin<=-.5?"early":"on";D.dataset.s=s;D.textContent=s==="on"?"à l’heure":(s==="late"?"retard +":"avance −")+mmss(delayMin)}
+ const t=N.t;let h="";if(t){if(N.quai){const dt=t.dep.v-nowMin();h="<span>départ <b>"+hTxt(t.dep)+"</b></span>"+(dt>0&&dt<120?'<span class="mu">dans '+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min")+"</span>":"")}
+  else h=(t.arr.v!==t.dep.v?"<span>arrivée <b>"+hTxt(t.arr)+"</b></span><span>départ <b>"+hTxt(t.dep)+"</b></span>":"<span><b>"+hTxt(t.arr)+"</b></span>")+'<span class="mu">dans '+N.dist+"</span>"}
+ $("#nbT").innerHTML=h;$("#nbR").innerHTML=N.quai?"":N.reg>0?"Tu peux rattraper <b>"+fmtReg(N.reg)+"</b> d’ici "+esc(N.name):"Rien à rattraper d’ici "+esc(N.name)}
+function showDelay(d,now){const E=$("#delay"),B=$("#dlBox");const sch=schedAt(d);
+ if(sch==null){E.textContent="";E.dataset.s="";delayMin=null;if(B){B.dataset.s="";$("#dlL").textContent="";$("#dlV").textContent=""}return}
+ /* à quai : en retard seulement une fois l'heure de départ passée */
+ let dm=((nowMin(now)-sch)%1440+1440+720)%1440-720;if(quaiDep!=null){dm=((nowMin(now)-quaiDep)%1440+1440+720)%1440-720;if(dm<0)dm=0}const m=Math.round(dm);delayMin=dm;
+ const s=dm>=.5?"late":dm<=-.5?"early":"on";E.dataset.s=s;E.textContent=m>=1?"Retard "+m+" min":m<=-1?"Avance "+(-m)+" min":"À l’heure";
+ if(B){B.dataset.s=s;$("#dlL").textContent=s==="late"?"Retard":s==="early"?"Avance":"À l’heure";$("#dlV").textContent=s==="on"?"00:00":(s==="late"?"+":"−")+mmss(dm)}}
+/* case « prochain arrêt » : à quai, ou prochain arrêt avec heures et minutes rattrapables d'ici là */
+function renderNext(i,cur,spd,km){const B=$("#nsBox");if(!B)return;let j0=null,quai=false;
+ if(spd!=null&&spd<2)for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(j0==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[j0]-cur))){j0=j;quai=true}
+ if(j0==null)for(let j=i+1;j<rows.length;j++)if(isStop(rows[j])&&Dc[j]>cur){j0=j;break}
+ B.classList.toggle("quai",quai);quaiDep=null;NEXT=null;
+ {let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(isStop(c)){ns="Arrêt <b>"+esc(stopName(c))+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns}
+ if(j0==null){$("#nsL").textContent="";$("#nsN").textContent="";$("#nsT").innerHTML="";$("#dlM").textContent="";return}
+ const r=rows[j0],t=rowTimes(r);$("#nsN").textContent=stopName(r);$("#nsN").classList.toggle("long",stopName(r).length>16);
+ if(quai){$("#nsL").textContent="À quai";let w="";if(t){quaiDep=t.dep.v;const dt=t.dep.v-nowMin();w="départ <b>"+hTxt(t.dep)+"</b>"+(dt>0&&dt<120?" dans "+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min"):"")}$("#nsT").innerHTML=w}
+ else{$("#nsL").textContent="Prochain arrêt · "+km(Dc[j0]);$("#nsT").innerHTML=t?(t.arr.v!==t.dep.v?"arr. <b>"+hTxt(t.arr)+"</b> · dép. <b>"+hTxt(t.dep)+"</b>":"<b>"+hTxt(t.arr)+"</b>"):""}
+ /* minutes rattrapables : marges de régularité des points d'ici l'arrêt (celle de l'arrêt comprise) */
+ let reg=0;if(!quai)for(let j=i+1;j<=j0;j++)if(Dc[j]>cur)reg+=regMin(rows[j]);
+ NEXT={j:j0,quai,t,reg,name:stopName(r),dist:km(Dc[j0]),d:Dc[j0]};
+ $("#dlM").textContent=reg>0?fmtReg(reg)+" rattrapable"+(reg>=2?"s":""):quai?"":"rien à rattraper"}
 /* ---------- schéma de zone ---------- */
 let zoneKm=+store("zoneKm")||5;
 const SVGNS="http://www.w3.org/2000/svg";
@@ -1288,7 +1358,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  const lane=[yAx-62,yAx-22],lab=[];
  for(const j of pts){const r=rows[j],x=X(Dc[j]),past=Dc[j]<cur-30,nm=r.sub&&r.ctx?r.ctx+(/^\|?\s*BV\b/.test(r.name)?"":" "+r.name.replace(/^\|\s*/,"")):r.name;
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT-5)+'" y2="'+(yT+5)+'" class="rtick'+(past?" past":"")+'"/>');
-  const sub="PK "+fk(r.pk)+(r.reg?" · M. rég. "+r.reg+" min":"")+(isSup(r)?" · arrêt [C] supprimé":isCond(r)?" · [C]":"");
+  const sub="PK "+fk(r.pk)+(r.reg?" · +"+fmtReg(regMin(r))+" rattrapable":"")+(isSup(r)?" · arrêt [C] supprimé":isCond(r)?" · [C]":"");
   const st0=isStop(r);const wn=tw(nm,st0?"700 15px ":"400 13px ",st0?9.8:7.4)+(st0?nm.length*.3+22:0);const wdt=Math.max(wn+(r.train?78:0),sub.length*6.2)+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
   if(L<0)continue;occ.push({l:L,x0,x1});const xl=Math.min(Math.max(x,wn/2+6),W-wn/2-6);
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT+6)+'" y2="'+(lane[L]-19)+'" class="rlead'+(past?" past":"")+'"/>');
@@ -1302,9 +1372,15 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  /* à l'arrêt en gare : départ prévu */
  let ban="";const spd=mode==="sim"?sim.v:(gps&&(Date.now()-gps.ts)/1000<=5?gps.v:null);
  if(ok&&spd!=null&&spd<2){let best=null;for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&Math.abs(Dc[j]-cur)<=400&&(best==null||Math.abs(Dc[j]-cur)<Math.abs(Dc[best]-cur)))best=j;
-  if(best!=null){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=stopName(r);
+  if(best!=null&&NEXTUI==="classic"){const r=rows[best],m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)],dep=m.length?m[m.length-1]:null,nm=stopName(r);
    ban='<div class="stopban"><div class="sb1">Arrêt : <b>'+esc(nm)+"</b></div>"+(dep?'<div class="sb2">Départ à <b>'+dep[1]+"h"+dep[2]+(dep[3]?" et 30 s":"")+"</b></div>":"")+"</div>"}}
  if(mode!=="sim"&&netState&&netState.off&&gps&&(Date.now()-gps.ts)/1000<=10)ban='<div class="stopban off"><div class="sb1"><b>Hors du réseau ferré</b></div><div class="sb3">'+esc(netState.txt)+"</div></div>";
+ /* proposition 2 : carte du prochain arrêt posée au-dessus de la gare */
+ if(NEXTUI==="card"&&ok&&NEXT&&!ban.includes("off")){const N=NEXT,cw=230,xs=X(N.d),inV=xs>=0&&xs<=W,xc=Math.max(cw/2+8,Math.min(W-cw/2-8,inV?xs:W)),top=Math.max(8,yT-150);
+  const pill=delayMin==null?"":(()=>{const s=delayMin>=.5?"late":delayMin<=-.5?"early":"on";return'<span class="np" data-s="'+s+'">'+(s==="on"?"à l’heure":(s==="late"?"+":"−")+mmss(delayMin))+"</span>"})();
+  const t=N.t,tt=t?(N.quai?"départ <b>"+hTxt(t.dep)+"</b>":t.arr.v!==t.dep.v?"<b>"+hTxt(t.arr)+"</b> → <b>"+hTxt(t.dep)+"</b>":"<b>"+hTxt(t.arr)+"</b>"):"";
+  const sub=N.quai?(t?(()=>{const dt=t.dep.v-nowMin();return dt>0&&dt<120?"départ dans "+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min"):""})():""):N.reg>0?fmtReg(N.reg)+" à rattraper":"rien à rattraper";
+  ban+='<div class="ncard'+(N.quai?" quai":"")+'" style="left:'+(xc-cw/2)+'px;top:'+top+'px"><div class="nl">'+(N.quai?"À quai":"Prochain arrêt · "+N.dist)+'</div><div class="nn">'+esc(N.name)+'</div><div class="nt">'+tt+'</div><div class="nd">'+pill+"<span>"+sub+"</span></div>"+(inV?'<span class="ar" style="left:'+Math.max(10,Math.min(cw-24,xs-(xc-cw/2)-7))+'px"></span>':"")+"</div>"}
  const back=Math.abs(viewOff)>50?'<button class="rback" id="rBack">Revenir au train</button>':"";
  box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban+back;const rb=$("#rBack");if(rb)rb.onclick=e=>{e.stopPropagation();viewOff=0;lastRow=-1;frame(Date.now())}}
 /* numéro de train en cours : dernier changement de parité dépassé */
@@ -1411,7 +1487,7 @@ function renderList(){
   const t=ltv.filter(k=>inLtv(k,r.pk,r.sec)).reduce((m,k)=>Math.min(m,k.v),1e9);
   const eff=t<1e9&&(r.v==null||t<r.v);
   const nm=r.sub&&r.ctx?esc(r.ctx)+' <span class="sub">'+esc(r.name.replace(/^\|\s*/,""))+"</span>":esc(r.name||"—");
-  const x=[r.pl?"PL":"",r.reg?"M. rég. "+r.reg+" min":"",r.rad].filter(Boolean).map(esc).join(" · ");
+  const x=[r.pl?"PL":"",r.reg?"+"+fmtReg(regMin(r))+" rattrapable":"",r.rad].filter(Boolean).map(esc).join(" · ");
   e.innerHTML='<span class="lm'+(eff?" ltv":"")+'">'+(eff?t:(r.v==null?"?":r.v))+'</span><span class="pkc">'+fk(r.pk)+'</span><span class="nm">'+(isStop(r)?'<span class="tag">ARRÊT'+(isCond(r)?" [C]":"")+"</span>":isSup(r)?'<span class="tag off">[C] SUPPRIMÉ</span>':"")+nm+(isCond(r)?' <button class="csw" data-cs="'+i+'">'+(isSup(r)?"Rétablir l’arrêt":"Arrêt supprimé ?")+"</button>":"")+(r.train?' <b class="par">→ '+esc(r.train)+"</b>":"")+(x?'<span class="x">'+x+"</span>":"")+"</span>";
   e.onclick=ev=>{const b=ev.target.closest("button[data-cs]");if(b){ev.stopPropagation();setSup(rows[+b.dataset.cs],!isSup(rows[+b.dataset.cs]));return}if(mode==="man"){s=i;lastRow=-1;gotoRow(true)}};
   L.appendChild(e);
@@ -1420,7 +1496,7 @@ function renderList(){
  $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
 }
 const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
-function masked(why,spd,i,f){
+function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
@@ -1460,8 +1536,8 @@ function frame(now){
  const zl=Z.filter(z=>z.d1>cur).sort((a,b)=>a.d1-b.d1)[0];
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
- let ns="";for(let j=i+1;j<rows.length;j++){const c=rows[j];if(isStop(c)){ns="Arrêt <b>"+esc(stopName(c))+"</b> dans "+km(Dc[j]);break}}$("#ns").innerHTML=ns;
- showDelay(cur,now);autoC(cur,spd);
+ renderNext(i,cur,spd,km);
+ showDelay(cur,now);renderBanner();autoC(cur,spd);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
  else if(cNote&&Date.now()-cNoteT<60000)setSt("warn",cNote);
  else if(T)setSt("ok","Test GPS : écart de "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m avec le PK simulé.");
@@ -1469,7 +1545,7 @@ function frame(now){
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
  else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Position réglée à la main.");
  else setSt("ok",mode==="sim"?(sim.run?"Simulation":"Simulation à l’arrêt"):"Position réglée à la main · vitesse GPS ±"+Math.round(gps.acc)+" m");
- drawRoute(i,f,true);renderHours(i);markRows(i);
+ animTarget(Dc[i]+f*seg(i),now,spd);drawSmooth(now);renderHours(i);markRows(i);
 }
 function markRows(i){if(i===lastRow)return;lastRow=i;$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)});gotoRow()}
 function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
@@ -1611,8 +1687,24 @@ buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();doc
 renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
-setSideTab(sideTab);setSide(store("side")==="1");livInit();
+setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
+/* ---------- défilement fluide ----------
+   Les positions arrivent par à-coups (GPS une fois par seconde, simulation toutes les 500 ms).
+   Entre deux positions, le train avance à la vitesse mesurée ; à chaque nouvelle position, l'affichage
+   la rejoint en douceur au lieu de sauter. La vue est redessinée environ 30 fois par seconde. */
+const ANIM={d:null,td:null,tt:0,v:0,last:0,ok:false};
+function animTarget(d,now,spd){const v=mode==="sim"?(sim.run?sim.v*sim.mult:0):(spd||0);ANIM.td=d;ANIM.tt=now;ANIM.v=v/3.6;ANIM.ok=true;
+ if(ANIM.d==null||Math.abs(ANIM.d-d)>400)ANIM.d=d}
+function dToIF(d){let i=0;while(i+1<rows.length&&Dc[i+1]<=d)i++;return[i,Math.max(0,Math.min(.999,(d-Dc[i])/seg(i)))]}
+function drawSmooth(now){if(!ANIM.ok||ANIM.d==null||!rows.length)return;const dt=Math.min(.2,Math.max(0,(now-(ANIM.last||now))/1000));ANIM.last=now;
+ /* cible : dernière position + avance à la vitesse, au plus 2 s d'extrapolation */
+ const tgt=ANIM.td+ANIM.v*Math.min(2,(now-ANIM.tt)/1000);let d=ANIM.d+ANIM.v*dt,err=tgt-d;
+ d+=err*Math.min(1,dt/.5);if(ANIM.v>.5&&d<ANIM.d&&ANIM.d-d<60)d=ANIM.d;ANIM.d=Math.max(0,Math.min(Dc[Dc.length-1],d));
+ const[i,f]=dToIF(ANIM.d);drawRoute(i,f,true)}
+function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;animLoop.t=now;
+ const t=Date.now();if(ANIM.v>.3||Math.abs((ANIM.td??0)-(ANIM.d??0))>1)drawSmooth(t);else ANIM.last=t}
+requestAnimationFrame(animLoop);
 setInterval(tick,500);tick();
 </script>
 </body>

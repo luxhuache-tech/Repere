@@ -708,7 +708,7 @@ function regMin(r){const v=parseFloat(String(r.reg||"").replace(",","."));return
 const fmtReg=m=>{const t=Math.round(m*60),mi=Math.floor(t/60),se=t%60;return se?mi+" min "+String(se).padStart(2,"0"):mi+" min"};
 let delayMin=null,quaiDep=null,NEXT=null;
 /* présentation du prochain arrêt selon la page : barre du bas (test.html), carte sur la vue (test2.html), ou classique */
-const NEXTUI=/test1\.html/.test(location.pathname)?"banner":/test2\.html/.test(location.pathname)?"card":/test\.html/.test(location.pathname)?"bar":"classic";
+const NEXTUI=/test1\.html/.test(location.pathname)?"banner":/test2\.html/.test(location.pathname)?"card":"bar";
 /* proposition 1 : bandeau sous la barre du haut */
 function renderBanner(){const B=$("#nban");if(!B||NEXTUI!=="banner")return;const N=NEXT;B.classList.toggle("empty",!N);if(!N)return;B.classList.toggle("quai",N.quai);
  $("#nbL").textContent=N.quai?"À quai":"Arrêt";$("#nbN").textContent=N.name;
@@ -1496,7 +1496,7 @@ function renderList(){
  $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
 }
 const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
-function masked(why,spd,i,f){
+function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
@@ -1545,7 +1545,7 @@ function frame(now){
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
  else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Position réglée à la main.");
  else setSt("ok",mode==="sim"?(sim.run?"Simulation":"Simulation à l’arrêt"):"Position réglée à la main · vitesse GPS ±"+Math.round(gps.acc)+" m");
- drawRoute(i,f,true);renderHours(i);markRows(i);
+ animTarget(Dc[i]+f*seg(i),now,spd);drawSmooth(now);renderHours(i);markRows(i);
 }
 function markRows(i){if(i===lastRow)return;lastRow=i;$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)});gotoRow()}
 function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
@@ -1689,6 +1689,22 @@ if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
 setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);
 idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
+/* ---------- défilement fluide ----------
+   Les positions arrivent par à-coups (GPS une fois par seconde, simulation toutes les 500 ms).
+   Entre deux positions, le train avance à la vitesse mesurée ; à chaque nouvelle position, l'affichage
+   la rejoint en douceur au lieu de sauter. La vue est redessinée environ 30 fois par seconde. */
+const ANIM={d:null,td:null,tt:0,v:0,last:0,ok:false};
+function animTarget(d,now,spd){const v=mode==="sim"?(sim.run?sim.v*sim.mult:0):(spd||0);ANIM.td=d;ANIM.tt=now;ANIM.v=v/3.6;ANIM.ok=true;
+ if(ANIM.d==null||Math.abs(ANIM.d-d)>400)ANIM.d=d}
+function dToIF(d){let i=0;while(i+1<rows.length&&Dc[i+1]<=d)i++;return[i,Math.max(0,Math.min(.999,(d-Dc[i])/seg(i)))]}
+function drawSmooth(now){if(!ANIM.ok||ANIM.d==null||!rows.length)return;const dt=Math.min(.2,Math.max(0,(now-(ANIM.last||now))/1000));ANIM.last=now;
+ /* cible : dernière position + avance à la vitesse, au plus 2 s d'extrapolation */
+ const tgt=ANIM.td+ANIM.v*Math.min(2,(now-ANIM.tt)/1000);let d=ANIM.d+ANIM.v*dt,err=tgt-d;
+ d+=err*Math.min(1,dt/.5);if(ANIM.v>.5&&d<ANIM.d&&ANIM.d-d<60)d=ANIM.d;ANIM.d=Math.max(0,Math.min(Dc[Dc.length-1],d));
+ const[i,f]=dToIF(ANIM.d);drawRoute(i,f,true)}
+function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;animLoop.t=now;
+ const t=Date.now();if(ANIM.v>.3||Math.abs((ANIM.td??0)-(ANIM.d??0))>1)drawSmooth(t);else ANIM.last=t}
+requestAnimationFrame(animLoop);
 setInterval(tick,500);tick();
 </script>
 </body>
