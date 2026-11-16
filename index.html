@@ -75,7 +75,10 @@ body.ui-banner #nban:not(.empty){display:block!important}
 .ncard .np[data-s="late"]{background:color-mix(in srgb,var(--ltv) 25%,var(--card));color:var(--ltv)}.ncard .np[data-s="early"]{background:color-mix(in srgb,var(--ok) 22%,var(--card));color:var(--ok)}
 .ncard.quai{background:var(--email);border-color:var(--email);color:var(--emailtx)}.ncard.quai .nl,.ncard.quai .nd{color:var(--emailtx)}
 .ncard .ar{position:absolute;bottom:-9px;width:14px;height:14px;background:inherit;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}.ncard.quai .ar{border-color:var(--email)}
-.nsb.dim{opacity:.45}.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
+.nsb.dim{opacity:.45}
+.drb{position:absolute;right:12px;top:10px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--ltv) 22%,var(--card));color:var(--ltv);border-radius:9px;padding:6px 12px;font:700 15px/1 var(--fd);pointer-events:none}
+.drb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.drb .sl{stroke-width:2.4}
+#spd.est{color:var(--ltv)}#spd.est::before{content:"≈";font-size:.6em;margin-right:2px}.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
 /* voie */
 #route{position:relative}
 .rsl{stroke:var(--tx3);stroke-width:16;stroke-dasharray:2 14;opacity:.35}
@@ -700,7 +703,7 @@ function firstTime(){const t=Tm.find(x=>x!=null);return t==null?null:t}
 /* heure courante en minutes (horloge de simulation ou vraie heure) */
 function nowMin(now){if(mode==="sim"){if(sim.clock==null)sim.clock=firstTime();return sim.clock}const n=new Date(now||Date.now());return n.getHours()*60+n.getMinutes()+n.getSeconds()/60}
 /* « 03:50 » à partir de minutes */
-const mmss=m=>{const t=Math.round(Math.abs(m)*60);return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0")};
+const mmss=m=>{const t=Math.round(Math.abs(m)*60);if(t>=3600)return Math.floor(t/3600)+"h"+String(Math.floor(t%3600/60)).padStart(2,"0");return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0")};
 /* heures d'une rangée de fiche : arrivée = première, départ = dernière ; « + » = 30 s */
 function rowTimes(r){const m=[...String(r.time||"").matchAll(/(\d{1,2}):(\d{2})(\+?)/g)].map(x=>({h:+x[1],m:+x[2],p:!!x[3],v:+x[1]*60+ +x[2]+(x[3]?.5:0)}));return m.length?{arr:m[0],dep:m[m.length-1]}:null}
 const hTxt=t=>t?t.h+"h"+String(t.m).padStart(2,"0")+(t.p?"<small>+30</small>":""):"";
@@ -1381,6 +1384,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   const t=N.t,tt=t?(N.quai?"départ <b>"+hTxt(t.dep)+"</b>":t.arr.v!==t.dep.v?"<b>"+hTxt(t.arr)+"</b> → <b>"+hTxt(t.dep)+"</b>":"<b>"+hTxt(t.arr)+"</b>"):"";
   const sub=N.quai?(t?(()=>{const dt=t.dep.v-nowMin();return dt>0&&dt<120?"départ dans "+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min"):""})():""):N.reg>0?fmtReg(N.reg)+" à rattraper":"rien à rattraper";
   ban+='<div class="ncard'+(N.quai?" quai":"")+'" style="left:'+(xc-cw/2)+'px;top:'+top+'px"><div class="nl">'+(N.quai?"À quai":"Prochain arrêt · "+N.dist)+'</div><div class="nn">'+esc(N.name)+'</div><div class="nt">'+tt+'</div><div class="nd">'+pill+"<span>"+sub+"</span></div>"+(inV?'<span class="ar" style="left:'+Math.max(10,Math.min(cw-24,xs-(xc-cw/2)-7))+'px"></span>':"")+"</div>"}
+ if(typeof DR!=="undefined"&&DR.show&&ok)ban+='<div class="drb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><path d="M3 3l18 18" class="sl"/></svg>Défilement automatique</div>';
  const back=Math.abs(viewOff)>50?'<button class="rback" id="rBack">Revenir au train</button>':"";
  box.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban+back;const rb=$("#rBack");if(rb)rb.onclick=e=>{e.stopPropagation();viewOff=0;lastRow=-1;frame(Date.now())}}
 /* numéro de train en cours : dernier changement de parité dépassé */
@@ -1504,18 +1508,36 @@ function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;
  {const D=$("#dlBox");if(D){D.dataset.s="";$("#dlL").textContent="Position perdue";$("#dlV").textContent="—";$("#dlM").textContent="";delayMin=null}const N=$("#nsBox");if(N)N.classList.add("dim")}
  setSt("warn",why+" PK et limite masqués.");if(i!=null)drawRoute(i,f,false)
 }
+/* ---------- défilement automatique sans GPS ---------- */
+const DR={on:false,show:false,d:0,v:0,t:0,d0:0,good:null,okSince:null,why:""};
+function drStep(now){const dt=Math.max(0,(now-DR.t)/1000);DR.t=now;
+ const L=effLim(DR.d,ltvZones(),trainLen()).v;if(L!=null)DR.v=Math.min(DR.v,L/3.6);
+ let d=DR.d+DR.v*dt;
+ /* arrêt au prochain arrêt prévu ; 20 km au plus sans GPS */
+ for(let j=0;j<rows.length;j++)if(isStop(rows[j])&&!isSup(rows[j])&&Dc[j]>DR.d0+50){if(d>=Dc[j]){d=Dc[j];DR.v=0}break}
+ if(d-DR.d0>20000){d=DR.d0+20000;DR.v=0}
+ DR.d=Math.min(d,Dc[Dc.length-1]);const[i,f]=dToIF(DR.d);s=i+f}
 function frame(now){
  if(!rows.length){mapPos(mode!=="sim"&&gps?[gps.lon,gps.lat]:null,false);drawRoute(0,0,false);return}
  let spd=null;if(mode==="sim")spd=sim.v;else if(gps&&(now-gps.ts)/1000<=5)spd=Math.round(gps.v);
  const gpsPt=gps&&(now-gps.ts)/1000<=10?[gps.lon,gps.lat]:null;
+ DR.show=false;
  if(mode==="gps"){
   let G=trk.res;if(!gps||(now-gps.ts)/1000>5)G={ok:false,why:geoErr||"Pas de position GPS récente."};
   const i0=Math.min(rows.length-1,Math.floor(s));
-  if(!G||!G.ok){masked(netState&&netState.off?"Hors du réseau ferré. "+netState.txt:netState&&netState.other?netState.txt:(G?G.why:"Recherche de la position…"),spd,i0,s-i0);mapPos(gpsPt,false);return}
-  const ns=pkToS(G.sec,G.pk);if(ns==null){masked("PK hors de la fiche.",spd,i0,s-i0);mapPos(gpsPt,false);return}
-  s=ns;
+  const ns=G&&G.ok?pkToS(G.sec,G.pk):null,good=ns!=null&&!(netState&&netState.off);
+  if(good){DR.okSince=DR.okSince||now;
+   /* GPS revenu : on reste en défilement automatique tant qu'il n'est pas stable depuis 5 s */
+   if(DR.on&&now-DR.okSince<5000){drStep(now);DR.show=true;DR.why="GPS retrouvé, recalage dans "+Math.ceil((5000-(now-DR.okSince))/1000)+" s"}
+   else{DR.on=false;s=ns}}
+  else{DR.okSince=null;
+   /* plus de GPS (tunnel…) : le train continue à la dernière vitesse connue, sans dépasser la limite ni l'arrêt suivant */
+   if(DR.on||(DR.good&&now-DR.good.t<60000&&!(netState&&netState.off))){if(!DR.on){DR.on=true;DR.d=DR.good.d;DR.v=DR.good.v;DR.t=DR.good.t;DR.d0=DR.good.d}drStep(now);DR.show=true;DR.why=G&&G.why||"Pas de GPS"}
+   else{masked(netState&&netState.off?"Hors du réseau ferré. "+netState.txt:netState&&netState.other?netState.txt:(G?G.why:"Recherche de la position…"),spd,i0,s-i0);mapPos(gpsPt,false);return}}
+  if(DR.show)spd=DR.v*3.6;
  }
  const i=Math.min(rows.length-1,Math.floor(s)),f=s-i,r=rows[i],b=rows[i+1];
+ if(mode==="gps"&&!DR.show&&spd!=null)DR.good={d:Dc[i]+f*seg(i),v:spd/3.6,t:now};
  {const tn=curTrain(i)||store("trainNo");if(tn&&$("#ficheT").textContent!==tn)$("#ficheT").textContent=tn}
  const same=b&&b.sec===r.sec&&Math.abs(b.pk-r.pk)<=80;
  const pk=same?r.pk+f*(b.pk-r.pk):r.pk;
@@ -1529,7 +1551,7 @@ function frame(now){
   }}
  mapPos(mode==="sim"?simPt:gpsPt,true);
  const cur=Dc[i]+f*seg(i),Z=ltvZones(),Lt=trainLen(),E=effLim(cur,Z,Lt);let lim=E.v,inL=E.ltv;
- $("#pk").textContent=fk(T?T.pk:pk);$("#lim").textContent=lim==null?"?":lim;$("#lim").classList.toggle("l3",String(lim).length>2);$("#spd").textContent=spd==null?"—":Math.round(spd);
+ $("#pk").textContent=(DR.show?"≈ ":"")+fk(T?T.pk:pk);$("#spd").classList.toggle("est",DR.show);$("#lim").textContent=lim==null?"?":lim;$("#lim").classList.toggle("l3",String(lim).length>2);$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tLim").classList.toggle("ltv",inL);
  const over=spd!=null&&lim!=null&&spd>lim;$("#tSpd").classList.toggle("over",over);$("#tLim").classList.toggle("over",over);
  {const g=$("#gBar");g.style.width=spd!=null&&lim?Math.min(100,spd/lim*100)+"%":"0";g.className=over?"over":spd!=null&&lim&&spd>=lim*.95?"near":""}
@@ -1539,11 +1561,12 @@ function frame(now){
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
  renderNext(i,cur,spd,km);
- showDelay(cur,now);renderBanner();autoC(cur,spd);
+ showDelay(cur,now);renderBanner();
+ if(DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");autoC(cur,spd);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
  else if(cNote&&Date.now()-cNoteT<60000)setSt("warn",cNote);
  else if(T)setSt("ok","Test GPS : écart de "+Math.round(Math.abs(T.pk-T.truth)*1000)+" m avec le PK simulé.");
- else if(mode==="gps")setSt("ok","GPS · ligne "+geo.sec[r.sec].split("/")[0]+" · à "+Math.round(trk.res.d)+" m du tracé · ±"+Math.round(gps.acc)+" m");
+ else if(mode==="gps"&&DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");else if(mode==="gps")setSt("ok","GPS · ligne "+geo.sec[r.sec].split("/")[0]+" · à "+Math.round(trk.res.d)+" m du tracé · ±"+Math.round(gps.acc)+" m");
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
  else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Position réglée à la main.");
  else setSt("ok",mode==="sim"?(sim.run?"Simulation":"Simulation à l’arrêt"):"Position réglée à la main · vitesse GPS ±"+Math.round(gps.acc)+" m");
@@ -1701,7 +1724,7 @@ function animTarget(d,now,spd){const v=mode==="sim"?(sim.run?sim.v*sim.mult:0):(
 function dToIF(d){let i=0;while(i+1<rows.length&&Dc[i+1]<=d)i++;return[i,Math.max(0,Math.min(.999,(d-Dc[i])/seg(i)))]}
 function drawSmooth(now){if(!ANIM.ok||ANIM.d==null||!rows.length)return;const dt=Math.min(.2,Math.max(0,(now-(ANIM.last||now))/1000));ANIM.last=now;
  /* cible : dernière position + avance à la vitesse, au plus 2 s d'extrapolation */
- const tgt=ANIM.td+ANIM.v*Math.min(2,(now-ANIM.tt)/1000);let d=ANIM.d+ANIM.v*dt,err=tgt-d;
+ const tgt=ANIM.td+ANIM.v*Math.min(6,(now-ANIM.tt)/1000);let d=ANIM.d+ANIM.v*dt,err=tgt-d;
  d+=err*Math.min(1,dt/.5);if(ANIM.v>.5&&d<ANIM.d&&ANIM.d-d<60)d=ANIM.d;ANIM.d=Math.max(0,Math.min(Dc[Dc.length-1],d));
  const[i,f]=dToIF(ANIM.d);drawRoute(i,f,true)}
 function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;animLoop.t=now;
