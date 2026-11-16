@@ -12,4 +12,10 @@ Source : SNCF Réseau. Ces données ne sont pas destinées à la navigation en t
 Le profil en long est complété par l'appli au moment de l'import : altitudes du terrain IGN (Géoplateforme, calcul altimétrique) et tunnels/ponts ferroviaires OpenStreetMap (© contributeurs OpenStreetMap, ODbL) via Overpass.
 
 ## pentes/
-Déclivité par hectomètre, un fichier par code ligne (`{"c": code, "r": [[pk_début, [g, …]], …]}`, g en dixièmes de ‰ dans le sens des PK croissants, sur chaque tronçon de 100 m). Tirée de la colonne `altitude_declivites` de `pks.csv` du dépôt [extras-opendata-sncf-reseau](https://github.com/nicolaswurtz/extras-opendata-sncf-reseau) de Nicolas Wurtz : déclivités SNCF Réseau (open data) ramenées à la ligne. Licence ODbL 1.0. Sauts de plus de 40 ‰ écartés. Produit par `tools/pack_pentes.py`.
+Un fichier par code ligne, tiré du dépôt [extras-opendata-sncf-reseau](https://github.com/nicolaswurtz/extras-opendata-sncf-reseau) de Nicolas Wurtz (licence ODbL 1.0), produit par `tools/pack_pentes.py` :
+
+- `r` : déclivité par hectomètre (colonne `altitude_declivites` de `pks.csv` : déclivités SNCF Réseau ramenées à la ligne), en dixièmes de ‰ dans le sens des PK croissants ; sauts de plus de 40 ‰ écartés ;
+- `a` : altitude du terrain corrigée des tunnels (EU-DEM, colonne `altitude_tunnels`), en décimètres, tous les 100 m ; sert quand l'IGN est injoignable ;
+- `t` : tunnels (`lignes-tunnels.geojson`) : PK début, PK fin, nom.
+
+Les « localités » du même dépôt ont été essayées comme points de calage et écartées : elles dégradaient la précision du PK.
