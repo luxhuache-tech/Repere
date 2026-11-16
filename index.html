@@ -423,7 +423,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
     </div>
     <h3>Profil en long</h3>
     <div class="box small"><div id="profMsg" class="muted"></div>
-     <p class="muted" style="margin-bottom:0">Courbe grise sous la carte : altitude du terrain IGN, tunnels et ponts OpenStreetMap remplacés par une droite, déclivité mesurée SNCF Réseau (état 2021) prioritaire pour les ‰. Avec tes livrets de ligne importés, la déclivité caractéristique de chaque section (rampe et pente maxi dans ton sens de marche) s’affiche au-dessus de la courbe et borne les pentes estimées. Indicatif seulement.</p>
+     <p class="muted" style="margin-bottom:0">Courbe grise sous la carte : altitude du terrain IGN, tunnels et ponts OpenStreetMap remplacés par une droite, déclivité mesurée SNCF Réseau (état 2021) prioritaire pour les ‰. Indicatif seulement.</p>
      <div class="row"><button class="btn" id="profRe">Recalculer le profil</button></div></div>
     <div id="geoRep"></div>
     <div class="row"><button class="btn dng" id="geoClr">Effacer la géométrie</button></div>
@@ -980,7 +980,9 @@ function dcPos(n,RT){const out=dcRowsFor(n,RT).map(j=>Dc[j]);const secs=[...new 
  for(const g of dcGares(n))for(const sec of secs){const rg=secRange(sec);for(const c of GEO.locate(lineFor(sec),g.lon,g.lat)){if(c.d>400||!rg||c.pk<rg[0]-.05||c.pk>rg[1]+.05)continue;const d=pkToD(sec,Math.max(rg[0],Math.min(rg[1],c.pk)));if(d!=null)out.push(d)}}
  return out}
 function rowXY(j){const L=lineFor(rows[j].sec);return L?GEO.point(L,rows[j].pk):null}
-function declIntervals(){if(!rows.length||!LIV.idx)return[];const sig=rows.length+"|"+Dc[Dc.length-1]+"|"+(typeof geoRaw!=="undefined"&&geoRaw?1:0)+"|"+LIV.idx.map(x=>x.id+":"+(x.decl?x.decl.length:"-")).join(",");if(dcCache&&dcSig===sig)return dcCache;
+/* désactivé à la demande : les livrets ne modifient plus le profil (bande, pastille, bornage) */
+const DECL_ON=false;
+function declIntervals(){if(!DECL_ON||!rows.length||!LIV.idx)return[];const sig=rows.length+"|"+Dc[Dc.length-1]+"|"+(typeof geoRaw!=="undefined"&&geoRaw?1:0)+"|"+LIV.idx.map(x=>x.id+":"+(x.decl?x.decl.length:"-")).join(",");if(dcCache&&dcSig===sig)return dcCache;
  const RT=rows.map(r=>dcTok(stopName(r)+" "+(r.sub&&r.ctx?"":r.name||"")));const out=[],ends=rows.map((r,j)=>j).filter(j=>j===0||j===rows.length-1||rows[j].sec!==rows[j-1].sec||rows[j].sec!==rows[j+1].sec).map(j=>({j,xy:rowXY(j)})).filter(e=>e.xy);
  for(const x of LIV.idx)for(const d of x.decl||[]){if(!d.a||!d.b||d.a===d.b)continue;const A=dcPos(d.a,RT),B=dcPos(d.b,RT);let best=null;
   for(const da of A)for(const db of B){const L=Math.abs(db-da);if(L<200||L>150000)continue;if(!best||L<best.L)best={L,d1:Math.min(da,db),d2:Math.max(da,db)}}
@@ -1003,7 +1005,7 @@ function declAt(d){const I=declIntervals();let C=I.filter(o=>!o.det&&d>=o.d1&&d<
  let r=null,p=null;for(const o of C){const v=o[par];if(v.r!=null)r=Math.max(r??0,v.r);if(v.p!=null)p=Math.max(p??0,v.p)}if(r==null&&p==null)return null;
  const liv=[...new Set(C.map(o=>o.liv))].join(", ");return{r,p,par,liv,d1:Math.max(...C.map(o=>o.d1)),d2:Math.min(...C.map(o=>o.d2)),txt:C.map(o=>o.txt).join(" ; "),var:C.length>1}}
 /* lecture en arrière-plan pour les livrets importés avant cette fonction */
-async function declBackfill(){if(!LIV.idx)return;let ch=false;for(const x of LIV.idx){if(x.decl!==undefined)continue;try{const buf=await idbGet("liv:"+x.id);if(!buf)continue;const lib=pdfLib();const pdf=await lib.getDocument({data:new Uint8Array(buf.slice(0)),isOffscreenCanvasSupported:false}).promise;x.decl=await readDecl(pdf,lib);ch=true}catch(e){x.decl=[]}}
+async function declBackfill(){if(!DECL_ON||!LIV.idx)return;let ch=false;for(const x of LIV.idx){if(x.decl!==undefined)continue;try{const buf=await idbGet("liv:"+x.id);if(!buf)continue;const lib=pdfLib();const pdf=await lib.getDocument({data:new Uint8Array(buf.slice(0)),isOffscreenCanvasSupported:false}).promise;x.decl=await readDecl(pdf,lib);ch=true}catch(e){x.decl=[]}}
  if(ch){await idbSet("livIdx",{idx:LIV.idx,date:new Date().toISOString().slice(0,10)});dcCache=null;profD=null;lastRow=-1}}
 
 /* ---------- livrets de ligne : PDF importés sur l'appareil, jamais envoyés ni publiés ---------- */
@@ -1020,7 +1022,7 @@ async function livRead(buf,name){const pdf=await pdfLib().getDocument({data:new 
  title=title.replace(/\s+/g," ").replace(/^\d+\s*[–-]\s*/,"").trim()||name.replace(/\.pdf$/i,"");
  const ver=/Version\s+(\d+)\s+du\s+([\d-]+)/.exec(p1),app=/Applicable\s+à\s+partir\s+du\s+([\d-]+)/.exec(p1);
  const w=[...new Set(GEO.norm(all).split(" ").filter(x=>x.length>=4&&!/^\d+$/.test(x)))];
- let decl=[];try{decl=await readDecl(pdf,pdfLib())}catch(e){}
+ let decl;if(DECL_ON)try{decl=await readDecl(pdf,pdfLib())}catch(e){decl=[]}
  return{decl,id:code,code,num:code.split("-").pop(),title,version:ver?ver[1]:"",du:ver?ver[2]:"",app:app?app[1]:"",pages:pdf.numPages,w,tn:GEO.norm(title)}}
 async function livImport(files){if(LIV.busy)return;LIV.busy=true;const M=$("#livMsg");const idx=(LIV.idx||[]).slice();let ok=0,bad=[];
  try{for(let i=0;i<files.length;i++){const f=files[i];if(M)M.textContent="Lecture des livrets ("+(i+1)+" / "+files.length+")…";
