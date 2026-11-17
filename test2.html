@@ -1557,7 +1557,7 @@ function saveLtv(){ltv=parseLtv($("#taL").value);store("ltv",$("#taL").value);$(
 function renderList(){
  const L=$("#list");L.innerHTML="";let sec=0;
  if(!rows.length)L.innerHTML='<div class="empty">Aucune fiche chargée.<br>Réglages → Fiche.</div>';
- const trains=[...new Set(rows.map(r=>r.train).filter(Boolean))],tn=rows.length?store("trainNo"):null;$("#ficheT").textContent=(tn||"")+(trains.length?(tn?" → ":"")+trains.join(" → "):"")||"—";
+ const trains=[...new Set(rows.map(r=>r.train).filter(Boolean))],tn=rows.length?store("trainNo"):null;$("#ficheT").textContent=tn||trains[0]||"—";
  const many=new Set(rows.map(x=>x.sec)).size>1;
  rows.forEach((r,i)=>{
   if(r.sec!==sec){sec=r.sec;if(many){const d=document.createElement("div");d.className="secr";const g=geo.sec&&geo.sec[sec];d.textContent="Tronçon "+sec+(g?" · ligne "+g.split("/")[0]:"");L.appendChild(d)}}
@@ -1636,6 +1636,8 @@ function frame(now){
  $("#nx").innerHTML=nx;
  renderNext(i,cur,spd,km);
  showDelay(cur,now);renderBanner();emShow(cur);
+ /* numéro de train valable à cet endroit (change à la parité) */
+ {const t=curTrain(i)||store("trainNo")||"—",E=$("#ficheT");if(E&&E.textContent!==t)E.textContent=t}
  if(DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");autoC(cur,spd);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
  else if(cNote&&Date.now()-cNoteT<60000)setSt("warn",cNote);
