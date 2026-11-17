@@ -1,0 +1,38 @@
+name: Appli iPad
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["index.html", "ios/**", "lib/**", "data/**", ".github/workflows/ipad.yml"]
+permissions:
+  contents: write
+concurrency: { group: ipad, cancel-in-progress: true }
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fichiers de l'appli
+        run: |
+          mkdir -p ios/www
+          cp index.html ios/www/
+          cp -R lib data ios/www/
+          rm -f ios/www/data/LISEZMOI.md
+      - name: Projet Xcode
+        run: brew install xcodegen && cd ios && xcodegen generate
+      - name: Compilation (non signée, Sideloadly signe à l'installation)
+        run: |
+          cd ios
+          xcodebuild -project Repere.xcodeproj -scheme Repere -configuration Release -sdk iphoneos \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build | tail -30
+          mkdir -p Payload && cp -R "build/Build/Products/Release-iphoneos/Repère.app" Payload/
+          zip -qry ../Repere.ipa Payload
+          ls -la ../Repere.ipa
+      - uses: actions/upload-artifact@v4
+        with: { name: Repere-ipa, path: Repere.ipa }
+      - name: Publier dans la version « appli »
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          gh release delete appli -y --cleanup-tag || true
+          gh release create appli Repere.ipa -t "Repère pour iPad" -n "Appli iPad à installer avec Sideloadly. Construite le $(date '+%d/%m/%Y %H:%M') depuis ${GITHUB_SHA::7}."
