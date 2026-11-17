@@ -98,9 +98,9 @@ body.ui-banner #nban:not(.empty){display:block!important}
 .rtrain{fill:var(--acc)}.rtrain.off{fill:var(--tx3)}
 .rtick{stroke:var(--tx2);stroke-width:1.5}.rtick.past{opacity:.4}
 .rplate{fill:var(--email)}.rplate.past{opacity:.45}
-.rn{fill:var(--tx2);font-size:13px;text-anchor:middle}.rn.stop{fill:var(--emailtx);font-size:15px;font-weight:700;letter-spacing:.02em}.rn.past,.rpk.past{fill:var(--tx3)}.rn.stop.past{fill:var(--emailtx);opacity:.5}
+.rn{fill:var(--tx2);font-size:13px;text-anchor:middle}.rn.stop{fill:var(--emailtx);font-size:15px;font-weight:700;letter-spacing:.02em}.rn.past,.rpk.past{fill:var(--tx3)}.rpk.past{font-weight:400}.rn.stop.past{fill:var(--emailtx);opacity:.5}
 .rpar{fill:var(--tx);font-weight:800}
-.rpk{fill:var(--tx3);font-size:11px;text-anchor:middle;font-variant-numeric:tabular-nums}
+.rpk{fill:var(--tx2);font-size:13px;font-weight:600;text-anchor:middle;font-variant-numeric:tabular-nums}
 .rlead{stroke:var(--line);stroke-width:1}.rlead.past{opacity:.5}
 .perr{fill:var(--ltv)!important}.rsec{stroke:var(--tx3);stroke-width:1;stroke-dasharray:5 5}.rst{fill:var(--tx3);font-size:11px}
 .stopban{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);background:var(--email);color:var(--emailtx);border-radius:10px;padding:16px 30px 18px;text-align:center;box-shadow:inset 0 0 0 3px var(--email),inset 0 0 0 4px var(--emailtx)}
@@ -1363,12 +1363,12 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  for(const j of pts){const r=rows[j],x=X(Dc[j]),past=Dc[j]<cur-30,nm=r.sub&&r.ctx?r.ctx+(/^\|?\s*BV\b/.test(r.name)?"":" "+r.name.replace(/^\|\s*/,"")):r.name;
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT-5)+'" y2="'+(yT+5)+'" class="rtick'+(past?" past":"")+'"/>');
   const sub="PK "+fk(r.pk)+(r.reg?" · +"+fmtReg(regMin(r))+" rattrapable":"")+(isSup(r)?" · arrêt [C] supprimé":isCond(r)?" · [C]":"");
-  const st0=isStop(r);const wn=tw(nm,st0?"700 15px ":"400 13px ",st0?9.8:7.4)+(st0?nm.length*.3+22:0);const wdt=Math.max(wn+(r.train?78:0),sub.length*6.2)+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
+  const st0=isStop(r);const wn=tw(nm,st0?"700 15px ":"400 13px ",st0?9.8:7.4)+(st0?nm.length*.3+22:0);const wdt=Math.max(wn+(r.train?78:0),tw(sub,"600 13px ",7.4))+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
   if(L<0)continue;occ.push({l:L,x0,x1});const xl=Math.min(Math.max(x,wn/2+6),W-wn/2-6);
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT+6)+'" y2="'+(lane[L]-19)+'" class="rlead'+(past?" past":"")+'"/>');
   if(st0)lab.push('<rect x="'+(xl-wn/2)+'" y="'+(lane[L]-17)+'" width="'+wn+'" height="24" rx="4" class="rplate'+(past?" past":"")+'"/>');
   lab.push('<text x="'+xl+'" y="'+lane[L]+'" class="rn'+(st0?" stop":"")+(past?" past":"")+'">'+esc(nm)+(r.train?'<tspan class="rpar" dx="8">→ '+esc(r.train)+"</tspan>":"")+"</text>");
-  lab.push('<text x="'+xl+'" y="'+(lane[L]+(st0?20:14))+'" class="rpk'+(past?" past":"")+'">'+esc(sub)+"</text>")}
+  lab.push('<text x="'+xl+'" y="'+(lane[L]+(st0?24:17))+'" class="rpk'+(past?" past":"")+'">'+esc(sub)+"</text>")}
  q.push(...lab);
  /* train sur la voie */
  const xt=X(cur);if(Lt>0)q.push('<line x1="'+X(Math.max(d0,cur-Lt))+'" x2="'+xt+'" y1="'+yT+'" y2="'+yT+'" class="rbody'+(ok?"":" off")+'"/>');
