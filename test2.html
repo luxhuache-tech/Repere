@@ -1362,7 +1362,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  const lane=[yAx-62,yAx-22],lab=[];
  for(const j of pts){const r=rows[j],x=X(Dc[j]),past=Dc[j]<cur-30,nm=r.sub&&r.ctx?r.ctx+(/^\|?\s*BV\b/.test(r.name)?"":" "+r.name.replace(/^\|\s*/,"")):r.name;
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT-5)+'" y2="'+(yT+5)+'" class="rtick'+(past?" past":"")+'"/>');
-  const sub="PK "+fk(r.pk)++(isSup(r)?" · arrêt [C] supprimé":isCond(r)?" · [C]":"");
+  const sub="PK "+fk(r.pk)+(isSup(r)?" · arrêt [C] supprimé":isCond(r)?" · [C]":"");
   const st0=isStop(r);const wn=tw(nm,st0?"700 15px ":"400 13px ",st0?9.8:7.4)+(st0?nm.length*.3+22:0);const wdt=Math.max(wn+(r.train?78:0),tw(sub,"600 13px ",7.4))+10;const x0=Math.max(0,x-wdt/2),x1=Math.min(W,x+wdt/2);let L=-1;for(let k=0;k<lane.length&&L<0;k++){if(occ.every(o=>o.l!==k||x1+6<o.x0||x0>o.x1+6))L=k}
   if(L<0)continue;occ.push({l:L,x0,x1});const xl=Math.min(Math.max(x,wn/2+6),W-wn/2-6);
   q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(yT+6)+'" y2="'+(lane[L]-19)+'" class="rlead'+(past?" past":"")+'"/>');
