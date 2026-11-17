@@ -1213,6 +1213,25 @@ async function loadHecto(cls){for(const c of new Set(cls)){if(!c||c in HECTO)con
 function hectoGrad(cl,pk){const R=HECTO[cl]&&HECTO[cl].r;if(!R)return null;for(const[p0,g]of R){const k=Math.floor((pk-p0)*10+1e-6);if(k>=0&&k<g.length)return g[k]/10;if(k===g.length&&Math.abs(pk-(p0+g.length/10))<1e-6)return g[k-1]/10}return null}
 async function loadDecl(){if(declData)return declData;try{const r=await fetch("data/declivite.json");if(r.ok)declData=(await r.json()).d}catch(e){}return declData||[]}
 /* altitudes IGN par lots (5 requêtes/s au plus) */
+/* ---------- BD TOPO IGN : altitude (Z) des tronçons de voie ferrée ----------
+   Pour chaque point du parcours, on projette sur les tronçons de voie principale à moins de 15 m
+   et on lit l'altitude interpolée ; médiane s'il y en a plusieurs (voies parallèles). */
+const BT_URL="https://data.geopf.fr/wfs/ows";
+async function btopoElev(S,onp){const out=new Array(S.length).fill(null),CH=40,cos=Math.cos((S[0]?S[0].lat:47)*Math.PI/180),M=111320;
+ for(let c=0;c<S.length;c+=CH){const P=S.slice(c,c+CH);let x0=180,y0=90,x1=-180,y1=-90;for(const p of P){x0=Math.min(x0,p.lon);x1=Math.max(x1,p.lon);y0=Math.min(y0,p.lat);y1=Math.max(y1,p.lat)}
+  const pad=.0004,q="SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=BDTOPO_V3:troncon_de_voie_ferree&MAXFEATURES=3000&OUTPUTFORMAT=application/json&BBOX="+[x0-pad,y0-pad,x1+pad,y1+pad].map(v=>v.toFixed(5)).join(",")+",EPSG:4326";
+  let J=null;for(let a=0;a<3&&!J;a++){try{const r=await fetch(BT_URL+"?"+q);if(!r.ok)throw new Error(r.status);J=await r.json()}catch(e){await sleep(700)}}
+  if(J&&J.features){const segs=[];
+   for(const f of J.features){const pr=f.properties||{},g=f.geometry;if(!g)continue;if(pr.etat_de_l_objet&&pr.etat_de_l_objet!=="En service")continue;if(!/principale|LGV|grande vitesse/i.test(pr.nature||""))continue;
+    if(pr.precision_altimetrique!=null&&pr.precision_altimetrique>3)continue;
+    for(const L of g.type==="MultiLineString"?g.coordinates:[g.coordinates])for(let k=0;k+1<L.length;k++){const A=L[k],B=L[k+1];if(A.length<3||B.length<3||A[2]<-500||B[2]<-500)continue;segs.push(A,B)}}
+   for(let i=0;i<P.length;i++){const p=P[i],zz=[];
+    for(let k=0;k<segs.length;k+=2){const A=segs[k],B=segs[k+1];const ax=(A[0]-p.lon)*cos*M,ay=(A[1]-p.lat)*M,bx=(B[0]-p.lon)*cos*M,by=(B[1]-p.lat)*M;
+     if(Math.min(ax,bx)>15||Math.max(ax,bx)<-15||Math.min(ay,by)>15||Math.max(ay,by)<-15)continue;
+     const dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy;let t=L2?-(ax*dx+ay*dy)/L2:0;t=Math.max(0,Math.min(1,t));const ex=ax+t*dx,ey=ay+t*dy;if(ex*ex+ey*ey>225)continue;zz.push(A[2]+t*(B[2]-A[2]))}
+    if(zz.length){zz.sort((a,b)=>a-b);out[c+i]=zz[zz.length>>1]}}}
+  onp&&onp(Math.min(1,(c+CH)/S.length))}
+ return out}
 async function ignElev(pts,onp){const out=new Array(pts.length).fill(null),N=150;
  for(let i=0;i<pts.length;i+=N){const b=pts.slice(i,i+N);const q="lon="+b.map(p=>p[0].toFixed(6)).join("|")+"&lat="+b.map(p=>p[1].toFixed(6)).join("|")+"&resource=ign_rge_alti_wld&zonly=true";
   let ok=false;for(let a=0;a<3&&!ok;a++){try{const r=await fetch(IGN_URL+"?"+q);if(!r.ok)throw new Error(r.status);const j=await r.json();
@@ -1251,14 +1270,18 @@ async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.k
    for(let pk=Math.ceil(R[0]/PSTEP)*PSTEP;pk<=R[1]+1e-9;pk+=PSTEP){const p=GEO.point(L,pk);if(p)S.push({sec,cl:k[0],rg:+k[1],pk:+pk.toFixed(3),lon:p[0],lat:p[1]})}}
   if(!S.length)throw new Error("aucun tronçon de la fiche n’a de géométrie");
   /* 2. altitudes IGN : réutilisées si le profil existant couvre déjà ces points */
-  let zs=null;if(prof&&prof.sig===sig&&!empty&&prof.v>=2&&prof.info.ign!==false){const m=new Map(prof.s.map(x=>[x[0]+"|"+x[1],x[6]]));zs=S.map(s=>m.get(s.sec+"|"+s.pk)??null);if(!zs.some(z=>z!=null))zs=null}
+  let zs=null,zsCached=false;if(prof&&prof.sig===sig&&!empty&&prof.v>=2&&prof.info.ign!==false&&prof.info.bt!=null){zsCached=true;const m=new Map(prof.s.map(x=>[x[0]+"|"+x[1],x[6]]));zs=S.map(s=>m.get(s.sec+"|"+s.pk)??null);if(!zs.some(z=>z!=null)){zs=null;zsCached=false}}
   await loadHecto(S.map(s=>s.cl));let ign=zs?prof.info.ign!==false:true;
   if(!zs){profStep("altitudes IGN",0);try{zs=await ignElev(S.map(s=>[s.lon,s.lat]),f=>{profStep("altitudes IGN",f);lastRow=-1})}catch(e){zs=null}
    /* IGN injoignable : altitudes du dépôt open data */
    if(!zs||!zs.some(z=>z!=null)){zs=S.map(s=>hectoAlt(s.cl,s.pk));ign=false}}
   if(!zs.some(z=>z!=null))throw new Error("aucune altitude disponible (IGN injoignable)");
+  /* altitude des voies elles-mêmes (BD TOPO IGN) : remplace celle du terrain là où elle existe */
+  let bt=zsCached?prof.info.bt:null;
+  if(bt==null){bt=0;if(navigator.onLine!==false){profStep("altitudes des voies BD TOPO",0);try{const zb=await btopoElev(S,f=>{profStep("altitudes des voies BD TOPO",f);lastRow=-1});
+   zb.forEach((z,i)=>{if(z!=null){zs[i]=z;bt++}})}catch(e){}}}
   const D=await loadDecl();S.forEach((s,i)=>{s.z=zs[i];const t=hectoTun(s.cl,s.pk);s.o=t!=null?"tunnel":null;s.on=t||""});
-  const info={ign,osm:null,nT:0,nB:0,n:S.length,date:new Date().toISOString().slice(0,10)};
+  const info={ign,bt,osm:null,nT:0,nB:0,n:S.length,date:new Date().toISOString().slice(0,10)};
   /* profil affiché tout de suite, sans les ouvrages */
   finishProfile(S,sig,info,D);
   /* 3. tunnels et ponts OSM, puis profil affiné */
@@ -1269,7 +1292,7 @@ async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.k
  }catch(e){profState.err=e.message||"erreur";profMsg("Profil indisponible : "+profState.err+". Il sera recalculé au prochain lancement avec du réseau, ou avec « Recalculer le profil ».")}
  finally{profBusy=false;profState.busy=false;lastRow=-1}}
 window.addEventListener("online",()=>{if(!profBusy&&(!prof||profState.err))buildProfile()});
-function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. "+(i.ign?"Altitude IGN ✓":"Altitude du terrain open data (IGN injoignable, nouvel essai au prochain lancement)")+(i.nTs?" · "+i.nTs+" tunnels SNCF Réseau":"")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":i.osm===false?"indisponibles (nouvel essai au prochain lancement)":"en attente")+" · déclivité SNCF Réseau sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
+function profInfo(){if(!prof)return"Pas encore de profil.";const i=prof.info;return"Profil du "+i.date+" : "+i.n+" points tous les 100 m. "+(i.bt?"Altitude des voies BD TOPO IGN sur "+Math.round(i.bt/i.n*100)+" % · ":"")+(i.ign?"Altitude IGN ✓":"Altitude du terrain open data (IGN injoignable, nouvel essai au prochain lancement)")+(i.nTs?" · "+i.nTs+" tunnels SNCF Réseau":"")+" · tunnels/ponts OSM "+(i.osm?i.nT+" tunnels, "+i.nB+" ponts":i.osm===false?"indisponibles (nouvel essai au prochain lancement)":"en attente")+" · déclivité SNCF Réseau sur "+Math.round(i.nS/i.n*100)+" % du trajet, estimée ailleurs à partir du terrain (≈, sections d’au moins 600 m, ±25 ‰ au plus)."}
 /* profil projeté sur la fiche : [{d, z, g (sens de marche), src, o}] */
 let profD=null,profDsig="";
 /* profil calculé avec l'ancienne méthode : recalcul sur place à partir des altitudes déjà gardées, sans réseau */
