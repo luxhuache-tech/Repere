@@ -8,9 +8,13 @@
 <meta name="apple-mobile-web-app-title" content="Repère">
 <meta name="theme-color" content="#15181a">
 <title>Repère</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#14181d">
+<link rel="stylesheet" href="lib/leaflet.min.css">
+<script src="lib/leaflet.min.js"></script>
+<script src="lib/pdf.min.js"></script>
 <style>
 :root{--bg:#15181a;--card:#1d2124;--card2:#262b2f;--line:#353b40;--tx:#e6e1d6;--tx2:#a8a397;--tx3:#6f6c65;--acc:#84c9a3;--ltv:#e9b44c;--bad:#e2695d;--ok:#84c9a3;--track:#c9c5ba;--plate:#dcd6c6;--ink:#1a1c1d;--email:#27477c;--emailtx:#eef0f4;--mapf:none;--pdff:brightness(.94);color-scheme:dark;
  --f:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,sans-serif;--fd:"DIN Alternate","DIN Condensed","Bahnschrift","Avenir Next Condensed","Avenir Next",system-ui,sans-serif}
@@ -1464,7 +1468,7 @@ function tw(t,font,est){try{if(twC===null){const c=document.createElement("canva
 
 /* ---------- lecture du PDF de la fiche ---------- */
 function group(it){it.sort((a,b)=>a.y-b.y||a.f-b.f);const L=[];for(const i of it){const l=L[L.length-1];if(l&&Math.abs(l.y-i.y)<2.5)l.push(i);else{const n=[i];n.y=i.y;L.push(n)}}L.forEach(l=>l.sort((a,b)=>a.f-b.f));return L}
-function pdfLib(){if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return pdfjsLib}
+function pdfLib(){if(typeof pdfjsLib==="undefined")throw new Error("Lecteur PDF non chargé (connexion nécessaire une première fois).");pdfjsLib.GlobalWorkerOptions.workerSrc="lib/pdf.worker.min.js";return pdfjsLib}
 async function readPdf(buf){
  const pdf=await pdfLib().getDocument({data:buf,isOffscreenCanvasSupported:false}).promise;
  const out=[],dft=[],warn=[],dp=[],sch=[];let cur=null,ctx="",train="",trainNo="";
@@ -1785,7 +1789,11 @@ function zoomTarget(){const v=Math.max(0,zoomSpd||0);let km=Math.max(2,Math.min(
  if(ANIM.d!=null&&rows.length){const d=ANIM.d;let j=0;while(j+1<rows.length&&Dc[j+1]<=d)j++;const lim=rows[j].v;
   for(let k=j+1;k<rows.length&&Dc[k]-d<km*1500;k++){const r=rows[k];if((r.v!=null&&lim!=null&&r.v<lim)||(isStop(r)&&!isSup(r))){const need=(Dc[k]-d)/1000*1.2;if(need>km)km=Math.min(12,need);break}}}
  return km}
-function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;const dt=Math.min(.2,(now-(animLoop.t||now))/1000);animLoop.t=now;
+function animLoop(now){requestAnimationFrame(animLoop);
+/* application installée : fonctionne hors ligne, écran gardé allumé pendant la conduite */
+if("serviceWorker" in navigator&&window.isSecureContext)navigator.serviceWorker.register("sw.js").catch(()=>{});
+let wakeL=null;async function keepAwake(){try{if(!("wakeLock" in navigator)||document.hidden||wakeL||!rows.length)return;wakeL=await navigator.wakeLock.request("screen");wakeL.addEventListener("release",()=>{wakeL=null})}catch(e){wakeL=null}}
+document.addEventListener("visibilitychange",keepAwake);document.addEventListener("pointerdown",keepAwake,{passive:true});setInterval(keepAwake,15000);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;const dt=Math.min(.2,(now-(animLoop.t||now))/1000);animLoop.t=now;
  const tz=zoomTarget(),dz=tz-zoneKm;if(Math.abs(dz)>.005)zoneKm+=dz*Math.min(1,dt/3);
  const t=Date.now();if(ANIM.v>.3||Math.abs((ANIM.td??0)-(ANIM.d??0))>1||Math.abs(dz)>.005)drawSmooth(t);else ANIM.last=t}
 requestAnimationFrame(animLoop);
