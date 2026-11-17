@@ -81,6 +81,8 @@ body.ui-banner #nban:not(.empty){display:block!important}
 .ncard .ar{position:absolute;bottom:-9px;width:14px;height:14px;background:inherit;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}.ncard.quai .ar{border-color:var(--email)}
 .nsb.dim{opacity:.45}
 #rLay{position:absolute;inset:0;overflow:hidden}
+.rem{stroke:var(--acc);stroke-width:5;opacity:.85}.remt{stroke:var(--acc);stroke-width:2}.rema{stroke:var(--acc);stroke-width:2;stroke-dasharray:5 5;opacity:.9}.remx{fill:var(--acc);font-size:13px;font-weight:700}
+.emal{color:var(--acc);font-weight:700}
 .drb{position:absolute;right:12px;top:10px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--ltv) 22%,var(--card));color:var(--ltv);border-radius:9px;padding:6px 12px;font:700 15px/1 var(--fd);pointer-events:none}
 .drb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.drb .sl{stroke-width:2.4}
 #spd.est{color:var(--ltv)}#spd.est::before{content:"≈";font-size:.6em;margin-right:2px}.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
@@ -332,7 +334,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <footer class="bot b3">
   <div class="bk nsb" id="nsBox"><span class="bl" id="nsL"></span><span class="bn" id="nsN"></span><span class="bt" id="nsT"></span></div>
   <div class="bk dlb" id="dlBox" data-s=""><span class="bl" id="dlL"></span><span class="bv" id="dlV"></span><span class="bt" id="dlM"></span></div>
-  <div class="bk nxb"><span id="nx"></span><span class="pill" id="gradNow"></span><span id="st" data-s="warn">Aucune fiche chargée.</span><span class="hide" id="delay"></span><span class="hide" id="ns"></span></div>
+  <div class="bk nxb"><span id="nx"></span><span class="pill" id="gradNow"></span><span class="emal" id="emA"></span><span id="st" data-s="warn">Aucune fiche chargée.</span><span class="hide" id="delay"></span><span class="hide" id="ns"></span></div>
  </footer>
  <div class="foot hide" id="manFoot"><button id="prev">Point précédent</button><button id="next">Point suivant</button></div>
 </div>
@@ -356,6 +358,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <button data-o="fiche" role="menuitem">Fiche train</button>
  <button data-o="pdf" role="menuitem">Étude de ligne (afficher / replier)</button>
  <button data-o="liv" role="menuitem">Livrets de ligne</button>
+ <button data-o="em" role="menuitem">Restrictions engin moteur</button><input type="file" id="emFile" accept=".json,application/json" class="hide">
  <button data-o="sch" role="menuitem">Schémas de l’avis DEFIT</button>
  <hr>
  <button data-o="chk" role="menuitem">Checklist de départ <span class="chkb" id="chkBadge2"></span></button>
@@ -677,7 +680,21 @@ function pkToD(sec,pk){const R=secRows(sec);if(!R.length)return null;
  for(let j=0;j<R.length-1;j++){const a=R[j][0].pk,b=R[j+1][0].pk;if((pk-a)*(pk-b)<=0&&a!==b)return Dc[R[j][1]]+(pk-a)/(b-a)*(Dc[R[j+1][1]]-Dc[R[j][1]])}
  if(Math.abs(pk-R[0][0].pk)<1e-6)return Dc[R[0][1]];return null}
 /* LTV projetées sur la fiche : [{d1,d2,k}] */
-function ltvZones(){const out=[];const secs=[...new Set(rows.map(r=>r.sec))];
+/* ---------- restrictions propres à l'engin moteur (importées, gardées sur l'iPad) ----------
+   {engin, items:[{l:code ligne, a, b, v, voie, txt, livret}], notes:[texte]} ;
+   sans « voie » : appliquée à la limite ; avec « voie » : alerte seulement (la voie suivie n'est pas connue). */
+let EMR=null;try{EMR=JSON.parse(store("emRestr")||"null")}catch(e){EMR=null}
+function emSecs(l){return[...new Set(rows.map(r=>r.sec))].filter(sec=>geo.sec&&(geo.sec[sec]||"").split("/")[0]===l)}
+function emZones(lim){const out=[];if(!EMR||!rows.length)return out;
+ for(const k of EMR.items||[]){if(lim!==(k.voie==null&&k.v!=null))continue;for(const sec of emSecs(k.l)){const R=secRange(sec);if(!R)continue;
+  const lo=Math.max(Math.min(k.a,k.b),R[0]),hi=Math.min(Math.max(k.a,k.b),R[1]);if(lo>hi)continue;const d1=pkToD(sec,lo),d2=pkToD(sec,hi);if(d1==null||d2==null)continue;
+  out.push({d1:Math.min(d1,d2),d2:Math.max(d1,d2),k:{...k,em:true},sec})}}return out}
+function emShow(cur){const E=$("#emA");if(!E)return;const A=emZones(false).filter(z=>z.d2>=cur&&z.d1<=cur+3000);
+ A.sort((p,q)=>p.d1-q.d1);E.textContent=A.length?(EMR.engin||"Engin")+" : "+A[0].k.txt+(A[0].d1>cur?" dans "+((A[0].d1-cur)/1000).toFixed(1).replace(".",",")+" km":""):""}
+function emMenu(){const F=$("#emFile");const n=EMR?(EMR.items||[]).length:0;
+ if(EMR&&!confirm((EMR.engin||"Engin")+" : "+n+" restrictions enregistrées sur l’iPad"+(EMR.notes&&EMR.notes.length?"\n\nÀ retenir :\n• "+EMR.notes.join("\n• "):"")+"\n\nOK : remplacer par un nouveau fichier · Annuler : garder"))return;
+ F.value="";F.onchange=async()=>{const f=F.files[0];if(!f)return;try{const J=JSON.parse(await f.text());if(!Array.isArray(J.items))throw 0;EMR=J;store("emRestr",JSON.stringify(J));lastRow=-1;setSt("ok",(J.engin||"Engin")+" : "+J.items.length+" restrictions enregistrées sur l’iPad.")}catch(e){setSt("warn","Fichier de restrictions illisible.")}};F.click()}
+function ltvZones(){const out=emZones(true);const secs=[...new Set(rows.map(r=>r.sec))];
  for(const k of ltv)for(const sec of secs){if(k.sec&&k.sec!==sec)continue;const R=secRange(sec);if(!R)continue;
   const lo=Math.max(Math.min(k.a,k.b),R[0]),hi=Math.min(Math.max(k.a,k.b),R[1]);if(lo>hi)continue;
   const d1=pkToD(sec,lo),d2=pkToD(sec,hi);if(d1==null||d2==null)continue;out.push({d1:Math.min(d1,d2),d2:Math.max(d1,d2),k,sec})}
@@ -689,7 +706,7 @@ function ltvZones(){const out=[];const secs=[...new Set(rows.map(r=>r.sec))];
 function trainLen(){const c=kvbCalc();return c.L?c.L*100:0}
 function effLim(d,Z,Lt){const a=d-Lt;let v=null,ltvMin=false;
  for(let j=0;j<rows.length;j++){const s0=Dc[j],s1=j<rows.length-1?Dc[j+1]:1e12;if(s0<=d&&s1>a&&rows[j].v!=null&&(v==null||rows[j].v<v))v=rows[j].v}
- for(const z of Z)if(z.d1<=d&&z.d2>=a&&(v==null||z.k.v<v)){v=z.k.v;ltvMin=true}else if(z.d1<=d&&z.d2>=a&&z.k.v===v)ltvMin=true;
+ for(const z of Z)if(z.d1<=d&&z.d2>=a&&(v==null||z.k.v<v)){v=z.k.v;ltvMin=!z.k.em}else if(z.d1<=d&&z.d2>=a&&z.k.v===v&&!z.k.em)ltvMin=true;
  let raw=null;for(let j=rows.length-1;j>=0;j--)if(Dc[j]<=d){raw=rows[j].v;break}
  return{v,ltv:ltvMin,clearing:raw!=null&&v!=null&&v<raw&&!Z.some(z=>z.d1<=d&&z.d2>=d&&z.k.v<=v)}}
 /* points où la limite effective change entre d0 et d1 : [{d,v,ltv,clr}] (clr = reprise après dégagement) */
@@ -1383,9 +1400,13 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  let lsx=-1e9,lsk=0;for(let j=0;j<rows.length-1;j++)if(rows[j].sec!==rows[j+1].sec&&vis(Dc[j+1])){const x=X(Dc[j+1]);q.push('<line x1="'+x+'" x2="'+x+'" y1="'+(sBot+10)+'" y2="'+yAx+'" class="rsec"/>');const g=geo.sec&&geo.sec[rows[j+1].sec];lsk=x-lsx<130?lsk+1:0;lsx=x;T(x+4,yT-10-lsk*13,"Changement de ligne"+(g?" "+g.split("/")[0]:""),"rst")}
  /* LTV sur la voie */
  const Z=ltvZones(),Lt=trainLen();
- for(const z of Z){if(z.d2<d0||z.d1>d1)continue;q.push('<line x1="'+X(Math.max(z.d1,d0))+'" x2="'+X(Math.min(z.d2,d1))+'" y1="'+yT+'" y2="'+yT+'" class="rltv"/>');
-  for(const d of [z.d1,z.d2])if(vis(d))q.push('<line x1="'+X(d)+'" x2="'+X(d)+'" y1="'+(yT-10)+'" y2="'+(yT+10)+'" class="rltvt"/>');
+ for(const z of Z){if(z.d2<d0||z.d1>d1)continue;const em=z.k.em;q.push('<line x1="'+X(Math.max(z.d1,d0))+'" x2="'+X(Math.min(z.d2,d1))+'" y1="'+yT+'" y2="'+yT+'" class="'+(em?"rem":"rltv")+'"/>');
+  for(const d of [z.d1,z.d2])if(vis(d))q.push('<line x1="'+X(d)+'" x2="'+X(d)+'" y1="'+(yT-10)+'" y2="'+(yT+10)+'" class="'+(em?"remt":"rltvt")+'"/>');
+  if(em&&vis(z.d1))T(X(z.d1)+4,yT+26,(EMR.engin||"Engin")+" "+z.k.v,"remx","start");
   if(z.k.ann!=null){const da=pkToD(z.sec,z.k.ann);if(da!=null&&vis(da))q.push('<circle cx="'+X(da)+'" cy="'+yT+'" r="5" class="rann"/>')}}
+ /* restrictions engin selon la voie : pointillés + texte */
+ for(const z of emZones(false)){if(z.d2<d0||z.d1>d1)continue;q.push('<line x1="'+X(Math.max(z.d1,d0))+'" x2="'+X(Math.min(z.d2,d1))+'" y1="'+(yT+8)+'" y2="'+(yT+8)+'" class="rema"/>');
+  const xa=X(Math.max(z.d1,d0)),t=(EMR.engin||"Engin")+" : "+z.k.txt;if(X(Math.min(z.d2,d1))-xa>tw(t,"700 13px ",7.5)*.6||vis(z.d1))T(xa+4,yT+26,t,"remx","start")}
  /* limites : paliers horizontaux (avec dégagement de la longueur du train) */
  const st=effLim(d0,Z,Lt),ch=effChanges(d0,d1,Z,Lt);const pieces=[];let a=d0,v=st.v,lt=st.ltv,clr=false;
  for(const c of ch){pieces.push({a,b:c.d,v,lt,clr});a=c.d;v=c.v;lt=c.ltv;clr=c.clr}pieces.push({a,b:d1,v,lt,clr});
@@ -1614,7 +1635,7 @@ function frame(now){
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
  renderNext(i,cur,spd,km);
- showDelay(cur,now);renderBanner();
+ showDelay(cur,now);renderBanner();emShow(cur);
  if(DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");autoC(cur,spd);
  if(over)setSt("bad","Excès de "+Math.round(spd-lim)+" km/h.");
  else if(cNote&&Date.now()-cNoteT<60000)setSt("warn",cNote);
@@ -1722,7 +1743,7 @@ function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add(
 document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
 function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>sideTab==="liv"?(LIV.cur&&LIV.doc?livRender(true):renderLiv()):renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
 $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
-dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
+dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
 dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
 dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
 
