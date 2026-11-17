@@ -8,4 +8,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: swiftc --version && swiftc -parse playgrounds/App.swift ios/Repere/App.swift && swiftc -parse playgrounds/Package.swift && echo "SYNTAXE SWIFT OK"
+      - run: swiftc --version && swiftc -parse playgrounds/App.swift && swiftc -parse ios/Repere/App.swift && swiftc -parse playgrounds/Package.swift && echo "SYNTAXE SWIFT OK"
