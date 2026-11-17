@@ -1,0 +1,11 @@
+name: Vérification Swift
+on:
+  push:
+    paths: ["playgrounds/**", "ios/**/*.swift", ".github/workflows/swift-check.yml"]
+  workflow_dispatch:
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swiftc --version && swiftc -parse playgrounds/App.swift ios/Repere/App.swift && swiftc -parse playgrounds/Package.swift && echo "SYNTAXE SWIFT OK"
