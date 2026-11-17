@@ -362,7 +362,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <button data-t="G" role="menuitem">Géométrie et profil</button>
  <button data-t="D" role="menuitem">Avis DEFIT</button>
  <hr>
- <div class="ddrow"><span>Distance</span><div class="sw" role="group" aria-label="Distance affichée" id="zoomSw"><button data-k="2">2 km</button><button data-k="5">5 km</button><button data-k="10">10 km</button></div></div>
+ 
  <div class="ddrow"><span>Thème</span><div class="sw" id="thSw2"><button data-t2="soir">Sombre</button><button data-t2="nuit">Nuit</button></div></div>
 </div>
 
@@ -741,7 +741,7 @@ function renderNext(i,cur,spd,km){const B=$("#nsBox");if(!B)return;let j0=null,q
  NEXT={j:j0,quai,t,reg,name:stopName(r),dist:km(Dc[j0]),d:Dc[j0]};
  $("#dlM").textContent=reg>0?fmtReg(reg)+" rattrapable"+(reg>=2?"s":""):quai?"":"rien à rattraper"}
 /* ---------- schéma de zone ---------- */
-let zoneKm=+store("zoneKm")||5;
+let zoneKm=2;
 const SVGNS="http://www.w3.org/2000/svg";
 function drawZone(i,f,ok){
  const box=$("#zone");if(!box||box.offsetParent===null)return;
@@ -1217,6 +1217,16 @@ async function loadDecl(){if(declData)return declData;try{const r=await fetch("d
    Pour chaque point du parcours, on projette sur les tronçons de voie principale à moins de 15 m
    et on lit l'altitude interpolée ; médiane s'il y en a plusieurs (voies parallèles). */
 const BT_URL="https://data.geopf.fr/wfs/ows";
+/* fichiers précalculés dans l'appli (data/btopo/<ligne>.json), un point tous les 100 m : rapide, sans réseau IGN */
+async function btopoLocal(S){const out=new Array(S.length).fill(null),G=new Map(),C=.001,key=(x,y)=>Math.floor(x/C)+","+Math.floor(y/C);
+ for(const cl of new Set(S.map(s=>s.cl))){try{const r=await fetch("data/btopo/"+cl+".json");if(!r.ok)continue;const J=await r.json();
+  for(const[x,y,z]of J.p){const X=x/1e5,Y=y/1e5,k=cl+"|"+key(X,Y);if(!G.has(k))G.set(k,[]);G.get(k).push([X,Y,z/10])}}catch(e){}}
+ if(!G.size)return out;const M=111320,cs=Math.cos((S[0]?S[0].lat:47)*Math.PI/180);
+ S.forEach((s,i)=>{const fx=Math.floor(s.lon/C),fy=Math.floor(s.lat/C),N=[];
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const p of G.get(s.cl+"|"+(fx+dx)+","+(fy+dy))||[]){const d=Math.hypot((p[0]-s.lon)*cs*M,(p[1]-s.lat)*M);if(d<80)N.push([d,p[2]])}
+  if(!N.length)return;N.sort((a,b)=>a[0]-b[0]);if(N.length===1||N[0][0]<1){out[i]=N[0][1];return}
+  const[a,b]=N;out[i]=(a[1]*b[0]+b[1]*a[0])/(a[0]+b[0])});
+ return out}
 async function btopoElev(S,onp){const out=new Array(S.length).fill(null),CH=40,cos=Math.cos((S[0]?S[0].lat:47)*Math.PI/180),M=111320;
  for(let c=0;c<S.length;c+=CH){const P=S.slice(c,c+CH);let x0=180,y0=90,x1=-180,y1=-90;for(const p of P){x0=Math.min(x0,p.lon);x1=Math.max(x1,p.lon);y0=Math.min(y0,p.lat);y1=Math.max(y1,p.lat)}
   const pad=.0004,q="SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=BDTOPO_V3:troncon_de_voie_ferree&MAXFEATURES=3000&OUTPUTFORMAT=application/json&BBOX="+[x0-pad,y0-pad,x1+pad,y1+pad].map(v=>v.toFixed(5)).join(",")+",EPSG:4326";
@@ -1272,13 +1282,16 @@ async function buildProfile(force){if(profBusy)return;if(!rows.length||!Object.k
   /* 2. altitudes IGN : réutilisées si le profil existant couvre déjà ces points */
   let zs=null,zsCached=false;if(prof&&prof.sig===sig&&!empty&&prof.v>=2&&prof.info.ign!==false&&prof.info.bt!=null){zsCached=true;const m=new Map(prof.s.map(x=>[x[0]+"|"+x[1],x[6]]));zs=S.map(s=>m.get(s.sec+"|"+s.pk)??null);if(!zs.some(z=>z!=null)){zs=null;zsCached=false}}
   await loadHecto(S.map(s=>s.cl));let ign=zs?prof.info.ign!==false:true;
+  /* altitude des voies précalculée : si elle couvre presque tout, inutile d'interroger l'IGN */
+  const zbL=zsCached?null:await btopoLocal(S);
+  if(!zs&&zbL&&zbL.filter(z=>z!=null).length>=S.length*.97){zs=zbL.map((z,i)=>z??hectoAlt(S[i].cl,S[i].pk));ign=true}
   if(!zs){profStep("altitudes IGN",0);try{zs=await ignElev(S.map(s=>[s.lon,s.lat]),f=>{profStep("altitudes IGN",f);lastRow=-1})}catch(e){zs=null}
    /* IGN injoignable : altitudes du dépôt open data */
    if(!zs||!zs.some(z=>z!=null)){zs=S.map(s=>hectoAlt(s.cl,s.pk));ign=false}}
   if(!zs.some(z=>z!=null))throw new Error("aucune altitude disponible (IGN injoignable)");
   /* altitude des voies elles-mêmes (BD TOPO IGN) : remplace celle du terrain là où elle existe */
   let bt=zsCached?prof.info.bt:null;
-  if(bt==null){bt=0;if(navigator.onLine!==false){profStep("altitudes des voies BD TOPO",0);try{const zb=await btopoElev(S,f=>{profStep("altitudes des voies BD TOPO",f);lastRow=-1});
+  if(bt==null){bt=0;{try{const zb=zbL||await btopoLocal(S);
    zb.forEach((z,i)=>{if(z!=null){zs[i]=z;bt++}})}catch(e){}}}
   const D=await loadDecl();S.forEach((s,i)=>{s.z=zs[i];const t=hectoTun(s.cl,s.pk);s.o=t!=null?"tunnel":null;s.on=t||""});
   const info={ign,bt,osm:null,nT:0,nB:0,n:S.length,date:new Date().toISOString().slice(0,10)};
@@ -1422,7 +1435,7 @@ document.addEventListener("pointerdown",()=>{RB.touch=Date.now()},true);
 function drawRouteFast(i,f,ok){const g=routeGeom,cur=Dc[i]+f*seg(i),box=$("#route"),now=Date.now();
  if(!g||!RB.svg||!RB.svg.isConnected||!ok||viewOff!==RB.off||!box||box.clientWidth!==RB.W||now-RB.t>1000){drawRoute(i,f,ok);return}
  const dd=$("#dd");if(now-RB.touch<350||(dd&&!dd.classList.contains("hide"))||now-RB.t<66)return;
- if(Math.abs((cur-RB.cur)*RB.W/(g.d1-g.d0))<.5)return;drawRoute(i,f,ok)}
+ if(Math.abs((cur-RB.cur)*RB.W/(g.d1-g.d0))<.5&&Math.abs(zoneKm*1000-(g.d1-g.d0)/1.12)<5)return;drawRoute(i,f,ok)}
 /* numéro de train en cours : dernier changement de parité dépassé */
 function curTrain(i){let t=null;for(let j=0;j<=i&&j<rows.length;j++)if(rows[j].train)t=rows[j].train;return t}
 
@@ -1606,7 +1619,7 @@ function frame(now){
  else if(mode==="man"&&geoErr)setSt("warn",geoErr+" Position réglée à la main.");
  else if(mode==="man"&&(!gps||(now-gps.ts)/1000>5))setSt("warn","Vitesse GPS indisponible. Position réglée à la main.");
  else setSt("ok",mode==="sim"?(sim.run?"Simulation":"Simulation à l’arrêt"):"Position réglée à la main · vitesse GPS ±"+Math.round(gps.acc)+" m");
- animTarget(Dc[i]+f*seg(i),now,spd);drawSmooth(now);renderHours(i);markRows(i);
+ zoomSpd=spd||0;animTarget(Dc[i]+f*seg(i),now,spd);drawSmooth(now);renderHours(i);markRows(i);
 }
 function markRows(i){if(i===lastRow)return;lastRow=i;$("#list").querySelectorAll(".r").forEach(e=>{const k=+e.dataset.i;e.classList.toggle("cur",k===i);e.classList.toggle("past",k<i)});gotoRow()}
 function setSt(k,t){const e=$("#st");e.dataset.s=k;e.textContent=t}
@@ -1708,7 +1721,7 @@ $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sid
 dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
 dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
 dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
-document.querySelectorAll("#zoomSw button").forEach(b=>b.onclick=()=>setZoom(+b.dataset.k));
+
 $("#next").onclick=()=>{if(s<rows.length-1){s=Math.floor(s)+1;gotoRow(true)}};
 $("#prev").onclick=()=>{if(s>0){s=Math.ceil(s)-1;gotoRow(true)}};
 $("#play").onclick=()=>{if(s>=rows.length-1){s=0;sim.clock=null}sim.run=!sim.run;sim.t=Date.now();playIcon();listTouch=0};
@@ -1745,7 +1758,7 @@ try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]")
 $("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
 $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
 buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();document.querySelectorAll("#thSw button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
-renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();setZoom([2,5,10].includes(zoneKm)?zoneKm:5);setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
+renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();zoneKm=2;setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
 setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);
@@ -1763,8 +1776,18 @@ function drawSmooth(now){if(!ANIM.ok||ANIM.d==null||!rows.length)return;const dt
  const tgt=ANIM.td+ANIM.v*Math.min(6,(now-ANIM.tt)/1000);let d=ANIM.d+ANIM.v*dt,err=tgt-d;
  d+=err*Math.min(1,dt/.5);if(ANIM.v>.5&&d<ANIM.d&&ANIM.d-d<60)d=ANIM.d;ANIM.d=Math.max(0,Math.min(Dc[Dc.length-1],d));
  const[i,f]=dToIF(ANIM.d);drawRouteFast(i,f,true)}
-function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;animLoop.t=now;
- const t=Date.now();if(ANIM.v>.3||Math.abs((ANIM.td??0)-(ANIM.d??0))>1)drawSmooth(t);else ANIM.last=t}
+/* ---------- échelle automatique ----------
+   La vue montre environ 2 min 30 de route à la vitesse actuelle (2 km à l'arrêt, 12 km au plus),
+   élargie pour voir arriver la prochaine baisse de limite ou le prochain arrêt s'ils sont proches.
+   Le zoom change en douceur (environ 3 s). */
+let zoomSpd=0;
+function zoomTarget(){const v=Math.max(0,zoomSpd||0);let km=Math.max(2,Math.min(12,v/3.6*150/1000));
+ if(ANIM.d!=null&&rows.length){const d=ANIM.d;let j=0;while(j+1<rows.length&&Dc[j+1]<=d)j++;const lim=rows[j].v;
+  for(let k=j+1;k<rows.length&&Dc[k]-d<km*1500;k++){const r=rows[k];if((r.v!=null&&lim!=null&&r.v<lim)||(isStop(r)&&!isSup(r))){const need=(Dc[k]-d)/1000*1.2;if(need>km)km=Math.min(12,need);break}}}
+ return km}
+function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;const dt=Math.min(.2,(now-(animLoop.t||now))/1000);animLoop.t=now;
+ const tz=zoomTarget(),dz=tz-zoneKm;if(Math.abs(dz)>.005)zoneKm+=dz*Math.min(1,dt/3);
+ const t=Date.now();if(ANIM.v>.3||Math.abs((ANIM.td??0)-(ANIM.d??0))>1||Math.abs(dz)>.005)drawSmooth(t);else ANIM.last=t}
 requestAnimationFrame(animLoop);
 setInterval(tick,500);tick();
 </script>
