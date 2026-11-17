@@ -5,7 +5,7 @@ Usage : python3 tools/btopo.py [regex_codes]   (lancé par .github/workflows/bto
 import json, math, os, re, sys, time, urllib.request, urllib.parse, concurrent.futures as cf, statistics
 WFS = "https://data.geopf.fr/wfs/ows"
 L = json.load(open("data/lignes.json"))["lignes"]
-pat = re.compile(sys.argv[1]) if len(sys.argv) > 1 else None
+pat = re.compile(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1] else None
 os.makedirs("data/btopo", exist_ok=True)
 M = 111320.0
 def resample(part, step=100.0):

@@ -14,7 +14,9 @@ jobs:
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/btopo.py ${{ github.event.inputs.lignes }}
+      - run: python3 tools/btopo.py "$LIGNES"
+        env:
+          LIGNES: ${{ github.event.inputs.lignes }}
       - run: |
           git config user.name "luxhuache-tech"
           git config user.email "luxhuache-tech@users.noreply.github.com"
