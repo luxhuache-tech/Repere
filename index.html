@@ -588,13 +588,16 @@ function geoFix(lon,lat,acc,ts,vKmh){
  if(!secs.length)return{ok:false,why:"Aucune géométrie chargée pour cette fiche (onglet Géométrie)."};
  if(!(acc<=50))return{ok:false,why:"Précision GPS insuffisante (±"+Math.round(acc)+" m)."};
  const thr=Math.max(30,1.5*acc)+15,C=[];
- for(const sec of secs){const rg=secRange(sec);for(const c of GEO.locate(lineFor(sec),lon,lat))if(c.d<=thr&&rg&&c.pk>=rg[0]-1&&c.pk<=rg[1]+1)C.push({sec,pk:c.pk,d:c.d})}
+ for(const sec of secs){const rg=secRange(sec);for(const c of GEO.locate(lineFor(sec),lon,lat))if(c.d<=thr&&rg&&c.pk>=rg[0]-1&&c.pk<=rg[1]+1){const fd=pkToD(sec,Math.max(rg[0],Math.min(rg[1],c.pk)));C.push({sec,pk:c.pk,d:c.d,fd})}}
  if(!C.length)return{ok:false,why:"Position hors des lignes de la fiche (plus de "+Math.round(thr)+" m)."};
  const tolOf=(ref)=>{const dt=Math.max(0,(ts-ref.ts)/1000);return(Math.max(vKmh||0,60)/3.6*1.5*dt+150+2*acc)/1000};
- const near=(c,ref)=>{if(c.sec===ref.sec)return Math.abs(c.pk-ref.pk)<=tolOf(ref);
+ /* pas de retour en arrière dans la fiche (rebroussement sur la même ligne : mêmes PK à l'aller et au retour) */
+ const near=(c,ref)=>{if(c.fd!=null&&ref.fd!=null&&c.fd<ref.fd-250)return false;if(c.sec===ref.sec)return Math.abs(c.pk-ref.pk)<=tolOf(ref);
   if(Math.abs(c.sec-ref.sec)!==1)return false;const A=secRows(ref.sec),B=secRows(c.sec);if(!A.length||!B.length)return false;
   const endA=c.sec>ref.sec?A[A.length-1][0].pk:A[0][0].pk,stB=c.sec>ref.sec?B[0][0].pk:B[B.length-1][0].pk;return Math.abs(ref.pk-endA)<=1.5&&Math.abs(c.pk-stB)<=1.5};
- if(trk.last){const ok=C.filter(c=>near(c,trk.last)).sort((a,b)=>a.d-b.d)[0];
+ /* une position au-delà du bout de son tronçon (lignes parallèles) perd face au tronçon suivant de la fiche */
+ const outK=c=>{const rg=secRange(c.sec);return rg?Math.max(0,rg[0]-c.pk,c.pk-rg[1]):0},score=c=>c.d+1000*outK(c);
+ if(trk.last){const ok=C.filter(c=>near(c,trk.last)).sort((a,b)=>score(a)-score(b))[0];
   if(ok){trk.last={...ok,ts};trk.chain=null;trk.n=0;return{ok:true,...ok}}}
  /* (ré)acquisition : il faut 3 positions successives cohérentes et une seule solution possible */
  const distinct=C.filter((c,i)=>C.findIndex(o=>o.sec===c.sec&&Math.abs(o.pk-c.pk)<0.3)===i);
@@ -637,6 +640,13 @@ function geoBuild(){
   const c=cand.find(c=>c.key===pick);
   for(const x of (c?c.m:[]))rep.items.push({n:x.row.sub&&x.row.ctx?x.row.ctx:x.row.name,pf:x.row.pk,pb:x.g.pk,pg:GEO.loo(L,x.g.n)});
  }
+ /* tronçon sans gare reconnue (rebroussement, courte navette en gare) : même ligne qu'un tronçon voisin
+    si ses PK tombent dans l'étendue de cette ligne */
+ const SL=[...new Set(rows.map(r=>r.sec))];
+ SL.forEach((sec,k)=>{if(geo.sec[sec]||geoOv[sec]!==undefined)return;const R=secRange(sec);if(!R)return;
+  for(const nb of [SL[k-1],SL[k+1]]){const key=nb&&geo.sec[nb],L=key&&geo.lines[key];if(!L)continue;
+   const pks=L.pieces.flatMap(p=>p.anch.map(a=>a.pk));if(!pks.length)continue;
+   if(R[0]>=Math.min(...pks)-2&&R[1]<=Math.max(...pks)+2){geo.sec[sec]=key;geo.rep[sec]={...geo.rep[sec],key,lib:L.lib,items:[],inherit:nb};break}}});
  store("geo",JSON.stringify(geo));renderGeo();trkReset();if(typeof drawGeo==="function")drawGeo();if(typeof buildProfile==="function"&&Object.keys(geo.sec).length)setTimeout(()=>buildProfile(),0);
 }
 function renderGeo(){
