@@ -1,0 +1,23 @@
+name: Altitude des voies (BD TOPO)
+on:
+  workflow_dispatch:
+    inputs:
+      lignes:
+        description: "Codes de ligne (expression régulière), vide = toutes"
+        required: false
+        default: ""
+permissions:
+  contents: write
+jobs:
+  btopo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/btopo.py ${{ github.event.inputs.lignes }}
+      - run: |
+          git config user.name "luxhuache-tech"
+          git config user.email "luxhuache-tech@users.noreply.github.com"
+          git add data/btopo
+          git commit -m "Altitude des voies BD TOPO IGN (Licence Ouverte Etalab 2.0)" || echo "rien à publier"
+          git pull --rebase && git push
