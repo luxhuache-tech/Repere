@@ -31,7 +31,17 @@ final class Pack {
     private var index: [String: [Int]] = [:]
     private var base = 0
     init() {
-        let url = Bundle.main.url(forResource: "www", withExtension: "pack") ?? Bundle.module.url(forResource: "www", withExtension: "pack")
+        // Swift Playgrounds range les ressources dans le paquet principal ou dans un paquet annexe : on cherche partout.
+        var url = Bundle.main.url(forResource: "www", withExtension: "pack")
+        if url == nil {
+            for b in Bundle.allBundles + Bundle.allFrameworks {
+                if let u = b.url(forResource: "www", withExtension: "pack") { url = u; break }
+            }
+        }
+        if url == nil, let res = Bundle.main.resourceURL,
+           let e = FileManager.default.enumerator(at: res, includingPropertiesForKeys: nil) {
+            for case let u as URL in e where u.lastPathComponent == "www.pack" { url = u; break }
+        }
         guard let url, let d = try? Data(contentsOf: url, options: .mappedIfSafe), d.count > 8 else { return }
         var n: UInt64 = 0
         for i in 0..<8 { n |= UInt64(d[d.startIndex + i]) << (8 * UInt64(i)) }

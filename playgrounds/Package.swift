@@ -34,7 +34,7 @@ let package = Package(
             name: "AppModule",
             path: ".",
             resources: [
-                .copy("Resources/www.pack")
+                .process("Resources")
             ]
         )
     ]
