@@ -76,7 +76,7 @@ body.ui-banner #nban:not(.empty){display:block!important}
 .ncard.quai{background:var(--email);border-color:var(--email);color:var(--emailtx)}.ncard.quai .nl,.ncard.quai .nd{color:var(--emailtx)}
 .ncard .ar{position:absolute;bottom:-9px;width:14px;height:14px;background:inherit;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}.ncard.quai .ar{border-color:var(--email)}
 .nsb.dim{opacity:.45}
-#rLay{position:absolute;inset:0;overflow:hidden}#rLay svg{will-change:transform}
+#rLay{position:absolute;inset:0;overflow:hidden}
 .drb{position:absolute;right:12px;top:10px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--ltv) 22%,var(--card));color:var(--ltv);border-radius:9px;padding:6px 12px;font:700 15px/1 var(--fd);pointer-events:none}
 .drb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.drb .sl{stroke-width:2.4}
 #spd.est{color:var(--ltv)}#spd.est::before{content:"≈";font-size:.6em;margin-right:2px}.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
@@ -1392,12 +1392,14 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   $("#rBack").onclick=e=>{e.stopPropagation();viewOff=0;lastRow=-1;RB.t=0;frame(Date.now())}}
  lay.innerHTML='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+" "+H+'">'+q.join("")+"</svg>"+ban;$("#rBack").classList.toggle("hide",!back);
  RB.t=Date.now();RB.cur=cur;RB.off=viewOff;RB.W=W;RB.svg=lay.firstChild;RB.tr=lay.querySelector(".rtrain")}
-/* entre deux dessins complets (1 par seconde), la vue glisse : on décale le dessin et on ramène le train */
-const RB={t:0,cur:0,off:0,W:0,svg:null,tr:null};
-function drawRouteFast(i,f,ok){const g=routeGeom,cur=Dc[i]+f*seg(i),box=$("#route");
- if(!g||!RB.svg||!RB.svg.isConnected||!ok||viewOff!==RB.off||!box||box.clientWidth!==RB.W||Date.now()-RB.t>1000){drawRoute(i,f,ok);return}
- const px=(cur-RB.cur)*RB.W/(g.d1-g.d0);if(Math.abs(px)>12){drawRoute(i,f,ok);return}
- RB.svg.style.transform="translateX("+(-px).toFixed(1)+"px)";if(RB.tr)RB.tr.setAttribute("transform","translate("+px.toFixed(1)+" 0)")}
+/* redessin limité : 15 images/s au plus, seulement si le train a bougé d'un demi-pixel,
+   et en pause pendant un appui ou menu ouvert pour que les boutons répondent */
+const RB={t:0,cur:0,off:0,W:0,svg:null,tr:null,touch:0};
+document.addEventListener("pointerdown",()=>{RB.touch=Date.now()},true);
+function drawRouteFast(i,f,ok){const g=routeGeom,cur=Dc[i]+f*seg(i),box=$("#route"),now=Date.now();
+ if(!g||!RB.svg||!RB.svg.isConnected||!ok||viewOff!==RB.off||!box||box.clientWidth!==RB.W||now-RB.t>1000){drawRoute(i,f,ok);return}
+ const dd=$("#dd");if(now-RB.touch<350||(dd&&!dd.classList.contains("hide"))||now-RB.t<66)return;
+ if(Math.abs((cur-RB.cur)*RB.W/(g.d1-g.d0))<.5)return;drawRoute(i,f,ok)}
 /* numéro de train en cours : dernier changement de parité dépassé */
 function curTrain(i){let t=null;for(let j=0;j<=i&&j<rows.length;j++)if(rows[j].train)t=rows[j].train;return t}
 
