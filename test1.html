@@ -132,7 +132,8 @@ body.ui-banner #nban:not(.empty){display:block!important}
 .lcardb{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:0;background:var(--card2);color:var(--tx);border-radius:14px;padding:12px 14px;margin-bottom:8px}
 .lcardb .ln{font:700 22px/1 var(--fd);color:var(--acc);min-width:58px;font-variant-numeric:tabular-nums}
 .lcardb .lt{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:16px;min-width:0}.lcardb .lf{font-weight:400;font-size:12px;color:var(--tx2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#livZ:not(.hide){display:flex}.subbar .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lcardb .lm{font-weight:400;font-size:12px;color:var(--tx3)}
+#livZ:not(.hide){display:flex}.subbar .ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pdfSel{flex:1;min-width:0;max-width:100%;font:inherit;font-size:16px;background:var(--card2);color:var(--tx);border:1px solid var(--line);border-radius:9px;padding:6px 8px}#pdfDel{flex:none;margin-left:8px}.lcardb .lm{font-weight:400;font-size:12px;color:var(--tx3)}
 .livlock{padding:20px 4px}.livlock p{color:var(--tx2);line-height:1.5}
 #livForm{display:flex;gap:8px;margin-top:12px}#livPass{flex:1;min-width:0;background:var(--card2);border:1px solid var(--line);border-radius:11px;color:var(--tx);font:inherit;font-size:17px;padding:10px 12px}
 .livhint{font-size:13px;color:var(--tx2);margin:2px 0 8px}.livhint:empty{display:none}
@@ -343,10 +344,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
   <span id="pdfPg" class="etd"></span>
   <button class="ic etd" id="zOut" aria-label="Dézoomer"><svg class="i"><use href="#i-minus"/></svg></button>
   <button class="ic etd" id="zIn" aria-label="Zoomer"><svg class="i"><use href="#i-plus"/></svg></button>
-  <label class="ic etd" aria-label="Ouvrir un PDF"><svg class="i"><use href="#i-doc"/></svg><input type="file" id="pdfFile" accept="application/pdf" class="hide"></label>
+  <label class="ic etd" aria-label="Ajouter une étude (PDF)"><svg class="i"><use href="#i-doc"/></svg><input type="file" id="pdfFile" accept="application/pdf" multiple class="hide"></label>
   <span class="lvd" id="livZ"><button class="ic" id="livOut" aria-label="Dézoomer"><svg class="i"><use href="#i-minus"/></svg></button><button class="ic" id="livIn" aria-label="Zoomer"><svg class="i"><use href="#i-plus"/></svg></button></span>
   <button class="ic" id="sideClose" aria-label="Replier le panneau"><svg class="i"><use href="#i-fold"/></svg></button></div>
- <div class="subbar etd"><span class="ttl" id="pdfT">Étude de ligne</span></div>
+ <div class="subbar etd"><span class="ttl" id="pdfT">Étude de ligne</span><select id="pdfSel" class="hide" aria-label="Étude affichée"></select><button class="lnk hide" id="pdfDel">Retirer</button></div>
  <div class="subbar lvd"><button class="ic hide" id="livBack" aria-label="Liste des livrets"><svg class="i"><use href="#i-back"/></svg></button><span class="ttl" id="livT">Livrets de ligne</span></div>
  <div id="livv" class="lvd"></div>
  <div id="pdfv" class="etd"><div class="empty">Ouvre ton étude de ligne (PDF) avec l’icône document.<br>Elle reste enregistrée sur l’iPad.</div></div>
@@ -374,7 +375,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div>
 
 <div id="ovMap" class="ov hide" role="dialog" aria-label="Carte"><div class="ovbox">
- <div class="bar"><span class="ttl ovt">Carte</span><button class="ic on" id="follow" aria-pressed="true" aria-label="Suivre le train"><svg class="i"><use href="#i-loc"/></svg></button><button class="ic" id="theme" aria-label="Mode nuit"><svg class="i"><use href="#i-moon"/></svg></button><button class="ic ovx" aria-label="Fermer"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <div class="bar"><span class="ttl ovt">Carte</span><span class="small muted" id="mapSt"></span><button class="ic on" id="follow" aria-pressed="true" aria-label="Suivre le train"><svg class="i"><use href="#i-loc"/></svg></button><button class="ic" id="theme" aria-label="Mode nuit"><svg class="i"><use href="#i-moon"/></svg></button><button class="ic ovx" aria-label="Fermer"><svg class="i"><use href="#i-x"/></svg></button></div>
  <div class="mapw"><div id="map"></div></div></div></div>
 <div id="ovFiche" class="ov hide" role="dialog" aria-label="Fiche train"><div class="ovbox">
  <div class="bar"><span class="ttl ovt">Fiche train</span><button class="ic ovx" aria-label="Fermer"><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -1675,7 +1676,13 @@ function tick(){
 }
 
 /* ---------- carte ---------- */
-let map=null,mk=null,geoLayer=null,follow=true;
+let map=null,mk=null,geoLayer=null,follow=true,meMk=null,meAcc=null,meFirst=true;
+function mapMe(){if(!map||!meMk)return;const E=$("#mapSt");
+ if(!gps||Date.now()-gps.ts>15000){if(map.hasLayer(meMk)){meMk.remove();meAcc.remove()}if(E)E.textContent=geoErr||(watchId!=null?"Recherche de ta position…":"");return}
+ const ll=[gps.lat,gps.lon];meMk.setLatLng(ll);meAcc.setLatLng(ll).setRadius(Math.max(5,gps.acc||0));if(!map.hasLayer(meMk)){meAcc.addTo(map);meMk.addTo(map)}
+ if(E)E.textContent="Ta position ±"+Math.round(gps.acc||0)+" m";
+ /* sans train à suivre (simulation, pas de fiche), on centre sur l'iPad */
+ if(follow&&(!rows.length||mode==="man"||(mode==="sim"&&!sim.run))){if(meFirst){map.setView(ll,15);meFirst=false}else map.panTo(ll,{animate:true})}}
 function initMap(){
  if(typeof L==="undefined"){$("#map").innerHTML='<div class="empty">Carte indisponible hors connexion.</div>';return}
  map=L.map("map",{zoomControl:false,attributionControl:true}).setView([46.6,2.4],6);
@@ -1684,6 +1691,9 @@ function initMap(){
  L.tileLayer("https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",{maxZoom:19,subdomains:"abc",opacity:.4,attribution:"ORM"}).addTo(map);
  geoLayer=L.layerGroup().addTo(map);map.attributionControl.addAttribution("SNCF Réseau · IGN");
  mk=L.circleMarker([0,0],{radius:8,color:"#fff",weight:3,fillColor:"#4f9dff",fillOpacity:1});
+ /* position réelle de l'iPad, affichée quel que soit le mode (simulation comprise) */
+ meAcc=L.circle([0,0],{radius:10,color:"#4f9dff",weight:1,fillColor:"#4f9dff",fillOpacity:.15,interactive:false});
+ meMk=L.circleMarker([0,0],{radius:6,color:"#fff",weight:2,fillColor:"#4f9dff",fillOpacity:1,interactive:false});
  map.on("dragstart",()=>{follow=false;setFollow()});
  drawGeo();if(window.ResizeObserver)new ResizeObserver(()=>map.invalidateSize()).observe($("#map"));
 }
@@ -1695,7 +1705,8 @@ function drawGeo(noFit){if(!map)return;geoLayer.clearLayers();const B=[];
  if(B.length&&!noFit)map.fitBounds(B,{padding:[20,20]})}
 function mapPos(p,ok){if(!map)return;if(!p){if(map.hasLayer(mk))mk.remove();return}
  mk.setLatLng([p[1],p[0]]).setStyle({fillColor:ok?cssv("--acc"):cssv("--tx3"),color:cssv("--tx")});if(!map.hasLayer(mk))mk.addTo(map);
- if(follow)map.setView([p[1],p[0]],Math.max(map.getZoom(),13),{animate:true})}
+ /* en simulation arrêtée ou en mode manuel, la carte suit plutôt ta vraie position si le GPS en donne une */
+ const meOk=gps&&Date.now()-gps.ts<15000;if(follow&&(mode==="gps"||!meOk||(mode==="sim"&&sim.run)))map.setView([p[1],p[0]],Math.max(map.getZoom(),13),{animate:true})}
 $("#follow").onclick=()=>{follow=!follow;setFollow()};
 function setTheme(t){document.documentElement.dataset.theme=t;store("theme",t);$("#theme").classList.toggle("on",t==="nuit");$("#theme").setAttribute("aria-pressed",t==="nuit");document.querySelector('meta[name="theme-color"]').content=t==="nuit"?"#070707":"#15181a";document.querySelectorAll("#thSw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));document.querySelectorAll("#thSw2 button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t2===t));if(rows.length)lastRow=-1;drawGeo(true)}
 $("#theme").onclick=()=>setTheme(document.documentElement.dataset.theme==="nuit"?"soir":"nuit");
@@ -1719,7 +1730,22 @@ async function renderStudy(){
  if(frac)V.scrollTop=frac*V.scrollHeight;pageNo()}
 function pageNo(){if(!pdfDoc)return;const V=$("#pdfv");let n=1;for(const c of V.querySelectorAll("canvas"))if(c.offsetTop-V.offsetTop<=V.scrollTop+V.clientHeight/3)n=+c.dataset.p;$("#pdfPg").textContent=n+" / "+pdfDoc.numPages;if(V.scrollHeight)store("studyTop",String(V.scrollTop/V.scrollHeight))}
 $("#pdfv").addEventListener("scroll",()=>pageNo(),{passive:true});
-$("#pdfFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=await f.arrayBuffer();const nm=f.name.replace(/\.pdf$/i,"");await idbSet("study",{buf:b,name:nm});store("studyTop",null);$("#pdfv").scrollTop=0;openStudy(b,nm)};
+/* plusieurs études de ligne gardées sur l'iPad ; on choisit celle affichée dans la liste */
+let studies=[];
+async function studyInit(){try{studies=(await idbGet("studies"))||[];const old=await idbGet("study");
+  if(old&&old.buf){const id="s"+Date.now();await idbSet("study:"+id,old);studies.push({id,name:old.name||"Étude de ligne"});await idbSet("studies",studies);await idbSet("study",null);store("studyId",id)}}catch(e){studies=[]}
+ renderStudySel();const p=studies.find(x=>x.id===store("studyId"))||studies[0];if(p)showStudy(p.id,true)}
+function renderStudySel(){const S=$("#pdfSel");S.innerHTML=studies.map(x=>'<option value="'+x.id+'">'+esc(x.name)+"</option>").join("");S.value=store("studyId")||"";
+ S.classList.toggle("hide",!studies.length);$("#pdfT").classList.toggle("hide",!!studies.length);$("#pdfDel").classList.toggle("hide",!studies.length)}
+async function showStudy(id,keepTop){const x=await idbGet("study:"+id);if(!x)return;if(!keepTop||store("studyId")!==id){store("studyTop",null);$("#pdfv").scrollTop=0}store("studyId",id);$("#pdfSel").value=id;openStudy(x.buf,x.name)}
+$("#pdfSel").onchange=e=>showStudy(e.target.value);
+$("#pdfDel").onclick=async()=>{const id=store("studyId"),x=studies.find(s=>s.id===id);if(!x||!confirm("Retirer l’étude « "+x.name+" » de l’iPad ?"))return;
+ await idbSet("study:"+id,null);studies=studies.filter(s=>s.id!==id);await idbSet("studies",studies);store("studyId",studies[0]?studies[0].id:null);renderStudySel();
+ if(studies[0])showStudy(studies[0].id);else{pdfDoc=null;$("#pdfT").textContent="Étude de ligne";$("#pdfv").innerHTML='<div class="empty">Ajoute une étude de ligne (PDF) avec l’icône document.</div>'}};
+$("#pdfFile").onchange=async e=>{const F=[...e.target.files];e.target.value="";if(!F.length)return;let last=null;
+ for(const f of F){const b=await f.arrayBuffer(),nm=f.name.replace(/\.pdf$/i,""),old=studies.find(s=>s.name===nm),id=old?old.id:"s"+Date.now()+Math.floor(Math.random()*1e3);
+  await idbSet("study:"+id,{buf:b,name:nm});if(!old)studies.push({id,name:nm});last=id}
+ await idbSet("studies",studies);renderStudySel();showStudy(last)};
 $("#zIn").onclick=()=>{pdfZoom=Math.min(3,pdfZoom*1.25);renderStudy()};
 $("#zOut").onclick=()=>{pdfZoom=Math.max(.5,pdfZoom/1.25);renderStudy()};
 let rzT=0;window.addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(()=>renderStudy(),400)});
@@ -1732,8 +1758,8 @@ function startGps(){
   if((v==null||v<0)&&gps&&gps.lat!=null){const dt=(p.timestamp-gps.ts)/1000;v=dt>0?GEO.dist([gps.lon,gps.lat],[c.longitude,c.latitude])/dt:0}
   gps={v:(v||0)*3.6,acc:c.accuracy,ts:p.timestamp,lat:c.latitude,lon:c.longitude};geoErr="";
   if(mode==="gps")trk.res=geoFix(c.longitude,c.latitude,c.accuracy,p.timestamp,gps.v);
-  netState=c.accuracy<=150&&(Object.keys(geo.lines).length||geoRaw)?netCheck(c.longitude,c.latitude,c.accuracy):null},
-  e=>{geoErr="GPS indisponible ("+e.message+")."},{enableHighAccuracy:true,maximumAge:0,timeout:10000});
+  netState=c.accuracy<=150&&(Object.keys(geo.lines).length||geoRaw)?netCheck(c.longitude,c.latitude,c.accuracy):null;mapMe()},
+  e=>{geoErr=e.code===1?"Localisation refusée : autorise-la dans Réglages → Confidentialité → Service de localisation (Safari).":"GPS indisponible ("+e.message+").";mapMe()},{enableHighAccuracy:true,maximumAge:0,timeout:10000});
 }
 function stopGps(){if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}}
 function playIcon(){$("#play use").setAttribute("href",sim.run?"#i-pause":"#i-play")}
@@ -1752,7 +1778,7 @@ $("#mSim").onclick=()=>setMode("sim");$("#mMan").onclick=()=>setMode("man");$("#
 /* menu déroulant et panneaux */
 const dd=$("#dd");const ddOpen=o=>{dd.classList.toggle("hide",!o);$("#openMenu").setAttribute("aria-expanded",o)};
 document.addEventListener("pointerdown",e=>{if(!dd.classList.contains("hide")&&!dd.contains(e.target)&&!$("#openMenu").contains(e.target))ddOpen(false)});
-function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add("hide"));$(id).classList.remove("hide");if(id==="#ovMap"&&map)setTimeout(()=>map.invalidateSize(),50);if(id==="#ovFiche"){lastRow=-1;setTimeout(()=>gotoRow(true),50)}}
+function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add("hide"));$(id).classList.remove("hide");if(id==="#ovMap"){if(watchId==null)startGps();meFirst=true;if(map)setTimeout(()=>{map.invalidateSize();mapMe()},350)}if(id==="#ovFiche"){lastRow=-1;setTimeout(()=>gotoRow(true),50)}}
 document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
 function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>sideTab==="liv"?(LIV.cur&&LIV.doc?livRender(true):renderLiv()):renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
 $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
@@ -1800,7 +1826,7 @@ renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();zoneK
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
 setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);
-idbGet("study").then(x=>{if(x&&x.buf)openStudy(x.buf,x.name)});
+studyInit();
 /* ---------- défilement fluide ----------
    Les positions arrivent par à-coups (GPS une fois par seconde, simulation toutes les 500 ms).
    Entre deux positions, le train avance à la vitesse mesurée ; à chaque nouvelle position, l'affichage
