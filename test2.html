@@ -1569,7 +1569,9 @@ function ecoGrad(D){const P=profPts().filter(p=>p.g!=null).sort((a,b)=>a.d-b.d);
 function ecoRun(G,Vc){const{D,lim,vb,gr,M}=G,n=D.length,ph=new Uint8Array(n),v=new Float32Array(n),dx=ECO.dx,L=ECO.loco;
  /* courbe d'erre : vitesse à partir de laquelle, en coupant, on rejoint juste la courbe de freinage */
  const tg=new Float32Array(n),vc=new Float32Array(n);for(let i=0;i<n;i++)tg[i]=Math.min(lim[i],Vc/3.6);
- vc[n-1]=vb[n-1];for(let i=n-2;i>=0;i--){const V=vc[i+1]*3.6,dr=.01*(ecoRes(V)+gr[i])/1.06;vc[i]=Math.min(lim[i],Math.sqrt(Math.max(0,vc[i+1]*vc[i+1]+2*dx*dr)))}
+ /* l'erre s'arrête à 85 % de la croisière : en dessous on freine ; sinon, en palier, on couperait 15 km avant l'arrêt */
+ const Ve=.85*Vc/3.6;let is=n-1;while(is>0&&vb[is]<Ve)is--;for(let i=is;i<n;i++)vc[i]=vb[i];
+ for(let i=is-1;i>=0;i--){const V=vc[i+1]*3.6,dr=.01*(ecoRes(V)+gr[i])/1.06;vc[i]=Math.min(lim[i],Math.sqrt(Math.max(0,vc[i+1]*vc[i+1]+2*dx*dr)))}
  let x=G.v0,t=0;v[0]=x;
  for(let i=0;i<n-1;i++){const V=x*3.6,dr=.01*(ecoRes(V)+gr[i])/1.06;let y,p;
   if(x>=vc[i]-.3&&vc[i]<tg[i]+.5&&i>0){y=Math.sqrt(Math.max(0,x*x-2*dx*dr));p=2;if(y>vb[i+1]){y=vb[i+1];p=3}if(y>lim[i+1])y=lim[i+1]}
@@ -1592,6 +1594,8 @@ function ecoPlan(d0,v0,now){const M=ecoMass();if(!M||!rows.length)return null;
   /* en avance : on garde l'avance (temps de la marche d'ici l'arrêt), on ne fait pas traîner pour revenir à l'heure */
   const sc=typeof schedAt==="function"?schedAt(d0):null;if(sc!=null){const tt=(((t.arr.v-sc)%1440+1440)%1440)*60;if(tt<avail)avail=tt}}}
  const vmax=Math.max(...lim)*3.6,fast=ecoRun(G,vmax);let best=fast,Vc=vmax;
+ /* déjà en avance : on a le droit de le rester ; on roule presque en marche tendue (4 % de marge), sans faire traîner pour revenir à l'heure */
+ if(avail!=null&&typeof delayMin==='number'&&delayMin<=-.5)avail=Math.min(avail,fast.t*1.04);
  if(avail!=null&&avail-30>fast.t){let lo=30,hi=vmax;for(let it=0;it<14;it++){const m=(lo+hi)/2,r=ecoRun(G,m);if(r.t>avail-30)lo=m;else{hi=m;best=r;Vc=m}}}
  return{d0,D,...best,Vc,avail,tmin:fast.t,stop:j>=0?stopName(rows[j]):null,M,t0:now}}
 const ECO_TXT=["","Traction","Erre","Freinage","Maintien"],ECO_CLS=["","rcT","rcE","rcF","rcM"];
