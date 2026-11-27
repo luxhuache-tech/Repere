@@ -1681,13 +1681,19 @@ function splitSec(out){const tm=r=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(r.time
 /* ---------- données ---------- */
 /* Flamboin en origine ou en terminus : la fiche s'arrête à Flamboin, mais le train continue
    sur la ligne 831000 (vers Montereau) jusqu'au PK 111,9. On ajoute ce tronçon, à 40 km/h, sans horaire. */
-function flamExt(r){if(!r||!r.length)return r;if(r.some(x=>x.x831)){r.forEach(x=>{if(x.x831&&x.v==null)x.v=40;if(x.x831&&x.pk===111.9)x.name="ITE CEMEX"});return r}const fl=x=>/FLAMBOIN/i.test(stopName(x)||"");
+const FLAM_MIN=42;
+function flamExt(r){if(!r||!r.length)return r;
+ /* fiche déjà complétée par une ancienne version : on retire l'ajout et on le refait */
+ if(r.some(x=>x.x831)){const pre=!!r[0].x831;r=r.filter(x=>!x.x831).map(x=>{const y={...x};if(pre)y.sec=(y.sec||1)-1;delete y.gap;return y})}
+ const fl=x=>/FLAMBOIN/i.test(stopName(x)||"");
  const o=r.findIndex(x=>x.stop),t=r.map(x=>!!x.stop).lastIndexOf(true),isO=o>=0&&fl(r[o]),isT=t>=0&&fl(r[t]);if(!isO&&!isT)return r;
  const R=(pk,name,o)=>({pk,name,ctx:"",sub:false,stop:false,pl:false,time:"",reg:"",rad:"",train:"",page:0,v:40,x831:true,...o});
- const pts=[R(94.448,"Bif. de Flamboin (ligne 831000)"),R(99.102,"Les Ormes-sur-Voulzie",{pl:true}),R(102.653,"Vimpelles",{pl:true}),R(109.961,"Châtenay-sur-Seine",{pl:true}),R(111.9,"ITE CEMEX",{stop:true})];
+ const pts=()=>[R(94.448,"Bif. de Flamboin (ligne 831000)"),R(99.102,"Les Ormes-sur-Voulzie",{pl:true}),R(102.653,"Vimpelles",{pl:true}),R(109.961,"Châtenay-sur-Seine",{pl:true}),R(111.9,"ITE CEMEX",{stop:true})];
+ /* horaire indicatif : 42 min entre Flamboin et l'ITE CEMEX, dans les deux sens (ex. Flamboin 7h19 → CEMEX 8h01) */
+ const hh=(x,last)=>{const m=[...String(x.time||"").matchAll(/(\d{1,2}):(\d{2})/g)];if(!m.length)return null;const q=last?m[m.length-1]:m[0];return +q[1]*60+ +q[2]},fmt=v=>{v=((v%1440)+1440)%1440;return"≈ "+String(Math.floor(v/60)).padStart(2,"0")+":"+String(v%60).padStart(2,"0")};
  let out=r.map(x=>({...x}));
- if(isO){out.forEach(x=>x.sec=(x.sec||0)+1);const pre=pts.slice().reverse().map(x=>({...x,sec:1}));pre[pre.length-1].gap=600;out=pre.concat(out)}
- if(isT){const sc=Math.max(...out.map(x=>x.sec||0))+1,L=out.length-1;out[L]={...out[L],gap:600};out=out.concat(pts.map(x=>({...x,sec:sc})))}
+ if(isO){out.forEach(x=>x.sec=(x.sec||0)+1);const pre=pts().reverse().map(x=>({...x,sec:1}));pre[pre.length-1].gap=600;const h=hh(r[o],true);if(h!=null)pre[0].time=fmt(h-FLAM_MIN);out=pre.concat(out)}
+ if(isT){const sc=Math.max(...out.map(x=>x.sec||0))+1,L=out.length-1;out[L]={...out[L],gap:600};const P=pts().map(x=>({...x,sec:sc})),h=hh(r[t],false);if(h!=null)P[P.length-1].time=fmt(h+FLAM_MIN);out=out.concat(P)}
  return out}
 
 function setData(r,d){r=flamExt(r);rows=r;cSup=new Set();for(const k in cWatch)delete cWatch[k];store("cSup",null);defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));renderCond();geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
