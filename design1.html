@@ -1668,7 +1668,18 @@ function splitSec(out){const tm=r=>{const m=/(\d{1,2}):(\d{2})(\+?)/.exec(r.time
   r.sec=sec;if(t!=null)lt={t,pk:r.pk}});return out}
 
 /* ---------- données ---------- */
-function setData(r,d){rows=r;cSup=new Set();for(const k in cWatch)delete cWatch[k];store("cSup",null);defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));renderCond();geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
+/* Flamboin en origine ou en terminus : la fiche s'arrête à Flamboin, mais le train continue
+   sur la ligne 831000 (vers Montereau) jusqu'au PK 111,9. On ajoute ce tronçon, sans vitesse ni horaire. */
+function flamExt(r){if(!r||!r.length||r.some(x=>x.x831))return r;const fl=x=>/FLAMBOIN/i.test(stopName(x)||"");
+ const o=r.findIndex(x=>x.stop),t=r.map(x=>!!x.stop).lastIndexOf(true),isO=o>=0&&fl(r[o]),isT=t>=0&&fl(r[t]);if(!isO&&!isT)return r;
+ const R=(pk,name,o)=>({pk,name,ctx:"",sub:false,stop:false,pl:false,time:"",reg:"",rad:"",train:"",page:0,v:null,x831:true,...o});
+ const pts=[R(94.448,"Bif. de Flamboin (ligne 831000)"),R(99.102,"Les Ormes-sur-Voulzie",{pl:true}),R(102.653,"Vimpelles",{pl:true}),R(109.961,"Châtenay-sur-Seine",{pl:true}),R(111.9,"PK 111,9 (ligne 831000)",{stop:true})];
+ let out=r.map(x=>({...x}));
+ if(isO){out.forEach(x=>x.sec=(x.sec||0)+1);const pre=pts.slice().reverse().map(x=>({...x,sec:1}));pre[pre.length-1].gap=600;out=pre.concat(out)}
+ if(isT){const sc=Math.max(...out.map(x=>x.sec||0))+1,L=out.length-1;out[L]={...out[L],gap:600};out=out.concat(pts.map(x=>({...x,sec:sc})))}
+ return out}
+
+function setData(r,d){r=flamExt(r);rows=r;cSup=new Set();for(const k in cWatch)delete cWatch[k];store("cSup",null);defit=d;s=0;lastRow=-1;sim.run=false;sim.clock=null;playIcon();buildD();buildT();renderList();$("#defit").textContent=d.length?d.join("\n\n———\n\n"):"Aucun avis chargé.";store("rows",JSON.stringify(r));store("defit",JSON.stringify(d));renderCond();geoBuild();renderGeo();drawGeo();renderLtvSug();if(r.length&&!geoRaw)loadBuiltinGeo()}
 function demo(){const m=(pk,name,v,time,pl,stop)=>({pk,name,ctx:"",sub:false,stop:!!stop,pl:!!pl,time,reg:"",rad:"",sec:1,v});
  return[m(100,"TEST-A",90,"19:13","",1),m(100.8,"PN 12",60,"",1),m(102,"Bif. de Test",100,""),m(104.5,"Poste 4",120,"19:18"),m(106.2,"PN 15",80,"",1),m(108,"Signal 108",120,"19:22"),m(110.5,"Entrée Test-B",40,"19:25"),m(111,"TEST-B",40,"19:26","",1)]}
 function parseLtv(t){return t.split(/\r?\n/).map(l=>l.split(";").map(x=>x.trim().replace(",","."))).filter(c=>c.length>=3&&c.slice(0,3).every(x=>x!==""&&!isNaN(+x))).map(c=>({a:+c[0],b:+c[1],v:+c[2],sec:c[3]?+c[3]:0,note:c[4]||"",ann:c[5]!==undefined&&c[5]!==""&&!isNaN(+c[5])?+c[5]:null}))}
@@ -1695,7 +1706,7 @@ function renderList(){
  const n=new Set(rows.map(r=>r.sec)).size;
  $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
 }
-const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
+const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;if(a.gap&&a.sec!==b.sec)return a.gap;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
 function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;if(typeof ecoTick==="function")ecoTick(0,0,Date.now(),false);if(typeof sirRender==="function")sirRender(Date.now());
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
@@ -1928,7 +1939,7 @@ $("#file").onchange=async e=>{
 };
 
 /* ---------- démarrage ---------- */
-try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]");if(r&&r.length){rows=r;defit=d}}catch(e){}
+try{const r=JSON.parse(store("rows")||"null"),d=JSON.parse(store("defit")||"[]");if(r&&r.length){rows=flamExt(r);defit=d}}catch(e){}
 $("#taL").value=store("ltv")||"";ltv=parseLtv($("#taL").value);
 $("#defit").textContent=defit.length?defit.join("\n\n———\n\n"):"Aucun avis chargé.";
 buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();document.querySelectorAll("#thSw button").forEach(b=>b.onclick=()=>setTheme(b.dataset.t));
