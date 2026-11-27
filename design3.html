@@ -1690,8 +1690,8 @@ function flamExt(r){if(!r||!r.length)return r;
  const o=r.findIndex(x=>x.stop),t=r.map(x=>!!x.stop).lastIndexOf(true),isO=o>=0&&fl(r[o]),isT=t>=0&&fl(r[t]);if(!isO&&!isT)return r;
  const R=(pk,name,o)=>({pk,name,ctx:"",sub:false,stop:false,pl:false,time:"",reg:"",rad:"",train:"",page:0,v:40,x831:true,...o});
  const pts=()=>[R(94.448,"Bif. de Flamboin (ligne 831000)"),R(99.102,"Les Ormes-sur-Voulzie",{pl:true}),R(102.653,"Vimpelles",{pl:true}),R(109.961,"Châtenay-sur-Seine",{pl:true}),R(111.9,"ITE CEMEX",{stop:true})];
- /* horaire indicatif : 42 min entre Flamboin et l'ITE CEMEX, dans les deux sens (ex. Flamboin 7h19 → CEMEX 8h01) */
- const hh=(x,last)=>{const m=[...String(x.time||"").matchAll(/(\d{1,2}):(\d{2})/g)];if(!m.length)return null;const q=last?m[m.length-1]:m[0];return +q[1]*60+ +q[2]},fmt=v=>{v=((v%1440)+1440)%1440;return"≈ "+String(Math.floor(v/60)).padStart(2,"0")+":"+String(v%60).padStart(2,"0")};
+ /* horaire de l'ITE CEMEX : 42 min entre Flamboin et l'ITE CEMEX, dans les deux sens (ex. Flamboin 7h19 → CEMEX 8h01) */
+ const hh=(x,last)=>{const m=[...String(x.time||"").matchAll(/(\d{1,2}):(\d{2})/g)];if(!m.length)return null;const q=last?m[m.length-1]:m[0];return +q[1]*60+ +q[2]},fmt=v=>{v=((v%1440)+1440)%1440;return String(Math.floor(v/60)).padStart(2,"0")+":"+String(v%60).padStart(2,"0")};
  let out=r.map(x=>({...x}));
  if(isO){out.forEach(x=>x.sec=(x.sec||0)+1);const pre=pts().reverse().map(x=>({...x,sec:1}));pre[pre.length-1].gap=600;const h=hh(r[o],true);if(h!=null)pre[0].time=fmt(h-FLAM_MIN);out=pre.concat(out)}
  if(isT){const sc=Math.max(...out.map(x=>x.sec||0))+1,L=out.length-1;out[L]={...out[L],gap:600};const P=pts().map(x=>({...x,sec:sc})),h=hh(r[t],false);if(h!=null)P[P.length-1].time=fmt(h+FLAM_MIN);out=out.concat(P)}
