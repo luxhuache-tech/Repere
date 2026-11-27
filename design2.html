@@ -932,7 +932,7 @@ async function drawSchema(){const A=annex,B=$("#schBody");if(!A||!A[schCur])retu
  const sc=Math.min(W/v0.width,H/v0.height)*schZoom,vp=pg.getViewport({scale:sc*dpr});const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.style.width=vp.width/dpr+"px";c.style.height=vp.height/dpr+"px";
  await pg.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;B.innerHTML="";B.appendChild(c)}
 /* ---------- propositions de design « façon Sirius » (design1/2/3.html) ---------- */
-const DUI=(()=>{const m=/design([123])\.html/.exec(location.pathname)||/[?&]d=([123])/.exec(location.search);return m?+m[1]:0})();
+const DUI=(()=>{const m=/design([123])\.html/.exec(location.pathname)||/[?&]d=([123])/.exec(location.search);return m?+m[1]:/test[12]?\.html/.test(location.pathname)||/[?&]d=0/.test(location.search)?0:1})();
 const SIR_CLR=["","#4cc764","#a3a9b2","#ff4d4d","#3d8bff"];
 function sirClock(now){const t=nowMin(now);if(t==null)return"--:--:--";const s=Math.round(((t%1440)+1440)%1440*60);return[Math.floor(s/3600)%24,Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,"0")).join(":")}
 function sirDelay(){if(delayMin==null)return"";const s=delayMin>=.5?"late":delayMin<=-.5?"early":"on";return'<span class="sdl" data-s="'+s+'">'+(s==="on"?"à l’heure":(s==="late"?"+":"−")+mmss(delayMin))+"</span>"}
