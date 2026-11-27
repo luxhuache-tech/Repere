@@ -83,6 +83,8 @@ body.ui-banner #nban:not(.empty){display:block!important}
 #rLay{position:absolute;inset:0;overflow:hidden}
 .rem{stroke:var(--acc);stroke-width:5;opacity:.85}.remt{stroke:var(--acc);stroke-width:2}.rema{stroke:var(--acc);stroke-width:2;stroke-dasharray:5 5;opacity:.9}.remx{fill:var(--acc);font-size:13px;font-weight:700}
 .emal{color:var(--acc);font-weight:700}
+.rcurve{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.rcT{stroke:#3ecf6e;color:#3ecf6e}.rcM{stroke:#3ecf6e;color:#3ecf6e;stroke-dasharray:2 7}.rcE{stroke:#4aa3ff;color:#4aa3ff}.rcF{stroke:#ff5a52;color:#ff5a52}
+.nxb>#ecoA{white-space:normal;font-size:14px;line-height:1.25}.ecop{font:700 18px/1.2 var(--fd)}
 .drb{position:absolute;right:12px;top:10px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--ltv) 22%,var(--card));color:var(--ltv);border-radius:9px;padding:6px 12px;font:700 15px/1 var(--fd);pointer-events:none}
 .drb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.drb .sl{stroke-width:2.4}
 #spd.est{color:var(--ltv)}#spd.est::before{content:"≈";font-size:.6em;margin-right:2px}.nsb.quai{background:var(--email)}.nsb.quai .bl,.nsb.quai .bn,.nsb.quai .bt{color:var(--emailtx)}
@@ -335,7 +337,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <footer class="bot b3">
   <div class="bk nsb" id="nsBox"><span class="bl" id="nsL"></span><span class="bn" id="nsN"></span><span class="bt" id="nsT"></span></div>
   <div class="bk dlb" id="dlBox" data-s=""><span class="bl" id="dlL"></span><span class="bv" id="dlV"></span><span class="bt" id="dlM"></span></div>
-  <div class="bk nxb"><span id="nx"></span><span class="pill" id="gradNow"></span><span class="emal" id="emA"></span><span id="st" data-s="warn">Aucune fiche chargée.</span><span class="hide" id="delay"></span><span class="hide" id="ns"></span></div>
+  <div class="bk nxb"><span id="nx"></span><span class="pill" id="gradNow"></span><span id="ecoA"></span><span class="emal" id="emA"></span><span id="st" data-s="warn">Aucune fiche chargée.</span><span class="hide" id="delay"></span><span class="hide" id="ns"></span></div>
  </footer>
  <div class="foot hide" id="manFoot"><button id="prev">Point précédent</button><button id="next">Point suivant</button></div>
 </div>
@@ -359,7 +361,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  <button data-o="fiche" role="menuitem">Fiche train</button>
  <button data-o="pdf" role="menuitem">Étude de ligne (afficher / replier)</button>
  <button data-o="liv" role="menuitem">Livrets de ligne</button>
- <button data-o="em" role="menuitem">Restrictions engin moteur</button><input type="file" id="emFile" accept=".json,application/json" class="hide">
+ <button data-o="em" role="menuitem">Restrictions engin moteur</button>
+ <button data-o="eco" role="menuitem" id="ecoMenu">Courbe conseillée : oui</button><input type="file" id="emFile" accept=".json,application/json" class="hide">
  <button data-o="sch" role="menuitem">Schémas de l’avis DEFIT</button>
  <hr>
  <button data-o="chk" role="menuitem">Checklist de départ <span class="chkb" id="chkBadge2"></span></button>
@@ -1427,6 +1430,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+y+'" y2="'+y+'" class="rsp'+(p.lt?" ltv":"")+(past?" past":"")+(ok?"":" off")+'"/>');
   const n=pieces[k+1];if(n&&n.v!=null)q.push('<line x1="'+xb+'" x2="'+xb+'" y1="'+y+'" y2="'+Ys(n.v)+'" class="rspv"/>');
   if(p.b>cur&&(xb-Math.max(xa,X(cur)))>30){const xl=Math.max(xa,X(cur))+6;if(ok||p.a>cur)T(xl,y-8,String(p.v),"rv"+(p.lt?" ltv":"")+(p.a<=cur?" now":"")+(ok?"":" off"));if(p.clr&&p.a>cur)T(xl,y+14,"queue dégagée","rsm")}}
+ if(ok&&typeof ecoDraw==="function")ecoDraw(q,X,Ys,d0,d1,cur);
  /* déclivité en cours (pastille du bas) */
  {const g=ok&&!viewOff?gradAt(cur):ok?gradAt(cur):null,E=$("#gradNow");if(E){const cc=ok&&typeof declAt==="function"?declAt(cur):null;E.textContent=(g&&g.g!=null?gradTxt(g.g,g.src):"")+(cc?(g&&g.g!=null&&g.src!=="U"?" · ":"")+"car. "+(cc.r!=null?"↗"+cc.r:"")+(cc.p!=null?" ↘"+cc.p:"")+" ‰":"");E.title=cc?carTxt(cc):"";E.dataset.s=g&&g.g!=null?(g.g>=1?"r":g.g<=-1?"p":"0"):""}}
  /* points de passage, en bas */
@@ -1496,6 +1500,58 @@ function renderHours(i,force){const S=$("#hstrip");if(!S)return;S.classList.togg
 /* largeur d'un texte, mesurée dans la police réelle */
 let twC=null,twF=null;
 function tw(t,font,est){try{if(twC===null){const c=document.createElement("canvas");twC=c.getContext&&c.getContext("2d")||false;twF=getComputedStyle(document.body).fontFamily}if(twC){twC.font=font+twF;return twC.measureText(t).width}}catch(e){twC=false}return t.length*est}
+/* ---------- conduite économique : courbe de vitesse conseillée ----------
+   Modèle simple de marche d'un train fret tracté par une Euro 4000, calculé avec la masse totale KVB :
+   traction maxi, marche sur l'erre avant chaque baisse de limite et chaque arrêt, freinage de service.
+   On cherche la vitesse de croisière la plus basse qui tient l'horaire du prochain arrêt (arrivée).
+   C'est un conseil : la signalisation, les limites et le KVB restent la référence. */
+const ECO={loco:{F0:370e3,P:2700e3,vmax:100},b:.25,dx:50,plan:null,t:0,on:store("eco")!=="0"};
+/* résistance à l'avancement (daN/t) d'un train fret chargé, V en km/h */
+const ecoRes=V=>1.2+V*V/5000;
+function ecoMass(){const m=parseFloat(String(kvb.mt||"").replace(",","."));return isFinite(m)&&m>50?m:null}
+/* tableau des pentes (‰, positif = rampe dans le sens de marche) aux points de la grille */
+function ecoGrad(D){const P=profPts().filter(p=>p.g!=null).sort((a,b)=>a.d-b.d);const g=new Float32Array(D.length);let k=0;
+ for(let i=0;i<D.length;i++){while(k+1<P.length&&P[k+1].d<=D[i])k++;const p=P[k];g[i]=p&&Math.abs(p.d-D[i])<400?p.g:0}return g}
+/* marche simulée de d0 (vitesse v0, m/s) jusqu'au bout de la grille avec une vitesse de croisière Vc (km/h) */
+function ecoRun(G,Vc){const{D,lim,vb,gr,M}=G,n=D.length,ph=new Uint8Array(n),v=new Float32Array(n),dx=ECO.dx,L=ECO.loco;
+ /* courbe d'erre : vitesse à partir de laquelle, en coupant, on rejoint juste la courbe de freinage */
+ const tg=new Float32Array(n),vc=new Float32Array(n);for(let i=0;i<n;i++)tg[i]=Math.min(lim[i],Vc/3.6);
+ vc[n-1]=vb[n-1];for(let i=n-2;i>=0;i--){const V=vc[i+1]*3.6,dr=.01*(ecoRes(V)+gr[i])/1.06;vc[i]=Math.min(lim[i],Math.sqrt(Math.max(0,vc[i+1]*vc[i+1]+2*dx*dr)))}
+ let x=G.v0,t=0;v[0]=x;
+ for(let i=0;i<n-1;i++){const V=x*3.6,dr=.01*(ecoRes(V)+gr[i])/1.06;let y,p;
+  if(x>=vc[i]-.3&&vc[i]<tg[i]+.5&&i>0){y=Math.sqrt(Math.max(0,x*x-2*dx*dr));p=2;if(y>vb[i+1]){y=vb[i+1];p=3}if(y>lim[i+1])y=lim[i+1]}
+  else if(x<tg[i]-.4){const F=Math.min(L.F0,L.P/Math.max(x,1)),a=F/(M*1000*1.06)-dr;y=Math.sqrt(Math.max(0,x*x+2*dx*a));p=1;if(y>tg[i+1])y=Math.max(x,tg[i+1]);if(y>vb[i+1]){y=vb[i+1];p=3}}
+  else{y=Math.min(x,tg[i+1]);p=dr<0?4:4;if(y>vb[i+1]){y=vb[i+1];p=3}else if(dr<0&&x>=tg[i])p=2}
+  ph[i]=p;v[i+1]=y;t+=2*dx/Math.max(.5,x+y);x=y}
+ ph[n-1]=ph[n-2]||0;return{v,ph,t}}
+/* prépare la grille de d0 au prochain arrêt et cherche la croisière qui tient l'horaire */
+function ecoPlan(d0,v0,now){const M=ecoMass();if(!M||!rows.length)return null;
+ let j=-1;for(let k=0;k<rows.length;k++)if(Dc[k]>d0+200&&isStop(rows[k])&&!isSup(rows[k])){j=k;break}
+ const end=j>=0?Dc[j]:Dc[Dc.length-1];if(end-d0<300)return null;
+ const n=Math.min(6000,Math.ceil((end-d0)/ECO.dx)+1),dx=(end-d0)/(n-1);ECO.dx=dx;
+ const D=new Float64Array(n),lim=new Float32Array(n),vb=new Float32Array(n),Z=ltvZones(),Lt=trainLen();
+ for(let i=0;i<n;i++){D[i]=d0+i*dx;const e=effLim(D[i],Z,Lt).v;lim[i]=Math.min(e==null?ECO.loco.vmax:e,ECO.loco.vmax)/3.6}
+ const gr=ecoGrad(D);vb[n-1]=j>=0?0:lim[n-1];
+ for(let i=n-2;i>=0;i--){const b=Math.max(.1,ECO.b+.01*gr[i]);vb[i]=Math.min(lim[i],Math.sqrt(vb[i+1]*vb[i+1]+2*b*dx))}
+ const G={D,lim,vb,gr,M,v0:Math.min(v0,vb[0])};
+ /* temps disponible jusqu'à l'arrivée prévue */
+ let avail=null;if(j>=0){const t=rowTimes(rows[j]);if(t){avail=((t.arr.v-nowMin(now))%1440+1440+720)%1440-720;avail*=60}}
+ const vmax=Math.max(...lim)*3.6,fast=ecoRun(G,vmax);let best=fast,Vc=vmax;
+ if(avail!=null&&avail-30>fast.t){let lo=30,hi=vmax;for(let it=0;it<14;it++){const m=(lo+hi)/2,r=ecoRun(G,m);if(r.t>avail-30)lo=m;else{hi=m;best=r;Vc=m}}}
+ return{d0,D,...best,Vc,avail,tmin:fast.t,stop:j>=0?stopName(rows[j]):null,M,t0:now}}
+const ECO_TXT=["","Traction","Marche sur l’erre","Freinage","Maintien"],ECO_CLS=["","rcT","rcE","rcF","rcM"];
+/* appelé à chaque image : recalcule le plan toutes les 4 s, met à jour le conseil */
+function ecoTick(cur,spd,now,ok){const E=$("#ecoA");if(!E)return;
+ if(!ECO.on||!ok||!ecoMass()){ECO.plan=null;E.innerHTML=ECO.on&&ok&&!ecoMass()&&rows.length?'<span class="muted">Courbe conseillée : renseigne la masse totale (KVB)</span>':"";return}
+ if(!ECO.plan||now-ECO.t>4000||cur<ECO.plan.d0||cur>ECO.plan.D[ECO.plan.D.length-1]){ECO.t=now;try{ECO.plan=ecoPlan(cur,Math.max(0,(spd||0)/3.6),now)}catch(e){ECO.plan=null}}
+ const P=ECO.plan;if(!P){E.innerHTML="";return}
+ const i=Math.max(0,Math.min(P.D.length-1,Math.round((cur-P.d0)/(P.D[1]-P.D[0]||1)))),p=P.ph[i]||1;let k=i;while(k<P.D.length-1&&P.ph[k]===p)k++;
+ const nx=k<P.D.length-1?P.ph[k]:0,dist=P.D[k]-cur;
+ E.innerHTML='<span class="ecop '+ECO_CLS[p]+'">'+ECO_TXT[p]+" "+Math.round(P.v[i]*3.6)+"</span>"+(nx?' <span class="muted">'+ECO_TXT[nx].toLowerCase()+" dans "+(dist<1000?Math.round(dist/50)*50+" m":(dist/1000).toFixed(1).replace(".",",")+" km")+"</span>":"")}
+/* dessin de la courbe conseillée dans la vue de conduite (même échelle que les limites) */
+function ecoDraw(q,X,Ys,d0,d1,cur){const P=ECO.plan;if(!P)return;const st=P.D[1]-P.D[0]||50,a=Math.max(0,Math.floor((Math.max(d0,cur)-P.d0)/st)),b=Math.min(P.D.length-1,Math.ceil((d1-P.d0)/st));
+ let s=a;for(let i=a+1;i<=b;i++){if(P.ph[i]!==P.ph[s]||i===b){const pts=[];for(let k=s;k<=i;k++)pts.push(X(P.D[k]).toFixed(1)+" "+Ys(P.v[k]*3.6).toFixed(1));
+  q.push('<polyline points="'+pts.join(" ")+'" class="rcurve '+ECO_CLS[P.ph[s]||1]+'"/>');s=i}}}
 
 
 /* ---------- lecture du PDF de la fiche ---------- */
@@ -1586,7 +1642,7 @@ function renderList(){
  $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
 }
 const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
-function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;
+function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;if(typeof ecoTick==="function")ecoTick(0,0,Date.now(),false);
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
@@ -1647,7 +1703,7 @@ function frame(now){
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
  renderNext(i,cur,spd,km);
- showDelay(cur,now);renderBanner();emShow(cur);
+ showDelay(cur,now);renderBanner();emShow(cur);ecoTick(cur,spd,now,true);
  /* numéro de train valable à cet endroit (change à la parité) */
  {const t=curTrain(i)||store("trainNo")||"—",E=$("#ficheT");if(E&&E.textContent!==t)E.textContent=t}
  if(DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");autoC(cur,spd);
@@ -1782,7 +1838,7 @@ function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add(
 document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
 function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>sideTab==="liv"?(LIV.cur&&LIV.doc?livRender(true):renderLiv()):renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
 $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
-dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
+dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="eco"){ECO.on=!ECO.on;store("eco",ECO.on?"1":"0");ECO.plan=null;$("#ecoMenu").textContent="Courbe conseillée : "+(ECO.on?"oui":"non");lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
 dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
 dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
 
@@ -1825,7 +1881,7 @@ buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();doc
 renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();zoneKm=2;setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
-setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);
+setSideTab(sideTab);setSide(store("side")==="1");livInit();$("#ecoMenu").textContent="Courbe conseillée : "+(ECO.on?"oui":"non");document.body.classList.add("ui-"+NEXTUI);
 studyInit();
 /* ---------- défilement fluide ----------
    Les positions arrivent par à-coups (GPS une fois par seconde, simulation toutes les 500 ms).
