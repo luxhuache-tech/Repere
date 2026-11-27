@@ -1595,8 +1595,10 @@ function ecoPlan(d0,v0,now){const M=ecoMass();if(!M||!rows.length)return null;
   /* en avance : on garde l'avance (temps de la marche d'ici l'arrêt), on ne fait pas traîner pour revenir à l'heure */
   const sc=typeof schedAt==="function"?schedAt(d0):null;if(sc!=null){const tt=(((t.arr.v-sc)%1440+1440)%1440)*60;if(tt<avail)avail=tt}}}
  const vmax=Math.max(...lim)*3.6,fast=ecoRun(G,vmax);let best=fast,Vc=vmax;
- /* déjà en avance : on a le droit de le rester ; on roule presque en marche tendue (4 % de marge), sans faire traîner pour revenir à l'heure */
- if(avail!=null&&(ECO.style==='tendue'||typeof delayMin==='number'&&delayMin<=-.5))avail=Math.min(avail,fast.t*1.04);
+ /* style tendu : presque au plus vite (4 % de marge). En éco, l'avance est gardée plus haut : on prend le temps de la marche
+    d'ici l'arrêt, ni plein pot ni erre pour la reperdre ; et jamais plus de 35 % au-dessus de la marche la plus rapide */
+ if(avail!=null&&ECO.style==='tendue')avail=Math.min(avail,fast.t*1.04);
+ if(avail!=null&&typeof delayMin==='number'&&delayMin<=-.5)avail=Math.min(avail,fast.t*1.35);
  if(avail!=null&&avail-30>fast.t){let lo=30,hi=vmax;for(let it=0;it<14;it++){const m=(lo+hi)/2,r=ecoRun(G,m);if(r.t>avail-30)lo=m;else{hi=m;best=r;Vc=m}}}
  return{d0,D,...best,Vc,avail,tmin:fast.t,stop:j>=0?stopName(rows[j]):null,M,t0:now}}
 const ecoLabel=()=>"Courbe conseillée : "+(!ECO.on?"non":ECO.style==="tendue"?"tendue":"éco");
