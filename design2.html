@@ -392,7 +392,7 @@ body.d2 .snx{flex:1}body.d2 .snt{flex-direction:column;gap:2px}
  <button data-o="pdf" role="menuitem">Étude de ligne (afficher / replier)</button>
  <button data-o="liv" role="menuitem">Livrets de ligne</button>
  <button data-o="em" role="menuitem">Restrictions engin moteur</button>
- <button data-o="eco" role="menuitem" id="ecoMenu">Courbe conseillée : oui</button><input type="file" id="emFile" accept=".json,application/json" class="hide">
+ <input type="file" id="emFile" accept=".json,application/json" class="hide">
  <button data-o="sch" role="menuitem">Schémas de l’avis DEFIT</button>
  <hr>
  <button data-o="chk" role="menuitem">Checklist de départ <span class="chkb" id="chkBadge2"></span></button>
@@ -1559,7 +1559,7 @@ function tw(t,font,est){try{if(twC===null){const c=document.createElement("canva
    traction maxi, marche sur l'erre avant chaque baisse de limite et chaque arrêt, freinage de service.
    On cherche la vitesse de croisière la plus basse qui tient l'horaire du prochain arrêt (arrivée).
    C'est un conseil : la signalisation, les limites et le KVB restent la référence. */
-const ECO={loco:{F0:370e3,P:2700e3,vmax:100},b:.25,dx:50,plan:null,t:0,on:store("eco")!=="0"};
+const ECO={loco:{F0:370e3,P:2700e3,vmax:100},b:.25,dx:50,plan:null,t:0,on:true};
 /* résistance à l'avancement (daN/t) d'un train fret chargé, V en km/h */
 const ecoRes=V=>1.2+V*V/5000;
 function ecoMass(){const m=parseFloat(String(kvb.mt||"").replace(",","."));return isFinite(m)&&m>50?m:null}
@@ -1921,7 +1921,7 @@ function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add(
 document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
 function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>sideTab==="liv"?(LIV.cur&&LIV.doc?livRender(true):renderLiv()):renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
 $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
-dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="eco"){ECO.on=!ECO.on;store("eco",ECO.on?"1":"0");ECO.plan=null;$("#ecoMenu").textContent=ecoLabel();lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
+dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="eco"){ECO.on=!ECO.on;store("eco",ECO.on?"1":"0");ECO.plan=null;lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
 dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
 dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
 
@@ -1964,7 +1964,7 @@ buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();doc
 renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();zoneKm=2;setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
-setSideTab(sideTab);setSide(store("side")==="1");livInit();$("#ecoMenu").textContent=ecoLabel();document.body.classList.add("ui-"+NEXTUI);if(DUI)document.body.classList.add("dsir","d"+DUI);
+setSideTab(sideTab);setSide(store("side")==="1");livInit();document.body.classList.add("ui-"+NEXTUI);if(DUI)document.body.classList.add("dsir","d"+DUI);
 studyInit();
 /* ---------- défilement fluide ----------
    Les positions arrivent par à-coups (GPS une fois par seconde, simulation toutes les 500 ms).
