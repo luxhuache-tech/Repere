@@ -1647,7 +1647,7 @@ async function recMenu(){const all=await recAll(),n=all.length,pts=all.reduce((a
  if(c==="1"){await recSave();const b=new Blob([JSON.stringify(await recAll())],{type:"application/json"}),f=new File([b],"repere-trajets.json",{type:"application/json"});
   if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f]}).catch(()=>{});else{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=f.name;a.click()}}
  else if(c==="2")recUpload(true);
- else if(c==="3"){const r=prompt("Dépôt GitHub PRIVÉ (propriétaire/nom) :",repo||"luxhuache-tech/repere-trajets");if(r==null)return;const t=prompt("Jeton GitHub (accès Contents en écriture à ce seul dépôt). Laisse vide pour garder l'actuel, « - » pour désactiver :","");
+ else if(c==="3"){const r=prompt("Dépôt GitHub PRIVÉ (propriétaire/nom) :",repo||"luxhuache-tech/Repere-trajet");if(r==null)return;const t=prompt("Jeton GitHub (accès Contents en écriture à ce seul dépôt). Laisse vide pour garder l'actuel, « - » pour désactiver :","");
   store("recRepo",r.trim());if(t==="-"){store("recTok",null);store("recRepo",null)}else if(t)store("recTok",t.trim());setSt("ok","Envoi automatique "+(store("recTok")?"réglé.":"désactivé."))}
  else if(c==="4"&&confirm("Effacer tous les enregistrements de conduite de l’iPad ?")){for(const T of all)await idbSet("trajet:"+T.id,null);store("trajets","[]");REC.trip=null;setSt("ok","Enregistrements effacés.")}}
 
