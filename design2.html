@@ -392,7 +392,7 @@ body.d2 .snx{flex:1}body.d2 .snt{flex-direction:column;gap:2px}
  <button data-o="pdf" role="menuitem">Étude de ligne (afficher / replier)</button>
  <button data-o="liv" role="menuitem">Livrets de ligne</button>
  <button data-o="em" role="menuitem">Restrictions engin moteur</button>
- <button data-o="eco" role="menuitem" id="ecoMenu">Courbe conseillée : éco</button><input type="file" id="emFile" accept=".json,application/json" class="hide">
+ <button data-o="eco" role="menuitem" id="ecoMenu">Courbe conseillée : oui</button><input type="file" id="emFile" accept=".json,application/json" class="hide">
  <button data-o="sch" role="menuitem">Schémas de l’avis DEFIT</button>
  <hr>
  <button data-o="chk" role="menuitem">Checklist de départ <span class="chkb" id="chkBadge2"></span></button>
@@ -946,7 +946,7 @@ function sirNextHTML(){const N=NEXT;if(!N)return'<div class="snl">Prochain arrê
 function sirBand(){const P=sirPhase();return'<div class="sband"'+(P.c?' style="color:'+P.c+'"':"")+'><span class="sb-ph">'+esc(P.t)+'</span>'+(P.v!=null?'<span class="sb-v">'+P.v+'<small> km/h</small></span>':"")+(P.nx?'<span class="sb-nx">'+esc(P.nx)+"</span>":"")+"</div>"}
 /* en-tête (1) ou colonne (2) */
 function sirRender(now){const E=$("#sir");if(!E||(DUI!==1&&DUI!==2))return;const P=sirPhase(),sp=$("#spd")?$("#spd").textContent:"—";
- const ph='<div class="sph '+P.cls+'"'+(P.c?' style="--pc:'+P.c+'"':"")+'><div class="sphl">Conduite conseillée'+(ECO.on?(ECO.style==='tendue'?' · tendue':' · éco'):'')+'</div><div class="spht">'+esc(P.t)+'</div>'+(P.v!=null?'<div class="sphv"><small>'+(P.t==="Freinage"?"jusqu’à ":P.t==="Maintien"?"à ":"objectif ")+'</small>'+P.v+'<small> km/h</small></div>':"")+(P.nx?'<div class="sphn">'+esc(P.nx)+"</div>":"")+"</div>";
+ const ph='<div class="sph '+P.cls+'"'+(P.c?' style="--pc:'+P.c+'"':"")+'><div class="sphl">Conduite conseillée</div><div class="spht">'+esc(P.t)+'</div>'+(P.v!=null?'<div class="sphv"><small>'+(P.t==="Freinage"?"jusqu’à ":P.t==="Maintien"?"à ":"objectif ")+'</small>'+P.v+'<small> km/h</small></div>':"")+(P.nx?'<div class="sphn">'+esc(P.nx)+"</div>":"")+"</div>";
  const ck='<div class="sck"><div class="snl">Heure</div><div class="sckt">'+sirClock(now)+"</div>"+sirDelay()+"</div>";
  const nx='<div class="snx">'+sirNextHTML()+"</div>";
  E.innerHTML=DUI===1?ph+ck+nx:ph+nx+ck}
@@ -1559,7 +1559,7 @@ function tw(t,font,est){try{if(twC===null){const c=document.createElement("canva
    traction maxi, marche sur l'erre avant chaque baisse de limite et chaque arrêt, freinage de service.
    On cherche la vitesse de croisière la plus basse qui tient l'horaire du prochain arrêt (arrivée).
    C'est un conseil : la signalisation, les limites et le KVB restent la référence. */
-const ECO={loco:{F0:370e3,P:2700e3,vmax:100},b:.25,dx:50,plan:null,t:0,on:store("eco")!=="0",style:store("ecoStyle")==="tendue"?"tendue":"eco"};
+const ECO={loco:{F0:370e3,P:2700e3,vmax:100},b:.25,dx:50,plan:null,t:0,on:store("eco")!=="0"};
 /* résistance à l'avancement (daN/t) d'un train fret chargé, V en km/h */
 const ecoRes=V=>1.2+V*V/5000;
 function ecoMass(){const m=parseFloat(String(kvb.mt||"").replace(",","."));return isFinite(m)&&m>50?m:null}
@@ -1595,13 +1595,12 @@ function ecoPlan(d0,v0,now){const M=ecoMass();if(!M||!rows.length)return null;
   /* en avance : on garde l'avance (temps de la marche d'ici l'arrêt), on ne fait pas traîner pour revenir à l'heure */
   const sc=typeof schedAt==="function"?schedAt(d0):null;if(sc!=null){const tt=(((t.arr.v-sc)%1440+1440)%1440)*60;if(tt<avail)avail=tt}}}
  const vmax=Math.max(...lim)*3.6,fast=ecoRun(G,vmax);let best=fast,Vc=vmax;
- /* style tendu : presque au plus vite (4 % de marge). En éco, l'avance est gardée plus haut : on prend le temps de la marche
+ /* adaptation automatique : en retard on rattrape (temps jusqu'à l'heure d'arrivée) ; en avance, l'avance est gardée plus haut : on prend le temps de la marche
     d'ici l'arrêt, ni plein pot ni erre pour la reperdre ; et jamais plus de 35 % au-dessus de la marche la plus rapide */
- if(avail!=null&&ECO.style==='tendue')avail=Math.min(avail,fast.t*1.04);
  if(avail!=null&&typeof delayMin==='number'&&delayMin<=-.5)avail=Math.min(avail,fast.t*1.35);
  if(avail!=null&&avail-30>fast.t){let lo=30,hi=vmax;for(let it=0;it<14;it++){const m=(lo+hi)/2,r=ecoRun(G,m);if(r.t>avail-30)lo=m;else{hi=m;best=r;Vc=m}}}
  return{d0,D,...best,Vc,avail,tmin:fast.t,stop:j>=0?stopName(rows[j]):null,M,t0:now}}
-const ecoLabel=()=>"Courbe conseillée : "+(!ECO.on?"non":ECO.style==="tendue"?"tendue":"éco");
+const ecoLabel=()=>"Courbe conseillée : "+(ECO.on?"oui":"non");
 const ECO_TXT=["","Traction","Erre","Freinage","Maintien"],ECO_CLS=["","rcT","rcE","rcF","rcM"];
 /* appelé à chaque image : recalcule le plan toutes les 4 s, met à jour le conseil */
 function ecoTick(cur,spd,now,ok){const E=$("#ecoA");if(!E)return;
@@ -1922,7 +1921,7 @@ function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add(
 document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
 function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>sideTab==="liv"?(LIV.cur&&LIV.doc?livRender(true):renderLiv()):renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
 $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
-dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="eco"){if(!ECO.on){ECO.on=true;ECO.style="eco"}else if(ECO.style==="eco")ECO.style="tendue";else ECO.on=false;store("eco",ECO.on?"1":"0");store("ecoStyle",ECO.style);ECO.plan=null;$("#ecoMenu").textContent=ecoLabel();lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
+dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="eco"){ECO.on=!ECO.on;store("eco",ECO.on?"1":"0");ECO.plan=null;$("#ecoMenu").textContent=ecoLabel();lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
 dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
 dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
 
