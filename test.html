@@ -83,7 +83,10 @@ body.ui-banner #nban:not(.empty){display:block!important}
 #rLay{position:absolute;inset:0;overflow:hidden}
 .rem{stroke:var(--acc);stroke-width:5;opacity:.85}.remt{stroke:var(--acc);stroke-width:2}.rema{stroke:var(--acc);stroke-width:2;stroke-dasharray:5 5;opacity:.9}.remx{fill:var(--acc);font-size:13px;font-weight:700}
 .emal{color:var(--acc);font-weight:700}
-.rcurve{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.rcT{stroke:#3ecf6e;color:#3ecf6e}.rcM{stroke:#3ecf6e;color:#3ecf6e;stroke-dasharray:2 7}.rcE{stroke:#4aa3ff;color:#4aa3ff}.rcF{stroke:#ff5a52;color:#ff5a52}
+.rcurve{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.rcT{stroke:#4cc764;color:#4cc764}.rcM{stroke:#3d8bff;color:#3d8bff}.rcE{stroke:#a3a9b2;color:#a3a9b2}.rcF{stroke:#ff4d4d;color:#ff4d4d}
+.rgrid{stroke:var(--tx);opacity:.08;stroke-dasharray:2 4}.rgl{fill:var(--tx3);font-size:12px;font-variant-numeric:tabular-nums}
+.ecoBig{position:absolute;left:44px;top:8px;display:flex;align-items:baseline;gap:14px;pointer-events:none;background:color-mix(in srgb,var(--bg) 70%,transparent);border-radius:10px;padding:4px 12px}
+.ecoBig .eb1{font:800 clamp(24px,3cqw,34px)/1.1 var(--fd);letter-spacing:.02em}.ecoBig .eb2{font:800 clamp(24px,3cqw,34px)/1.1 var(--fd);color:var(--tx);font-variant-numeric:tabular-nums}.ecoBig .eb3{font-size:15px;color:var(--tx2)}
 .nxb>#ecoA{white-space:normal;font-size:14px;line-height:1.25}.ecop{font:700 18px/1.2 var(--fd)}
 .drb{position:absolute;right:12px;top:10px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--ltv) 22%,var(--card));color:var(--ltv);border-radius:9px;padding:6px 12px;font:700 15px/1 var(--fd);pointer-events:none}
 .drb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.drb .sl{stroke-width:2.4}
@@ -300,6 +303,33 @@ a{color:var(--acc)}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hide{display:none!important}
 @media (orientation:portrait){.top{flex-wrap:wrap}.tpills{flex-direction:row}.bot{flex-wrap:wrap;white-space:normal}}
+
+/* ---------- propositions façon Sirius ---------- */
+#rwrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}#sir{display:none}
+body.d1 #sir,body.d2 #sir{display:flex;gap:8px;flex:none}
+body.d1 .bot.b3 .nsb,body.d1 .bot.b3 .dlb,body.d2 .bot.b3 .nsb,body.d2 .bot.b3 .dlb{display:none}
+body.d1 .bot.b3 .nxb,body.d2 .bot.b3 .nxb{flex-direction:row;gap:16px;align-items:center;padding:6px 14px}
+body.dsir .rsp{stroke:var(--tx);stroke-width:2.5;stroke-dasharray:9 6}body.dsir .rsp.ltv{stroke:var(--ltv)}body.dsir .rsa{opacity:.025}body.dsir .rspv{stroke-dasharray:3 4}
+body.dsir .rcurve{stroke-width:6}
+#sir>div{background:var(--card);border-radius:18px;padding:12px 18px;min-width:0}
+.snl,.sphl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:600}
+.sph{--pc:var(--tx2)}.spht{font:800 38px/1.05 var(--fd);color:var(--pc);text-transform:uppercase;letter-spacing:.02em}
+.sphv{font:700 26px/1.1 var(--fd);color:var(--tx);font-variant-numeric:tabular-nums}.sphv small,.sb-v small{font-size:.55em;color:var(--tx2);font-weight:600}
+.sphn{font-size:15px;color:var(--tx2);margin-top:2px}
+.sckt{font:700 34px/1.1 var(--fd);font-variant-numeric:tabular-nums;color:var(--tx)}
+.sdl{display:inline-block;margin-top:4px;padding:2px 10px;border-radius:99px;font:700 18px/1.3 var(--fd);font-variant-numeric:tabular-nums;background:var(--card2);color:var(--tx)}
+.sdl[data-s="late"]{background:color-mix(in srgb,var(--bad) 30%,var(--card));color:#ffb4ab}.sdl[data-s="early"]{background:color-mix(in srgb,#4cc764 25%,var(--card));color:#9be3a8}
+.snn{display:inline-block;margin:4px 0;padding:3px 14px;border-radius:8px;background:var(--plate);color:var(--ink);font:800 24px/1.2 var(--fd);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.snn.none{background:none;color:var(--tx3)}
+.snt{display:flex;gap:16px;font-size:16px;color:var(--tx2)}.snt b{color:var(--tx);font:700 20px var(--fd)}.snr{font-size:14px;color:var(--tx2);margin-top:2px}
+/* 1 : en-tête en trois cases */
+body.d1 #sir .sph{flex:1.3}body.d1 #sir .sck{flex:.8}body.d1 #sir .snx{flex:1.6}
+/* 2 : colonne à gauche, phase en aplat de couleur */
+body.d2 #rwrap{flex-direction:row}body.d2 #sir{flex-direction:column;width:270px}body.d2 #route{flex:1}
+body.d2 .sph{background:var(--pc)!important;min-height:150px}body.d2 .sph .sphl,body.d2 .sph .spht,body.d2 .sph .sphv,body.d2 .sph .sphn,body.d2 .sph small{color:#0b0d0e}body.d2 .sph:not(.rcT):not(.rcE):not(.rcF):not(.rcM){background:var(--card)!important}body.d2 .sph:not(.rcT):not(.rcE):not(.rcF):not(.rcM) .spht{color:var(--tx2)}
+body.d2 .snx{flex:1}body.d2 .snt{flex-direction:column;gap:2px}
+/* 3 : bandeau coloré en haut du graphique, bas d'écran conservé */
+.sband{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:22px;padding:0 20px;pointer-events:none;border-bottom:4px solid currentColor;background:color-mix(in srgb,currentColor 14%,var(--card));color:var(--tx3)}
+.sband .sb-ph{font:800 34px/1 var(--fd);text-transform:uppercase;letter-spacing:.03em}.sband .sb-v{font:700 30px/1 var(--fd);color:var(--tx);font-variant-numeric:tabular-nums}.sband .sb-nx{margin-left:auto;font-size:16px;color:var(--tx2)}
 </style>
 </head>
 <body>
@@ -333,7 +363,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
  </header>
  <div id="nban" class="hide"><div class="nb1"><span class="nbl" id="nbL"></span><span class="nbn" id="nbN"></span><span class="np" id="nbD"></span></div><div class="nb2" id="nbT"></div><div class="nb3" id="nbR"></div></div>
  <div id="hstrip"><button id="hTog" aria-expanded="false"><svg class="i"><use href="#i-fold"/></svg>Horaires</button><div id="hList"></div></div>
- <div id="route" aria-label="Ce qui arrive"></div>
+ <div id="rwrap"><div id="sir"></div><div id="route" aria-label="Ce qui arrive"></div></div>
  <footer class="bot b3">
   <div class="bk nsb" id="nsBox"><span class="bl" id="nsL"></span><span class="bn" id="nsN"></span><span class="bt" id="nsT"></span></div>
   <div class="bk dlb" id="dlBox" data-s=""><span class="bl" id="dlL"></span><span class="bv" id="dlV"></span><span class="bt" id="dlM"></span></div>
@@ -901,6 +931,25 @@ async function drawSchema(){const A=annex,B=$("#schBody");if(!A||!A[schCur])retu
  const pg=await ficheDoc.getPage(A[schCur].p),v0=pg.getViewport({scale:1}),dpr=Math.min(window.devicePixelRatio||1,2),W=B.clientWidth-16,H=B.clientHeight-16;
  const sc=Math.min(W/v0.width,H/v0.height)*schZoom,vp=pg.getViewport({scale:sc*dpr});const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.style.width=vp.width/dpr+"px";c.style.height=vp.height/dpr+"px";
  await pg.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;B.innerHTML="";B.appendChild(c)}
+/* ---------- propositions de design « façon Sirius » (design1/2/3.html) ---------- */
+const DUI=(()=>{const m=/design([123])\.html/.exec(location.pathname)||/[?&]d=([123])/.exec(location.search);return m?+m[1]:0})();
+const SIR_CLR=["","#4cc764","#a3a9b2","#ff4d4d","#3d8bff"];
+function sirClock(now){const t=nowMin(now);if(t==null)return"--:--:--";const s=Math.round(((t%1440)+1440)%1440*60);return[Math.floor(s/3600)%24,Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,"0")).join(":")}
+function sirDelay(){if(delayMin==null)return"";const s=delayMin>=.5?"late":delayMin<=-.5?"early":"on";return'<span class="sdl" data-s="'+s+'">'+(s==="on"?"à l’heure":(s==="late"?"+":"−")+mmss(delayMin))+"</span>"}
+function sirPhase(){const N=ECO.now;if(N)return{t:ECO_TXT[N.p],c:SIR_CLR[N.p],cls:ECO_CLS[N.p],v:N.v,nx:N.nx};
+ return{t:ECO.on?(rows.length&&!ecoMass()?"Masse KVB ?":"—"):"Courbe désactivée",c:"",cls:"",v:null,nx:""}}
+function sirNextHTML(){const N=NEXT;if(!N)return'<div class="snl">Prochain arrêt</div><div class="snn none">—</div>';const t=N.t;
+ let h='<div class="snl">'+(N.quai?"À quai":"Prochain arrêt · "+N.dist)+'</div><div class="snn">'+esc(N.name)+"</div>";
+ if(t)h+='<div class="snt">'+(N.quai?"<span>Départ <b>"+hTxt(t.dep)+"</b></span>":(t.arr.v!==t.dep.v?"<span>Arrivée <b>"+hTxt(t.arr)+"</b></span><span>Départ <b>"+hTxt(t.dep)+"</b></span>":"<span>Arrivée <b>"+hTxt(t.arr)+"</b></span>"))+"</div>";
+ if(!N.quai)h+='<div class="snr">'+(N.reg>0?fmtReg(N.reg)+" rattrapable"+(N.reg>=2?"s":""):"rien à rattraper")+"</div>";return h}
+/* bandeau en haut de la vue (proposition 3) */
+function sirBand(){const P=sirPhase();return'<div class="sband"'+(P.c?' style="color:'+P.c+'"':"")+'><span class="sb-ph">'+esc(P.t)+'</span>'+(P.v!=null?'<span class="sb-v">'+P.v+'<small> km/h</small></span>':"")+(P.nx?'<span class="sb-nx">'+esc(P.nx)+"</span>":"")+"</div>"}
+/* en-tête (1) ou colonne (2) */
+function sirRender(now){const E=$("#sir");if(!E||(DUI!==1&&DUI!==2))return;const P=sirPhase(),sp=$("#spd")?$("#spd").textContent:"—";
+ const ph='<div class="sph '+P.cls+'"'+(P.c?' style="--pc:'+P.c+'"':"")+'><div class="sphl">Conduite conseillée</div><div class="spht">'+esc(P.t)+'</div>'+(P.v!=null?'<div class="sphv">'+P.v+'<small> km/h</small></div>':"")+(P.nx?'<div class="sphn">'+esc(P.nx)+"</div>":"")+"</div>";
+ const ck='<div class="sck"><div class="snl">Heure</div><div class="sckt">'+sirClock(now)+"</div>"+sirDelay()+"</div>";
+ const nx='<div class="snx">'+sirNextHTML()+"</div>";
+ E.innerHTML=DUI===1?ph+ck+nx:ph+nx+ck}
 
 /* ---------- lecture des LTV dans la fiche DEFIT ----------
    Les PK des panneaux sont du texte ; la vitesse est une image de panneau.
@@ -1386,7 +1435,7 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  if(!rows.length){RB.svg=null;box.innerHTML='<div class="empty">Aucune fiche chargée.<br>Menu ≡ → Importer une fiche.</div>';return}
  const cur=Dc[i]+f*seg(i),span=zoneKm*1000,dEnd=Dc[Dc.length-1];viewOff=Math.max(-span*.5,Math.min(viewOff,dEnd-cur));const d0=cur-span*.12+viewOff,d1=d0+span*1.12;routeGeom={d0,d1,W,cur};
  const X=d=>(d-d0)/(d1-d0)*W,vis=d=>d>=d0&&d<=d1;
- const sTop=40,sBot=Math.round(H*.40),pTop=Math.round(H*.22),pBot=Math.round(H*.56),yT=Math.round(H*.6),yAx=H-22,q=[];
+ const sTop=DUI?(DUI===3?78:26):40,sBot=Math.round(H*(DUI?.62:.40)),pTop=Math.round(H*(DUI?.50:.22)),pBot=Math.round(H*(DUI?.71:.56)),yT=Math.round(H*(DUI?.75:.6)),yAx=H-22,q=[];
  const T=(x,y,t,c,a)=>q.push('<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" class="'+c+'"'+(a?' text-anchor="'+a+'"':"")+">"+esc(t)+"</text>");
  /* profil en long, en fond */
  const P=(typeof profPts==="function"?profPts():[]).filter(p=>p.d>=d0-600&&p.d<=d1+600&&p.z!=null);
@@ -1424,7 +1473,9 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
  /* limites : paliers horizontaux (avec dégagement de la longueur du train) */
  const st=effLim(d0,Z,Lt),ch=effChanges(d0,d1,Z,Lt);const pieces=[];let a=d0,v=st.v,lt=st.ltv,clr=false;
  for(const c of ch){pieces.push({a,b:c.d,v,lt,clr});a=c.d;v=c.v;lt=c.ltv;clr=c.clr}pieces.push({a,b:d1,v,lt,clr});
- const vmax=Math.max(60,...pieces.map(p=>p.v||0)),Ys=v=>sBot-(v/vmax)*(sBot-sTop-18);
+ /* échelle de vitesse graduée (tous les 20 km/h), comme sur Sirius */
+ const vtop=Math.ceil((Math.max(60,...pieces.map(p=>p.v||0))+10)/20)*20,Ys=v=>sBot-(v/vtop)*(sBot-sTop);
+ for(let g=20;g<=vtop;g+=20){const y=Ys(g);q.push('<line x1="34" x2="'+W+'" y1="'+y+'" y2="'+y+'" class="rgrid"/>');T(4,y+4,String(g),"rgl","start")}
  for(let k=0;k<pieces.length;k++){const p=pieces[k];if(p.v==null)continue;const y=Ys(p.v),xa=X(p.a),xb=X(p.b),past=p.b<=cur;
   q.push('<rect x="'+xa+'" y="'+y+'" width="'+Math.max(0,xb-xa)+'" height="'+Math.max(0,yT-14-y)+'" class="rsa'+(p.lt?" ltv":"")+(past?" past":"")+'"/>');
   q.push('<line x1="'+xa+'" x2="'+xb+'" y1="'+y+'" y2="'+y+'" class="rsp'+(p.lt?" ltv":"")+(past?" past":"")+(ok?"":" off")+'"/>');
@@ -1461,6 +1512,8 @@ function drawRoute(i,f,ok){const box=$("#route");if(!box)return;const W=box.clie
   const t=N.t,tt=t?(N.quai?"départ <b>"+hTxt(t.dep)+"</b>":t.arr.v!==t.dep.v?"<b>"+hTxt(t.arr)+"</b> → <b>"+hTxt(t.dep)+"</b>":"<b>"+hTxt(t.arr)+"</b>"):"";
   const sub=N.quai?(t?(()=>{const dt=t.dep.v-nowMin();return dt>0&&dt<120?"départ dans "+(dt<1?Math.round(dt*60)+" s":Math.floor(dt)+" min"):""})():""):N.reg>0?fmtReg(N.reg)+" à rattraper":"rien à rattraper";
   ban+='<div class="ncard'+(N.quai?" quai":"")+'" style="left:'+(xc-cw/2)+'px;top:'+top+'px"><div class="nl">'+(N.quai?"À quai":"Prochain arrêt · "+N.dist)+'</div><div class="nn">'+esc(N.name)+'</div><div class="nt">'+tt+'</div><div class="nd">'+pill+"<span>"+sub+"</span></div>"+(inV?'<span class="ar" style="left:'+Math.max(10,Math.min(cw-24,xs-(xc-cw/2)-7))+'px"></span>':"")+"</div>"}
+ /* phase conseillée en grand */
+ if(DUI===3&&ok)ban+=sirBand();else if(!DUI&&ok&&ECO.plan&&ECO.now)ban+='<div class="ecoBig '+ECO_CLS[ECO.now.p]+'"><span class="eb1">'+ECO_TXT[ECO.now.p].toUpperCase()+'</span><span class="eb2">'+ECO.now.v+"</span>"+(ECO.now.nx?'<span class="eb3">'+ECO.now.nx+"</span>":"")+"</div>";
  if(typeof DR!=="undefined"&&DR.show&&ok)ban+='<div class="drb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><path d="M3 3l18 18" class="sl"/></svg>Défilement automatique</div>';
  const back=Math.abs(viewOff)>50;
  /* calques fixes : le bouton n'est jamais recréé, sinon un appui en cours se perd */
@@ -1539,15 +1592,16 @@ function ecoPlan(d0,v0,now){const M=ecoMass();if(!M||!rows.length)return null;
  const vmax=Math.max(...lim)*3.6,fast=ecoRun(G,vmax);let best=fast,Vc=vmax;
  if(avail!=null&&avail-30>fast.t){let lo=30,hi=vmax;for(let it=0;it<14;it++){const m=(lo+hi)/2,r=ecoRun(G,m);if(r.t>avail-30)lo=m;else{hi=m;best=r;Vc=m}}}
  return{d0,D,...best,Vc,avail,tmin:fast.t,stop:j>=0?stopName(rows[j]):null,M,t0:now}}
-const ECO_TXT=["","Traction","Marche sur l’erre","Freinage","Maintien"],ECO_CLS=["","rcT","rcE","rcF","rcM"];
+const ECO_TXT=["","Traction","Erre","Freinage","Maintien"],ECO_CLS=["","rcT","rcE","rcF","rcM"];
 /* appelé à chaque image : recalcule le plan toutes les 4 s, met à jour le conseil */
 function ecoTick(cur,spd,now,ok){const E=$("#ecoA");if(!E)return;
- if(!ECO.on||!ok||!ecoMass()){ECO.plan=null;E.innerHTML=ECO.on&&ok&&!ecoMass()&&rows.length?'<span class="muted">Courbe conseillée : renseigne la masse totale (KVB)</span>':"";return}
+ if(!ECO.on||!ok||!ecoMass()){ECO.plan=null;ECO.now=null;E.innerHTML=ECO.on&&ok&&!ecoMass()&&rows.length?'<span class="muted">Courbe conseillée : renseigne la masse totale (KVB)</span>':"";return}
  if(!ECO.plan||now-ECO.t>4000||cur<ECO.plan.d0||cur>ECO.plan.D[ECO.plan.D.length-1]){ECO.t=now;try{ECO.plan=ecoPlan(cur,Math.max(0,(spd||0)/3.6),now)}catch(e){ECO.plan=null}}
- const P=ECO.plan;if(!P){E.innerHTML="";return}
+ const P=ECO.plan;if(!P){E.innerHTML="";ECO.now=null;return}
  const i=Math.max(0,Math.min(P.D.length-1,Math.round((cur-P.d0)/(P.D[1]-P.D[0]||1)))),p=P.ph[i]||1;let k=i;while(k<P.D.length-1&&P.ph[k]===p)k++;
  const nx=k<P.D.length-1?P.ph[k]:0,dist=P.D[k]-cur;
- E.innerHTML='<span class="ecop '+ECO_CLS[p]+'">'+ECO_TXT[p]+" "+Math.round(P.v[i]*3.6)+"</span>"+(nx?' <span class="muted">'+ECO_TXT[nx].toLowerCase()+" dans "+(dist<1000?Math.round(dist/50)*50+" m":(dist/1000).toFixed(1).replace(".",",")+" km")+"</span>":"")}
+ const nxt=nx?ECO_TXT[nx]+" dans "+(dist<1000?Math.round(dist/50)*50+" m":(dist/1000).toFixed(1).replace(".",",")+" km"):"";
+ ECO.now={p,v:Math.round(P.v[i]*3.6),nx:nxt};E.innerHTML=""}
 /* dessin de la courbe conseillée dans la vue de conduite (même échelle que les limites) */
 function ecoDraw(q,X,Ys,d0,d1,cur){const P=ECO.plan;if(!P)return;const st=P.D[1]-P.D[0]||50,a=Math.max(0,Math.floor((Math.max(d0,cur)-P.d0)/st)),b=Math.min(P.D.length-1,Math.ceil((d1-P.d0)/st));
  let s=a;for(let i=a+1;i<=b;i++){if(P.ph[i]!==P.ph[s]||i===b){const pts=[];for(let k=s;k<=i;k++)pts.push(X(P.D[k]).toFixed(1)+" "+Ys(P.v[k]*3.6).toFixed(1));
@@ -1642,7 +1696,7 @@ function renderList(){
  $("#rep").innerHTML=rows.length?"<b>"+rows.length+" points lus, "+n+" tronçon(s).</b> Compare avec ton PDF avant de partir : la fiche officielle reste la référence.":"Aucune fiche chargée.";
 }
 const seg=i=>{const a=rows[i],b=rows[i+1];if(!b)return 1000;const d=Math.abs(b.pk-a.pk);return a.sec===b.sec&&d<=80?Math.max(100,d*1000):1000};
-function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;if(typeof ecoTick==="function")ecoTick(0,0,Date.now(),false);
+function masked(why,spd,i,f){ANIM.ok=false;ANIM.d=null;if(typeof ecoTick==="function")ecoTick(0,0,Date.now(),false);if(typeof sirRender==="function")sirRender(Date.now());
  $("#pk").textContent="—";$("#lim").textContent="—";$("#spd").textContent=spd==null?"—":Math.round(spd);
  $("#tSpd").classList.remove("over");$("#tLim").classList.remove("over","ltv");$("#gBar").style.width="0px";$("#gBar").className="";
  $("#nx").textContent="";$("#ns").textContent="";$("#delay").textContent="";
@@ -1703,7 +1757,7 @@ function frame(now){
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
  renderNext(i,cur,spd,km);
- showDelay(cur,now);renderBanner();emShow(cur);ecoTick(cur,spd,now,true);
+ showDelay(cur,now);renderBanner();emShow(cur);ecoTick(cur,spd,now,true);sirRender(now);
  /* numéro de train valable à cet endroit (change à la parité) */
  {const t=curTrain(i)||store("trainNo")||"—",E=$("#ficheT");if(E&&E.textContent!==t)E.textContent=t}
  if(DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");autoC(cur,spd);
@@ -1881,7 +1935,7 @@ buildD();buildT();setTheme(store("theme")==="nuit"?"nuit":"soir");chkCount();doc
 renderList();renderCond();renderGeo();renderKvb();renderLtvSug();initMap();zoneKm=2;setMid(midView==="list"?"list":"zone");setMode(["sim","man","gps"].includes(store("mode"))?store("mode"):"sim");
 if(rows.length&&!Object.keys(geo.lines).length)loadBuiltinGeo();
 profMsg(profInfo());upgradeProfile();if(rows.length&&Object.keys(geo.sec||{}).length)buildProfile();
-setSideTab(sideTab);setSide(store("side")==="1");livInit();$("#ecoMenu").textContent="Courbe conseillée : "+(ECO.on?"oui":"non");document.body.classList.add("ui-"+NEXTUI);
+setSideTab(sideTab);setSide(store("side")==="1");livInit();$("#ecoMenu").textContent="Courbe conseillée : "+(ECO.on?"oui":"non");document.body.classList.add("ui-"+NEXTUI);if(DUI)document.body.classList.add("dsir","d"+DUI);
 studyInit();
 /* ---------- défilement fluide ----------
    Les positions arrivent par à-coups (GPS une fois par seconde, simulation toutes les 500 ms).
