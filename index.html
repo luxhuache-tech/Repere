@@ -391,7 +391,7 @@ body.d2 .snx{flex:1}body.d2 .snt{flex-direction:column;gap:2px}
  <button data-o="fiche" role="menuitem">Fiche train</button>
  <button data-o="pdf" role="menuitem">Étude de ligne (afficher / replier)</button>
  <button data-o="liv" role="menuitem">Livrets de ligne</button>
- <button data-o="em" role="menuitem">Restrictions engin moteur</button>
+ <button data-o="em" role="menuitem">Restrictions engin moteur</button><button data-o="rec" role="menuitem">Enregistrements de conduite</button>
  <input type="file" id="emFile" accept=".json,application/json" class="hide">
  <button data-o="sch" role="menuitem">Schémas de l’avis DEFIT</button>
  <hr>
@@ -1618,6 +1618,38 @@ function ecoTick(cur,spd,now,ok){const E=$("#ecoA");if(!E)return;
 function ecoDraw(q,X,Ys,d0,d1,cur){const P=ECO.plan;if(!P)return;const st=P.D[1]-P.D[0]||50,a=Math.max(0,Math.floor((Math.max(d0,cur)-P.d0)/st)),b=Math.min(P.D.length-1,Math.ceil((d1-P.d0)/st));
  let s=a;for(let i=a+1;i<=b;i++){if(P.ph[i]!==P.ph[s]||i===b){const pts=[];for(let k=s;k<=i;k++)pts.push(X(P.D[k]).toFixed(1)+" "+Ys(P.v[k]*3.6).toFixed(1));
   q.push('<polyline points="'+pts.join(" ")+'" class="rcurve '+ECO_CLS[P.ph[s]||1]+'"/>');s=i}}}
+/* ---------- enregistrement de conduite (pour régler le modèle de traction) ----------
+   1 point par seconde en GPS : temps, distance, vitesse, précision, limite, pente, conseil, retard.
+   Gardé sur l'iPad (10 derniers trajets) ; export JSON ; envoi automatique vers un dépôt GitHub PRIVÉ si un jeton est réglé. */
+const REC={trip:null,last:0,saved:0,up:0,sha:{}};
+function recKey(){return"trajet:"+REC.trip.id}
+function recTick(cur,spd,now){if(mode==="sim"||!gps||(now-gps.ts)/1000>3||!rows.length)return;if(now-REC.last<1000)return;REC.last=now;
+ if(!REC.trip){const tr=($("#ficheT")||{}).textContent||"";const dt=new Date(now);REC.trip={id:dt.toISOString().slice(0,16).replace(/[:T]/g,"-")+"_"+tr.replace(/\W/g,""),train:tr,start:now,mt:+kvb.mt||null,mf:+kvb.mf||null,len:+kvb.len||null,loco:"E4000",p:[]}}
+ const g=typeof gradAt==="function"?gradAt(cur):null,L=effLim(cur,ltvZones(),trainLen()).v,E=ECO.now;
+ REC.trip.p.push([Math.round((now-REC.trip.start)/100)/10,Math.round(cur),Math.round(spd*10)/10,Math.round(gps.acc||0),L,g&&g.g!=null?Math.round(g.g*10)/10:null,E?E.p:0,E?E.v:null,delayMin==null?null:Math.round(delayMin*60)]);
+ if(now-REC.saved>30000){REC.saved=now;recSave()}
+ if(now-REC.up>15*60000){REC.up=now;recUpload(false)}}
+async function recSave(){if(!REC.trip)return;const T={...REC.trip,cols:["t_s","d_m","v_kmh","prec_m","lim","pente","phase","v_conseil","retard_s"]};await idbSet(recKey(),T);
+ let L=[];try{L=JSON.parse(store("trajets")||"[]")}catch(e){}if(!L.includes(T.id)){L.push(T.id);while(L.length>10){const o=L.shift();idbSet("trajet:"+o,null)}store("trajets",JSON.stringify(L))}}
+async function recAll(){let L=[];try{L=JSON.parse(store("trajets")||"[]")}catch(e){}const out=[];for(const id of L){const T=await idbGet("trajet:"+id);if(T)out.push(T)}return out}
+/* envoi vers un dépôt GitHub privé : réglages « recRepo » (propriétaire/dépôt) et « recTok » (jeton, saisi dans l'appli, jamais ailleurs) */
+async function recUpload(manual){const repo=store("recRepo"),tok=store("recTok");if(!repo||!tok){if(manual)setSt("warn","Envoi automatique non réglé.");return false}
+ await recSave();let ok=0,ko=0;for(const T of await recAll()){const path="trajets/"+T.id+".json",u="https://api.github.com/repos/"+repo+"/contents/"+path,H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
+  try{let sha=REC.sha[T.id];if(!sha){const g=await fetch(u,{headers:H});if(g.ok)sha=(await g.json()).sha}
+   const body=JSON.stringify(T),b64=btoa(unescape(encodeURIComponent(body)));
+   if(sha&&REC.len&&REC.len[T.id]===body.length){ok++;continue}
+   const r=await fetch(u,{method:"PUT",headers:H,body:JSON.stringify({message:"Trajet "+T.id,content:b64,...(sha?{sha}:{})})});
+   if(r.ok){REC.sha[T.id]=(await r.json()).content.sha;(REC.len=REC.len||{})[T.id]=body.length;ok++}else ko++}catch(e){ko++}}
+ if(manual)setSt(ko?"warn":"ok",ko?"Envoi : "+ko+" trajet(s) en échec (réseau ou jeton ?).":"Envoyé : "+ok+" trajet(s).");return!ko}
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&REC.trip){recSave();recUpload(false)}});
+async function recMenu(){const all=await recAll(),n=all.length,pts=all.reduce((a,T)=>a+T.p.length,0),repo=store("recRepo");
+ const c=prompt("Enregistrements de conduite : "+n+" trajet(s), "+Math.round(pts/60)+" min.\n"+(repo?"Envoi automatique vers "+repo+" : actif.":"Envoi automatique : non réglé.")+"\n\n1 = exporter le fichier\n2 = envoyer maintenant\n3 = régler l'envoi automatique\n4 = tout effacer","1");
+ if(c==="1"){await recSave();const b=new Blob([JSON.stringify(await recAll())],{type:"application/json"}),f=new File([b],"repere-trajets.json",{type:"application/json"});
+  if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f]}).catch(()=>{});else{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=f.name;a.click()}}
+ else if(c==="2")recUpload(true);
+ else if(c==="3"){const r=prompt("Dépôt GitHub PRIVÉ (propriétaire/nom) :",repo||"luxhuache-tech/repere-trajets");if(r==null)return;const t=prompt("Jeton GitHub (accès Contents en écriture à ce seul dépôt). Laisse vide pour garder l'actuel, « - » pour désactiver :","");
+  store("recRepo",r.trim());if(t==="-"){store("recTok",null);store("recRepo",null)}else if(t)store("recTok",t.trim());setSt("ok","Envoi automatique "+(store("recTok")?"réglé.":"désactivé."))}
+ else if(c==="4"&&confirm("Effacer tous les enregistrements de conduite de l’iPad ?")){for(const T of all)await idbSet("trajet:"+T.id,null);store("trajets","[]");REC.trip=null;setSt("ok","Enregistrements effacés.")}}
 
 
 /* ---------- lecture du PDF de la fiche ---------- */
@@ -1786,7 +1818,7 @@ function frame(now){
  if(zl)nx+=(nx?" · ":"")+'<b style="color:var(--ltv)">LTV '+zl.k.v+"</b> dans "+km(zl.d1);
  $("#nx").innerHTML=nx;
  renderNext(i,cur,spd,km);
- showDelay(cur,now);renderBanner();emShow(cur);ecoTick(cur,spd,now,true);sirRender(now);
+ showDelay(cur,now);renderBanner();emShow(cur);ecoTick(cur,spd,now,true);sirRender(now);recTick(cur,spd,now);
  /* numéro de train valable à cet endroit (change à la parité) */
  {const t=curTrain(i)||store("trainNo")||"—",E=$("#ficheT");if(E&&E.textContent!==t)E.textContent=t}
  if(DR.show)setSt("warn","Défilement automatique à "+Math.round(DR.v*3.6)+" km/h : "+DR.why.replace(/\.$/,"")+".");autoC(cur,spd);
@@ -1921,7 +1953,7 @@ function openOv(id){document.querySelectorAll(".ov").forEach(o=>o.classList.add(
 document.querySelectorAll(".ovx").forEach(b=>b.onclick=()=>b.closest(".ov").classList.add("hide"));
 function setSide(o){$("#side").classList.toggle("hide",!o);$("#sideBtn").classList.toggle("on",o);$("#sideBtn").setAttribute("aria-pressed",o);store("side",o?"1":"0");lastRow=-1;if(o)setTimeout(()=>sideTab==="liv"?(LIV.cur&&LIV.doc?livRender(true):renderLiv()):renderStudy(),60);if(map)setTimeout(()=>map.invalidateSize(),60)}
 $("#sideBtn").onclick=()=>setSide($("#side").classList.contains("hide"));$("#sideClose").onclick=()=>setSide(false);
-dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="eco"){ECO.on=!ECO.on;store("eco",ECO.on?"1":"0");ECO.plan=null;lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
+dd.querySelectorAll("button[data-o]").forEach(b=>b.onclick=()=>{ddOpen(false);const o=b.dataset.o;if(o==="sch")openSchema(null);else if(o==="chk")openCheck(false);else if(o==="pdf"){setSideTab("etude");setSide(true)}else if(o==="liv"){setSideTab("liv");setSide(true)}else if(o==="em")emMenu();else if(o==="rec")recMenu();else if(o==="eco"){ECO.on=!ECO.on;store("eco",ECO.on?"1":"0");ECO.plan=null;lastRow=-1}else openOv({map:"#ovMap",fiche:"#ovFiche"}[o])});
 dd.querySelectorAll("button[data-t]").forEach(b=>b.onclick=()=>{ddOpen(false);view(b.dataset.t);$("#menu").classList.remove("hide")});
 dd.querySelectorAll("button[data-t2]").forEach(b=>b.onclick=()=>setTheme(b.dataset.t2));
 
@@ -1988,11 +2020,12 @@ function zoomTarget(){const v=Math.max(0,zoomSpd||0);let km=Math.max(2,Math.min(
  if(ANIM.d!=null&&rows.length){const d=ANIM.d;let j=0;while(j+1<rows.length&&Dc[j+1]<=d)j++;const lim=rows[j].v;
   for(let k=j+1;k<rows.length&&Dc[k]-d<km*1500;k++){const r=rows[k];if((r.v!=null&&lim!=null&&r.v<lim)||(isStop(r)&&!isSup(r))){const need=(Dc[k]-d)/1000*1.2;if(need>km)km=Math.min(12,need);break}}}
  return km}
-function animLoop(now){requestAnimationFrame(animLoop);
 /* application installée : fonctionne hors ligne, écran gardé allumé pendant la conduite */
 if("serviceWorker" in navigator&&window.isSecureContext)navigator.serviceWorker.register("sw.js").catch(()=>{});
 let wakeL=null;async function keepAwake(){try{if(!("wakeLock" in navigator)||document.hidden||wakeL||!rows.length)return;wakeL=await navigator.wakeLock.request("screen");wakeL.addEventListener("release",()=>{wakeL=null})}catch(e){wakeL=null}}
-document.addEventListener("visibilitychange",keepAwake);document.addEventListener("pointerdown",keepAwake,{passive:true});setInterval(keepAwake,15000);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;const dt=Math.min(.2,(now-(animLoop.t||now))/1000);animLoop.t=now;
+document.addEventListener("visibilitychange",keepAwake);document.addEventListener("pointerdown",keepAwake,{passive:true});setInterval(keepAwake,15000);
+/* boucle d'animation : 30 images/s au plus */
+function animLoop(now){requestAnimationFrame(animLoop);if(document.hidden||!ANIM.ok||!rows.length)return;if(now-(animLoop.t||0)<32)return;const dt=Math.min(.2,(now-(animLoop.t||now))/1000);animLoop.t=now;
  const tz=zoomTarget(),dz=tz-zoneKm;if(Math.abs(dz)>.005)zoneKm+=dz*Math.min(1,dt/3);
  const t=Date.now();if(ANIM.v>.3||Math.abs((ANIM.td??0)-(ANIM.d??0))>1||Math.abs(dz)>.005)drawSmooth(t);else ANIM.last=t}
 requestAnimationFrame(animLoop);
